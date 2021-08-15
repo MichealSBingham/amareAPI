@@ -21,8 +21,10 @@ class User:
 
     def __init__(self, id, data=None,
                            hometown=None,
+                           residence=None,
                            birthday=None,
                            name=None,
+                          profile_image_url=None,
                            sex=None,
                            orientation=None,
                            natal_chart = None):
@@ -31,14 +33,16 @@ class User:
         self.__data = data
 
         self.name = data.get('name')
+        self.profile_image_url = data.get('profile_image_url')
         self.hometown = Location(info_dict=data.get('hometown'))
+        self.residence = Location(info_dict=data.get('residence'))
 
         #let's get the datetime object
         self.birthday = None # default value
         bday = data.get('birthday')
         if bday is not None:
             self.birthday = bday.get('timestamp')
-        #self.birthday = data["birthday"]["timestamp"] # returns a Datetime object
+
 
         self.sex = data.get('sex')
         self.orientation = data.get('orientation')
@@ -64,6 +68,28 @@ class User:
         self.north_node = self.natal_chart.get('North Node')
         self.south_node = self.natal_chart.get('South Node')
 
+
+    def dict(self):
+
+        if self.hometown is None:
+            htown = {}
+        else:
+            htown = self.hometown.dict()
+
+        if self.residence is None:
+            rtown = {}
+        else:
+            rtown = self.residence.dict()
+
+        return {
+            "name": self.name,
+            "sex": self.sex,
+           "birthday": self.birthday,
+           "orientation": self.orientation,
+           "profile_image_url": self.profile_image_url,
+           "hometown": htown,
+           "residence": rtown
+        }
 
     def __hash__(self):
         return hash(self.id)
@@ -131,15 +157,6 @@ class User:
                 except:
                     print("Failed to get aspect between " + p1.id + " and" + p2.id)
         return Aspects(syn)
-
-"""
-    #Returns the synastry aspects between `Self` and User 2 where `Self` is the inner planet in synastry
-    def synastry(self, user2=None,aspectsToGet=const.ALL_ASPECTS ):
-        aspects =self.__get_aspects(user2)
-        aspects = Aspects(aspects)
-        return aspects.where_active_planet_belongs_to(self)
-    
-    """
 
 
 

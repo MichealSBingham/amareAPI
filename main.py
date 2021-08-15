@@ -93,12 +93,7 @@ def user(request):
             user = User(id=id)
 
             return jsonify(success=True,
-                           user={
-                               'name': user.name,
-                               'sign': user.sun.sign,
-                               'birthday': user.birthday,
-                               'sex':  user.sex
-                           })
+                           user=user.dict())
 
         except Exception as e:
 
@@ -119,25 +114,6 @@ def user(request):
                            'description': "UNAUTHORIZED. Failed to authenticate, invalid secret key."},
                        secret_entered=secret
                        )
-
-def test_installation(request):
-    try:
-        import astrology.NatalChart
-        import flatlib
-    except Exception as e:
-        return jsonify(success=False,
-                       error={
-                           'why': str(e),
-                           'trace': traceback.format_exc()}
-                       )
-
-def test_installation2(request):
-    try:
-        import astrology.NatalChart
-        import flatlib
-    except Exception as e:
-        return "no"
-
 
 
 

@@ -10,4 +10,17 @@ class Location:
         self.longitude = info_dict.get("longitude")
         self.state = info_dict.get("state")
         self.country = info_dict.get("country")
-        self.city = info_dict.get("city")
+
+
+    def dict(self):
+        if self.__info_dict is None or self.__info_dict == {}:
+            return {}
+
+        return {
+            "city": self.city,
+            "geohash": self.geohash,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "state": self.state,
+            "country": self.country,
+        }
