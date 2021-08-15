@@ -33,14 +33,14 @@ HTTP Cloud Function.
         <https://cloud.google.com/functions/docs/writing/http#http_frameworks>
         
  Deployment:
-     gcloud functions deploy hello \
---runtime python39 --trigger-http --allow-unauthenticated
+     gcloud functions deploy func_name \
+--runtime python37 --trigger-http --allow-unauthenticated
 
 Delete:
-gcloud functions delete hello
+gcloud functions delete func_name
 
 Get url to end point
-gcloud functions describe hello
+gcloud functions describe func_name
 
 
 Returns the user data  
@@ -57,65 +57,6 @@ Returns the user data
 
 '''
 
-
-def go(request):
-
-
-    try:
-        data = request.get_json(force=True)
-        try:
-
-            secret = data["secret"]
-
-            if not (secret == SECRET):
-                return jsonify(success=False,
-                           error=jsonify(
-                                    code=401,
-                                     description="UNAUTHORIZED. Failed to authenticate, invalid secret key.")
-                           )
-
-            try:
-                id = data["id"]
-
-                try:
-                    user = User(id=id)
-
-                    #User Information
-                    name = user.name
-                    return jsonify(
-                        success=True,
-                        name=name
-                    )
-
-                except:
-                    return jsonify(success=False,
-                                   error=jsonify(
-                                       code=404,
-                                       description="USER NOT FOUND. The user does not exist.")
-                                   )
-
-
-
-            except:  # nn auth data providied
-                return jsonify(success=False,
-                               error=jsonify(
-                                   code=400,
-                                   description="BAD REQUEST. Missing user id.")
-                               )
-
-        except:  #nn auth data providied
-            return jsonify(success=False,
-                           error=jsonify(
-                                    code=400,
-                                     description="BAD REQUEST. Failed to authenticate, missing the secret key.")
-                           )
-
-    except:
-        return jsonify(success=False,
-                       error=jsonify(
-                           code=400,
-                           description="BAD REQUEST. Could not understand request.")
-                       )
 
 
 def user(request):
