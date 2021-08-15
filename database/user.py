@@ -29,12 +29,24 @@ class User:
         self.id = id
         data = self.users_ref.document(f'{id}').get().to_dict()
         self.__data = data
-        self.name = data['name']
-        self.hometown = Location(info_dict=data['hometown'])
-        self.birthday = data["birthday"]["timestamp"] # returns a Datetime object
-        self.sex = data['sex']
-        self.orientation = data['orientation']
+
+        self.name = data.get('name')
+        self.hometown = Location(info_dict=data.get('hometown'))
+
+        #let's get the datetime object
+        self.birthday = None # default value
+        bday = data.get('birthday')
+        if bday is not None:
+            self.birthday = bday.get('timestamp')
+        #self.birthday = data["birthday"]["timestamp"] # returns a Datetime object
+
+        self.sex = data.get('sex')
+        self.orientation = data.get('orientation')
+
+
         self.natal_chart = NatalChart.get_natal_chart(self.birthday, self.hometown)
+        if self.natal_chart is None:
+            self.natal_chart = {}
 
         self.sun = self.natal_chart.get('Sun')
         self.moon = self.natal_chart.get('Moon')

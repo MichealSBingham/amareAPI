@@ -35,6 +35,8 @@ aspect.type // 120 , returns Int of degrees the aspect is ...>
 """
 
 def get_natal_chart(date, birth_location):
+    if ( date is None ) or (birth_location is None):
+        return None
     date = __proper_date__(date)
     return Chart(date, GeoPos(birth_location.latitude, birth_location.longitude), IDs=const.LIST_OBJECTS)
 
