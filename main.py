@@ -1,10 +1,6 @@
-from google.cloud import firestore
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
-import json
 from flask import jsonify
-from user import User
+from database.user import User
+import traceback
 """
 PATH_TO_FIR_CREDENTIALS = 'amare-firebase.json'
 cred = credentials.Certificate(PATH_TO_FIR_CREDENTIALS)
@@ -12,7 +8,6 @@ default_app = firebase_admin.initialize_app(cred)
 db = firestore.client()
 """
 
-from flask import escape
 ##Hide this, do not expose this
 SECRET = "O6012599956O6012598567K4048252227M9176990590"
 
@@ -123,10 +118,6 @@ def go(request):
                        )
 
 
-
-
-from flask import escape
-
 def user(request):
     """HTTP Cloud Function.
     Args:
@@ -173,12 +164,14 @@ def user(request):
                                'name': user.name
                            })
 
-        except:
+        except Exception as e:
 
             return jsonify(success=False,
                            error={
                                'code': 404,
-                               'description': "USER NOT FOUND. Could not find user with id " + id + " ."}
+                               'description': "USER NOT FOUND. Could not find user with id " + id + ".",
+                               'why': str(e),
+                               'trace': traceback.format_exc()}
                            )
 
 
@@ -187,7 +180,8 @@ def user(request):
         return jsonify(success=False,
                        error={
                            'code': 401,
-                           'description': "UNAUTHORIZED. Failed to authenticate, invalid secret key."}
+                           'description': "UNAUTHORIZED. Failed to authenticate, invalid secret key."},
+                       secret_entered=secret
                        )
 
 

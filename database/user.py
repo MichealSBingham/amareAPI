@@ -2,15 +2,14 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 from Location import Location
-import NatalChart
+from astrology import NatalChart
 from flatlib import const
-from flatlib import aspects
 import itertools
-from NatalChart import Aspects
+from astrology.NatalChart import Aspects
 
 
 #Constants
-PATH_TO_FIR_CREDENTIALS = 'amare-firebase.json'
+PATH_TO_FIR_CREDENTIALS = 'database/amare-firebase.json'
 cred = credentials.Certificate(PATH_TO_FIR_CREDENTIALS)
 default_app = firebase_admin.initialize_app(cred)
 db = firestore.client()
