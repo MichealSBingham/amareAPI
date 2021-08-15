@@ -184,6 +184,23 @@ def user(request):
                        secret_entered=secret
                        )
 
+def test_installation(request):
+    try:
+        import astrology.NatalChart
+        import flatlib
+    except Exception as e:
+        return jsonify(success=False,
+                       error={
+                           'why': str(e),
+                           'trace': traceback.format_exc()}
+                       )
+
+def test_installation2(request):
+    try:
+        import astrology.NatalChart
+        import flatlib
+    except Exception as e:
+        return "no"
 
 
 

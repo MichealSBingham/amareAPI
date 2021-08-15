@@ -1,7 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
-from Location import Location
+#from Location import Location
 from astrology import NatalChart
 from flatlib import const
 import itertools
@@ -29,9 +29,9 @@ class User:
         self.id = id
         data = self.users_ref.document(f'{id}').get().to_dict()
         self.__data = data
+        self.name = data['name']
         self.hometown = Location(info_dict=data['hometown'])
         self.birthday = data["birthday"]["timestamp"] # returns a Datetime object
-        self.name = data['name']
         self.sex = data['sex']
         self.orientation = data['orientation']
         self.natal_chart = NatalChart.get_natal_chart(self.birthday, self.hometown)
@@ -148,6 +148,16 @@ class User:
 
 
 
+class Location:
+    def __init__(self, info_dict, city=None, geohash=None, latitude=None, longitude=None, state=None, country=None):
+        self.__info_dict = info_dict
+        self.city = info_dict["city"]
+        self.geohash = info_dict["geohash"]
+        self.latitude = info_dict["latitude"]
+        self.longitude = info_dict["longitude"]
+        self.state = info_dict["state"]
+        self.country = info_dict["country"]
+        self.city = info_dict["city"]
 
 
 
