@@ -19,7 +19,7 @@ class User:
 
     users_ref = db.collection(f'users')
 
-    def __init__(self, id, data=None,
+    def __init__(self, id=None, data=None,
                            hometown=None,
                            residence=None,
                            birthday=None,
@@ -29,23 +29,40 @@ class User:
                            orientation=None,
                            natal_chart = None):
         self.id = id
-        data = self.users_ref.document(f'{id}').get().to_dict()
-        self.__data = data
+        if self.id is None or self.id == '':
+            self.__data = {}
+        else:
+            self.__data = self.users_ref.document(f'{id}').get().to_dict()
 
-        self.name = data.get('name')
-        self.profile_image_url = data.get('profile_image_url')
-        self.hometown = Location(info_dict=data.get('hometown'))
-        self.residence = Location(info_dict=data.get('residence'))
+
+
+        if (self.__data is None) or data == {}:
+            self.__data = {}
+
+
+        self.name = self.__data.get('name')
+        self.profile_image_url = self.__data.get('profile_image_url')
+
+
+        self.hometown = Location(info_dict=self.__data.get('hometown', {}))
+
+        print("Self.hometown in User is... ")
+        print(self.hometown)
+
+        if self.hometown.info_dict is None or self.hometown.info_dict == {}:
+            self.hometown = hometown   # set the value given to it
+        self.residence = Location(info_dict=self.__data.get('residence'))
 
         #let's get the datetime object
-        self.birthday = None # default value
-        bday = data.get('birthday')
+        bday = self.__data.get('birthday')
         if bday is not None:
             self.birthday = bday.get('timestamp')
+        else:
+            self.birthday = birthday
 
 
-        self.sex = data.get('sex')
-        self.orientation = data.get('orientation')
+        self.sex = self.__data.get('sex')
+        self.orientation = self.__data.get('orientation')
 
 
         self.natal_chart = NatalChart.get_natal_chart(self.birthday, self.hometown)

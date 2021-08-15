@@ -1,15 +1,9 @@
 from flask import jsonify
 from database.user import User
 import traceback
-"""
-PATH_TO_FIR_CREDENTIALS = 'amare-firebase.json'
-cred = credentials.Certificate(PATH_TO_FIR_CREDENTIALS)
-default_app = firebase_admin.initialize_app(cred)
-db = firestore.client()
-"""
+from secret import api_keys
 
-##Hide this, do not expose this
-SECRET = "O6012599956O6012598567K4048252227M9176990590"
+
 
 
 
@@ -76,7 +70,7 @@ def user(request):
                     'description': "BAD REQUEST. Failed to authenticate, no secret key provided."}
                 )
 
-    if secret == SECRET:
+    if secret == api_keys.SECRET:
 
         if request_json and 'id' in request_json:
             id = request_json['id']
@@ -116,6 +110,61 @@ def user(request):
                        )
 
 
+# Returns the natal chart of the user
+def natal(request):
+    request_json = request.get_json(silent=True)
+    request_args = request.args
+
+    # Ensuring proper authorization
+    if request_json and 'secret' in request_json:
+        secret = request_json['secret']
+    elif request_args and 'secret' in request_args:
+        secret = request_args['secret']
+    else:
+        return jsonify(success=False,
+                       error={
+                           'code': 400,
+                           'description': "BAD REQUEST. Failed to authenticate, no secret key provided."}
+                       )
+
+    if secret == api_keys.SECRET:
+
+        if request_json and 'id' in request_json:
+            id = request_json['id']
+        elif request_args and 'id' in request_args:
+            id = request_args['id']
+        else:
+            return jsonify(success=False,
+                           error={
+                               'code': 400,
+                               'description': "BAD REQUEST. Did not provide user id."}
+                           )
+
+        try:
+            user = User(id=id)
+
+            return jsonify(success=True,
+                           user=user.dict())
+
+        except Exception as e:
+
+            return jsonify(success=False,
+                           error={
+                               'code': 404,
+                               'description': "USER NOT FOUND. Could not find user with id " + id + ".",
+                               'why': str(e),
+                               'trace': traceback.format_exc()}
+                           )
+
+
+
+    else:
+        return jsonify(success=False,
+                       error={
+                           'code': 401,
+                           'description': "UNAUTHORIZED. Failed to authenticate, invalid secret key."},
+                       secret_entered=secret
+                       )
 
 
 

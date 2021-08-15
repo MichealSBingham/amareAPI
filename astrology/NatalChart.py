@@ -34,11 +34,19 @@ aspect.type // 120 , returns Int of degrees the aspect is ...>
 
 """
 
+#date: date timestamp from database, if you pass a date here manually past a list: [date, time] ex: ['2021/07/21', '19:52']
+#birth_location : Location  (must have lattidude and longitude)
 def get_natal_chart(date, birth_location):
+
     if ( date is None ) or (birth_location is None):
         return None
-    date = __proper_date__(date)
-    return Chart(date, GeoPos(birth_location.latitude, birth_location.longitude), IDs=const.LIST_OBJECTS)
+    if type(date) is Datetime:  #it's already a datetime object no need to convert it to otherwise
+
+        date_ = date
+    else:
+
+        date_ = __proper_date__(date)
+    return Chart(date_, GeoPos(birth_location.latitude, birth_location.longitude), IDs=const.LIST_OBJECTS)
 
 # converts a datetime object to the proper 'Datetime' object for the natal chart api
 def __proper_date__(date):
