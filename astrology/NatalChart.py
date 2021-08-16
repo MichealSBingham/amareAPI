@@ -34,6 +34,8 @@ aspect.type // 120 , returns Int of degrees the aspect is ...>
 
 """
 
+# Utility Functions ...
+
 #date: date timestamp from database, if you pass a date here manually past a list: [date, time] ex: ['2021/07/21', '19:52']
 #birth_location : Location  (must have lattidude and longitude)
 def get_natal_chart(date, birth_location):
@@ -187,6 +189,12 @@ def angleBetween(planet1, planet2):
     a1 = trueAngle(planet1)
     a2 = trueAngle(planet2)
     return abs(a1-a2)
+
+# Converts the attributes of the planet object to a dict. Mostly for returning a json for the api
+def planetToDict(planet):
+    pass
+
+
 
 
 

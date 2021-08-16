@@ -27,7 +27,8 @@ class User:
                           profile_image_url=None,
                            sex=None,
                            orientation=None,
-                           natal_chart = None):
+                           natal_chart = None,
+                           exists = False):
         self.id = id
         if self.id is None or self.id == '':
             self.__data = {}
@@ -38,6 +39,8 @@ class User:
 
         if (self.__data is None) or data == {}:
             self.__data = {}
+        else:
+            self.exists = True
 
 
         self.name = self.__data.get('name')
@@ -45,9 +48,6 @@ class User:
 
 
         self.hometown = Location(info_dict=self.__data.get('hometown', {}))
-
-        print("Self.hometown in User is... ")
-        print(self.hometown)
 
         if self.hometown.info_dict is None or self.hometown.info_dict == {}:
             self.hometown = hometown   # set the value given to it

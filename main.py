@@ -5,8 +5,17 @@ from secret import api_keys
 
 
 
+from json import dumps
+from flask import make_response
+""""
+def jsonify(status=200, indent=4, sort_keys=True, **kwargs):
+    response = make_response(dumps(dict(**kwargs), indent=indent, sort_keys=sort_keys))
+    response.headers['Content-Type'] = 'application/json; charset=utf-8'
+    response.headers['mimetype'] = 'application/json'
+    response.status_code = status
+    return response
 
-
+"""
 ## Admin Functions ...
 
 # Get's the natal chart of a user by user id.
@@ -58,6 +67,8 @@ def user(request):
     request_json = request.get_json(silent=True)
     request_args = request.args
 
+
+
 # Ensuring proper authorization
     if request_json and 'secret' in request_json:
         secret = request_json['secret']
@@ -86,6 +97,16 @@ def user(request):
         try:
             user = User(id=id)
 
+            if not user.exists:
+
+                return jsonify(success=False,
+                               error={
+                                   'code': 404,
+                                   'description': "USER NOT FOUND. Could not find user with id " + id + ", or the user has no information saved."
+                                   }
+                               )
+
+
             return jsonify(success=True,
                            user=user.dict())
 
@@ -109,9 +130,17 @@ def user(request):
                        secret_entered=secret
                        )
 
+"""
+Returns the natal chart of the user
 
-# Returns the natal chart of the user
+Provide ID OR (birthday and location) 
+ - Parameters: 
+           - id : String (user id of the user) [optional if you provide bday and location] 
+           - secret: String ( secret key for auth) 
+           - 
+"""
 def natal(request):
+    providedId = False
     request_json = request.get_json(silent=True)
     request_args = request.args
 
@@ -129,10 +158,13 @@ def natal(request):
 
     if secret == api_keys.SECRET:
 
+
         if request_json and 'id' in request_json:
             id = request_json['id']
+            providedId = True
         elif request_args and 'id' in request_args:
             id = request_args['id']
+            providedId = True
         else:
             return jsonify(success=False,
                            error={
@@ -141,7 +173,17 @@ def natal(request):
                            )
 
         try:
-            user = User(id=id)
+
+            if providedId:
+                user = User(id=id)
+
+
+            else:    #Passed in birthday and location instead
+                pass
+
+
+
+
 
             return jsonify(success=True,
                            user=user.dict())
