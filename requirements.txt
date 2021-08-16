@@ -2,7 +2,9 @@ CacheControl==0.12.6
 cachetools==4.2.2
 certifi==2021.5.30
 charset-normalizer==2.0.4
+click==8.0.1
 firebase-admin==5.0.1
+Flask==2.0.1
 flatlib==0.2.3
 google-api-core==1.31.1
 google-api-python-client==2.15.0
@@ -17,7 +19,11 @@ googleapis-common-protos==1.53.0
 grpcio==1.39.0
 httplib2==0.19.1
 idna==3.2
+itsdangerous==2.0.1
+Jinja2==3.0.1
+MarkupSafe==2.0.1
 msgpack==1.0.2
+numpy==1.21.2
 packaging==21.0
 proto-plus==1.19.0
 protobuf==3.17.3
@@ -28,6 +34,10 @@ pyswisseph==2.8.0.post1
 pytz==2021.1
 requests==2.26.0
 rsa==4.7.2
+Shapely==1.5.9
 six==1.15.0
+timezonefinder==5.2.0
+tzwhere==3.0.3
 uritemplate==3.0.1
 urllib3==1.26.6
+Werkzeug==2.0.1

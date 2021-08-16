@@ -1,3 +1,5 @@
+import pytz
+import timezonefinder, pytz
 
 class Location:
     def __init__(self, info_dict=None, city=None, geohash=None, latitude=None, longitude=None, state=None, country=None):
@@ -34,3 +36,15 @@ class Location:
             "state": self.state,
             "country": self.country,
         }
+
+# Returns the timezone or None if could not find it given location
+    def timezone(self):
+        try:
+            tf = timezonefinder.TimezoneFinder()
+            tzString = tf.certain_timezone_at(lat=self.latitude, lng=self.longitude)
+            return pytz.timezone(tzString)
+        except:
+            return None
+
+
+

@@ -37,7 +37,7 @@ HTTP Cloud Function.
         
  Deployment:
      gcloud functions deploy func_name \
---runtime python37 --trigger-http --allow-unauthenticated
+--runtime python37 --trigger-http  --security-level=secure-always --allow-unauthenticated
 
 Delete:
 gcloud functions delete func_name

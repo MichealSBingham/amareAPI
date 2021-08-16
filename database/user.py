@@ -88,25 +88,39 @@ class User:
 
     def dict(self):
 
+
         if self.hometown is None:
             htown = {}
+            tz = None
         else:
             htown = self.hometown.dict()
+            tz = self.hometown.timezone() # timezone object or None
 
         if self.residence is None:
             rtown = {}
         else:
             rtown = self.residence.dict()
 
-        return {
+# Converts the datetime object to a string, also changes the timezone
+        if self.birthday is None:
+            bday_string = None
+        else:
+            bday_string = self.birthday.replace(tzinfo=self.birthday.tzinfo).astimezone(
+                tz=tz).strftime("%a %d %b %Y %H:%M:%S %Z")
+
+        user_data_dict = {
             "name": self.name,
             "sex": self.sex,
-           "birthday": self.birthday,
+           "birthday": bday_string,
            "orientation": self.orientation,
            "profile_image_url": self.profile_image_url,
            "hometown": htown,
            "residence": rtown
         }
+
+
+
+        return user_data_dict
 
     def __hash__(self):
         return hash(self.id)
