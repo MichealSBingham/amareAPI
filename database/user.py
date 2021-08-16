@@ -117,10 +117,10 @@ class User:
            "hometown": htown,
            "residence": rtown
         }
+        cleaned_user_data_dic = {k: v for k, v in user_data_dict.items() if v is not None and v is not '' and not (v == {}) and not (v == [])}
 
 
-
-        return user_data_dict
+        return cleaned_user_data_dic
 
     def __hash__(self):
         return hash(self.id)
