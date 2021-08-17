@@ -150,7 +150,7 @@ def isOnCuspOf(planet, set_orb=3):
     if planet.signlon < set_orb:
         # on cusps on planet before
         goBackwards = True
-    if 30 - planet.signlon < 3:
+    if 30 - planet.signlon < set_orb:
         goForwards = True
     if goForwards == False and goBackwards == False:
         return None
