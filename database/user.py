@@ -117,7 +117,7 @@ class User:
            "hometown": htown,
            "residence": rtown
         }
-        cleaned_user_data_dic = {k: v for k, v in user_data_dict.items() if v is not None and v is not '' and not (v == {}) and not (v == [])}
+        cleaned_user_data_dic = {k: v for k, v in user_data_dict.items() if v is not None and v != '' and (v != {}) and  (v != [])}
 
 
         return cleaned_user_data_dic

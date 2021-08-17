@@ -6,19 +6,59 @@ from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib import aspects
 from flatlib import angle
+from flatlib.object import Object as Obj
 
 """
-Example Usage of Planet Object: 
-
+Example Usage of Planet Obj : 
 planet = user.sun # Object from flatlib 
-
 planet.sign // returns 'Cancer' 
 planet.element() // returns 'Fire' ** Element of the planet, not the sign 
 planet.signlon // returns '28.8120704...' Int representation of angle. 
 planet.movement() // returns 'Direct' or 'Retrograde'
-planet.isRetrograde() // returns True or False if planet is in Retorgrade 
+planet.isRetrograde() // returns True or False if planet is in Retrograde 
+"""
+
+#Converts Object (flatlib.object) [planet] to a dictionary. Orb decides on a cusp
+def planetToDict(planet, set_orb=3):
+    sign = planet.sign              #Sign (String) 'Cancer', 'Scorpio', etc
+    angle = planet.signlon          #Angle (Float, [0,30) )   25.343223, 3.2
+    speed = planet.lonspeed         # Speed (Float) degrees per day through the zodiac
+
+    if planet.id != "Asc" or planet.id != "MC":
+        is_retrograde = planet.isRetrograde()       # True or False in retrograde
+    else:
+        is_retrograde = None                #MC and ASC cannot retrograde
+
+    element = getElementFromSign(sign)    # 'Water', etc. , element of sign
+
+    cusp_sign = isOnCuspOf(planet, set_orb)         #will return None if no cusp
+    cusp_element = getElementFromSign(cusp_sign)
+    if cusp_sign is not None:
+        almost = {"cusp_sign": cusp_sign, "cusp_element": cusp_element}
+        is_on_cusp = True
+    else:
+        is_on_cusp = False
+        almost = None
+
+    planet_data = {
+
+        "sign": sign,
+        "element": element,
+        "angle": angle,
+        "speed": speed,
+        "is_retrograde": is_retrograde,
+        "is_on_cusp": is_on_cusp,
+        "almost": almost
+
+    }
+
+    cleaned_planet_data = {k: v for k, v in planet_data.items() if
+                             v is not None and v != '' and (v != {}) and (v != [])}
+
+    return cleaned_planet_data
 
 
+"""
 // Aspects 
 aspects.isAspecting(planet1, planet2, const.ALL_ASPECTS) // returns if planet1 aspects planet2 within its orb 
 aspects.hasAspect(planet1, planet2, const.ALL_ASPECTS) // returns True or False 
@@ -190,9 +230,6 @@ def angleBetween(planet1, planet2):
     a2 = trueAngle(planet2)
     return abs(a1-a2)
 
-# Converts the attributes of the planet object to a dict. Mostly for returning a json for the api
-def planetToDict(planet):
-    pass
 
 
 
@@ -292,22 +329,6 @@ class DetailedAspect:
         s = self.active + self.passive
         s2 = other.active + other.passive
         return s >= s2
-
-""" Wrong/ Doesn't work 
-    #__Probably__ returns the same aspect but from the other's person chart:
-    # Example: Micheal and Kyra's chart --
-    # Suppose 1) syn = micheal.synastry(kyra) // Micheal outer, Kyra is inner.
-    #              a = syn.get('Mars', 'Venus') gets the mars/venus aspect in case (1)
-    # Now suppose,
-    #....... 2) syn2 = kyra.synastry(micheal) // Micheal inner, Kyra outer
-    # .....        a2 = syn.get('Mars', 'Venus') // mars/venus aspect
-    #
-    #
-    # Under the assumption that: syn2.get(x,y)  = syn1.get(x,y)
-    # Returns the same aspect but it's from the other person's chart (inner/outer person on natal chart is swapped)
-    def reversed(self):
-        return self.get(self.second.id, self.first.id)
-"""
 
 
 #// Collection of detailed aspects, between 2 persons or 2 natal charts

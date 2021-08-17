@@ -157,6 +157,7 @@ def natal(request):
                            'description': "BAD REQUEST. Failed to authenticate, no secret key provided."}
                        )
 
+    # If authorized
     if secret == api_keys.SECRET:
 
 
