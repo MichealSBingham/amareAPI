@@ -7,7 +7,7 @@ from secret import api_keys
 
 from json import dumps
 from flask import make_response
-""""
+
 def jsonify(status=200, indent=4, sort_keys=True, **kwargs):
     response = make_response(dumps(dict(**kwargs), indent=indent, sort_keys=sort_keys))
     response.headers['Content-Type'] = 'application/json; charset=utf-8'
@@ -15,7 +15,7 @@ def jsonify(status=200, indent=4, sort_keys=True, **kwargs):
     response.status_code = status
     return response
 
-"""
+
 ## Admin Functions ...
 
 # Get's the natal chart of a user by user id.
@@ -36,7 +36,7 @@ HTTP Cloud Function.
         <https://cloud.google.com/functions/docs/writing/http#http_frameworks>
         
  Deployment:
-     gcloud functions deploy func_name \
+     gcloud functions deploy user \
 --runtime python37 --trigger-http  --security-level=secure-always --allow-unauthenticated
 
 Delete:
@@ -111,6 +111,7 @@ def user(request):
                            user=user.dict())
 
         except Exception as e:
+
 
             return jsonify(success=False,
                            error={
