@@ -28,12 +28,14 @@ class User:
                            sex=None,
                            orientation=None,
                            natal_chart = None,
-                           exists = False):
+                           exists = False,
+                           knownTime=True):
         self.id = id
         if self.id is None or self.id == '':
             self.__data = {}
         else:
             self.__data = self.users_ref.document(f'{id}').get().to_dict()
+
 
 
 
@@ -60,6 +62,12 @@ class User:
         else:
             self.birthday = birthday
 
+        knowsTime = self.__data.get('known_time')
+        if knowsTime is not None:
+            self.knownTime = knowsTime
+        else:
+            self.knownTime = False
+
 
         self.sex = self.__data.get('sex')
         self.orientation = self.__data.get('orientation')
@@ -80,8 +88,12 @@ class User:
         self.neptune = self.natal_chart.get('Neptune')
         self.pluto = self.natal_chart.get('Pluto')
         self.chiron = self.natal_chart.get('Chiron')
-        self.asc = self.natal_chart.get('Asc')
-        self.mc = self.natal_chart.get('MC')
+        if self.knownTime:
+            self.asc = self.natal_chart.get('Asc')
+            self.mc = self.natal_chart.get('MC')
+        else:
+            self.asc = None
+            self.mc = None
         self.north_node = self.natal_chart.get('North Node')
         self.south_node = self.natal_chart.get('South Node')
 
@@ -130,7 +142,12 @@ class User:
 
     #returns all of the planets
     def planets(self):
-        return [self.sun, self.moon, self.mercury, self.venus, self.mars, self.jupiter, self.saturn, self.uranus, self.neptune, self.pluto, self.north_node, self.chiron, self.asc, self.mc]
+        if not self.knownTime:
+            self.asc = None
+            self.mc = None
+
+        ps = [self.sun, self.moon, self.mercury, self.venus, self.mars, self.jupiter, self.saturn, self.uranus, self.neptune, self.pluto, self.north_node, self.chiron, self.asc, self.mc]
+        return [p for p in ps if p ] # removes all 'None'
 
     #returns all aspects between each planet , even if there is 'NO ASPECT' between them
     # returns [DetailedAspect]

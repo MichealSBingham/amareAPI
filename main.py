@@ -46,7 +46,7 @@ Get url to end point
 gcloud functions describe func_name
 
 
-Returns the user data  
+Returns the user data. No natal chart or anything though.  
 
 - Request Parameters: 
      - SECRET (String) : secret id used to authenticate for the admin api 
@@ -59,8 +59,6 @@ Returns the user data
                 - description (String)      :       Description of the error 
 
 '''
-
-
 
 def user(request):
 
@@ -138,10 +136,24 @@ Provide ID OR (birthday and location)
  - Parameters: 
            - id : String (user id of the user) [optional if you provide bday and location] 
            - secret: String ( secret key for auth) 
-           - 
+           - birthday: String 'YYYY/MM/DD'  ('1999/07/21')  [optional if you have id] 
+           - birth_time: String '19:52' MUST BE IN UTC TIME AT THE MOMENT. [optional]
+           - latitude: Int [optional if you provide id or location]
+           - longitude: int ^ 
+           - location: String (Natural language location to search... i.e. 'One world trade center', 'NYC', 'Atlanta, GA') etc .
 """
 def natal(request):
+    from astrology.NatalChart import planetToDict
+
+    #Pulling from database
     providedId = False
+
+    #Creating a chart from scratch with bday and time
+    providedBirthday = False
+    providedTime = False
+    providedCoordinates = False
+    providedLocationToSearch = False
+
     request_json = request.get_json(silent=True)
     request_args = request.args
 
@@ -157,7 +169,66 @@ def natal(request):
                            'description': "BAD REQUEST. Failed to authenticate, no secret key provided."}
                        )
 
-    # If authorized
+    if request_json and 'birthday' in request_json:         # (String) "YYYY/MM/DD" Ex; "1999/07/21"
+        birthday = request_json['birthday']
+        providedBirthday = True
+    elif request_args and 'birthday' in request_args:
+        birthday = request_args['birthday']
+        providedBirthday = True
+    else:
+        providedBirthday = False
+
+    if request_json and 'birth_time' in request_json:
+        time = request_json['birth_time']
+        providedTime = True
+    elif request_args and 'birth_time' in request_args:
+        time = request_args['birth_time']
+        providedTime = True
+    else:
+        time = "12:00"
+        providedBirthday = False
+
+    if request_json and 'latitude' in request_json:  # (String) "YYYY/MM/DD" Ex; "1999/07/21"
+        latitude = request_json['latitude']
+        providedLatitude = True
+    elif request_args and 'latitude' in request_args:
+        latitude = request_args['latitude']
+        providedLatitude = True
+    else:
+        providedLatitude = False
+
+    if request_json and 'longitude' in request_json:  # (String) "YYYY/MM/DD" Ex; "1999/07/21"
+        longitude = request_json['longitude']
+        providedLongitude = True
+    elif request_args and 'longitude' in request_args:
+        longitude = request_args['longitude']
+        providedLongitude = True
+    else:
+        providedLongitude = False
+
+    if providedLatitude and providedLongitude:
+        providedCoordinates = True
+    else:
+        providedCoordinates = False
+
+
+
+    if request_json and 'location' in request_json:  # (String) "YYYY/MM/DD" Ex; "1999/07/21"
+        location = request_json['location']
+        providedLocationToSearch = True
+    elif request_args and 'location' in request_args:
+        location = request_args['location']
+        providedLocationToSearch = True
+    else:
+        providedLocationToSearch = False
+
+
+
+
+
+
+
+            # If authorized
     if secret == api_keys.SECRET:
 
 
@@ -167,28 +238,123 @@ def natal(request):
         elif request_args and 'id' in request_args:
             id = request_args['id']
             providedId = True
+
         else:
+            pass
+            """"
             return jsonify(success=False,
                            error={
                                'code': 400,
                                'description': "BAD REQUEST. Did not provide user id."}
                            )
+"""
 
         try:
 
             if providedId:
-                user = User(id=id)
 
 
-            else:    #Passed in birthday and location instead
-                pass
+                try:  ## Should just pull from database.. this creates it from scratch
+                    user = User(id=id)
+                    planets = user.planets()
+                    planetsDic = {}
+                    for planet in planets:
+                        planetsDic[planet.id] = planetToDict(planet)
+                    return jsonify(success=True,
+                                   planets=planetsDic,
+                                   houses="UNDER CONSTRUCTION",
+                                   aspects="UNDER CONSTRUCTION"
+                            )
+
+
+                except Exception as e:  #could not get the planets
+                    return jsonify(success=False,
+                           error={
+                               'code': 500,
+                               'description': "USER DATA INCOMPLETE. Could not get chart data from user with id " + id + ".",
+                               'why': str(e),
+                               'trace': traceback.format_exc()}
+                           )
+
+
+            else:
+                from flatlib.datetime import Datetime
+
+                if providedBirthday and (providedCoordinates or providedLocationToSearch):
+                    from database.Location import Location
+
+                    if providedCoordinates:
+                        try:
+                            date = Datetime(birthday, time)
+                            user = User(birthday=date, hometown=Location(latitude=latitude, longitude=longitude), knownTime=providedTime)
+
+                            planets = user.planets()
+                            planetsDic = {}
+                            for planet in planets:
+                                planetsDic[planet.id] = planetToDict(planet)
+                            return jsonify(success=True,
+                                           planets=planetsDic,
+                                           houses="UNDER CONSTRUCTION",
+                                           aspects="UNDER CONSTRUCTION"
+                                           )
+
+
+                        except Exception as e:
+                            return jsonify(success=False,
+                                    error={
+                                        'code': 412,
+                                        'description': "INVALID PARAMETERS. Not able to draw natal chart with given date and location.",
+                                        'why': str(e),
+                                        'trace': traceback.format_exc()}
+                                    )
+
+                    if providedLocationToSearch:
+
+
+                        city = Location(search=location)
+                        coordinates = city.coordinates()
+
+                        if coordinates is None:  #// COuld not find the location the user entered
+                            return jsonify(success=False,
+                                           error={
+                                               'code': 404,
+                                               'description': "LOCATION NOT FOUND. Please enter a new search for the location or use coordinates."}
+                                           )
+                        else:
+
+                            try:
+                                date = Datetime(birthday, time)
+                                user = User(birthday=date, hometown=city, knownTime=providedTime)
+
+                                planets = user.planets()
+                                planetsDic = {}
+                                for planet in planets:
+                                    planetsDic[planet.id] = planetToDict(planet)
+                                return jsonify(success=True,
+                                               planets=planetsDic,
+                                               houses="UNDER CONSTRUCTION",
+                                               aspects="UNDER CONSTRUCTION"
+                                               )
 
 
 
+                            except Exception as e:  #// Could not draw natal chart due to inputted date and location
+                                 return jsonify(success=False,
+                                            error={
+                                                    'code': 412,
+                                                    'description': "INVALID PARAMETERS. Not able to draw natal chart with given date and location.",
+                                                     'why': str(e),
+                                                      'trace': traceback.format_exc()}
+                           )
 
 
-            return jsonify(success=True,
-                           user=user.dict())
+                else:     #Did not include proper parameters
+                    return jsonify(success=False,
+                                   error={
+                                       'code': 412,
+                                       'description': "MISSING PARAMETERS. You must either specify a user id or include a birthday and birth city or coordinates to the city."}
+                                   )
+
 
         except Exception as e:
 
