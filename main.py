@@ -186,7 +186,7 @@ def natal(request):
         providedTime = True
     else:
         time = "12:00"
-        providedBirthday = False
+        providedTime = False
 
     if request_json and 'latitude' in request_json:  # (String) "YYYY/MM/DD" Ex; "1999/07/21"
         latitude = request_json['latitude']
