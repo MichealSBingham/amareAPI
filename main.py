@@ -141,6 +141,7 @@ Provide ID OR (birthday and location)
            - latitude: Int [optional if you provide id or location]
            - longitude: int ^ 
            - location: String (Natural language location to search... i.e. 'One world trade center', 'NYC', 'Atlanta, GA') etc .
+           - natal_orb: Int Orb to use for natal charts for planetary signs to determine cusps (NOT for aspect orbs) 
 """
 def natal(request):
     from astrology.NatalChart import planetToDict
@@ -223,6 +224,12 @@ def natal(request):
         providedLocationToSearch = False
 
 
+    if request_json and 'natal_orb' in request_json:  # (String) "YYYY/MM/DD" Ex; "1999/07/21"
+        natal_orb = int(request_json['natal_orb'])
+    elif request_args and 'natal_orb' in request_args:
+        natal_orb = int(request_args['natal_orb'])
+    else:
+        natal_orb = 3 # default orb
 
 
 
@@ -291,7 +298,7 @@ def natal(request):
                             planets = user.planets()
                             planetsDic = {}
                             for planet in planets:
-                                planetsDic[planet.id] = planetToDict(planet)
+                                planetsDic[planet.id] = planetToDict(planet, set_orb=natal_orb)
                             return jsonify(success=True,
                                            planets=planetsDic,
                                            houses="UNDER CONSTRUCTION",
@@ -329,7 +336,7 @@ def natal(request):
                                 planets = user.planets()
                                 planetsDic = {}
                                 for planet in planets:
-                                    planetsDic[planet.id] = planetToDict(planet)
+                                    planetsDic[planet.id] = planetToDict(planet, set_orb=natal_orb)
                                 return jsonify(success=True,
                                                planets=planetsDic,
                                                houses="UNDER CONSTRUCTION",
