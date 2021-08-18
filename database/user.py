@@ -66,7 +66,7 @@ class User:
         if knowsTime is not None:
             self.knownTime = knowsTime
         else:
-            self.knownTime = False
+            self.knownTime = True
 
 
         self.sex = self.__data.get('sex')

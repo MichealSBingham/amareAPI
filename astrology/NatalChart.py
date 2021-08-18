@@ -22,12 +22,14 @@ planet.isRetrograde() // returns True or False if planet is in Retrograde
 def planetToDict(planet, set_orb=3):
     sign = planet.sign              #Sign (String) 'Cancer', 'Scorpio', etc
     angle = planet.signlon          #Angle (Float, [0,30) )   25.343223, 3.2
-    speed = planet.lonspeed         # Speed (Float) degrees per day through the zodiac
+             # Speed (Float) degrees per day through the zodiac
 
-    if planet.id != "Asc" or planet.id != "MC":
+    if planet.id != "Asc" and planet.id != "MC":
         is_retrograde = planet.isRetrograde()       # True or False in retrograde
+        speed = planet.lonspeed
     else:
         is_retrograde = None                #MC and ASC cannot retrograde
+        speed = None
 
     element = getElementFromSign(sign)    # 'Water', etc. , element of sign
 
