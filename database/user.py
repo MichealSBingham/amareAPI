@@ -29,12 +29,19 @@ class User:
                            orientation=None,
                            natal_chart = None,
                            exists = False,
-                           knownTime=True):
+                           known_time=False):
         self.id = id
         if self.id is None or self.id == '':
             self.__data = {}
+            self.known_time = known_time
         else:
             self.__data = self.users_ref.document(f'{id}').get().to_dict()
+            knowsTime = self.__data.get('known_time')
+            if knowsTime is not None:
+                self.known_time = knowsTime
+            else:
+                self.known_time = False
+
 
 
 
@@ -62,11 +69,7 @@ class User:
         else:
             self.birthday = birthday
 
-        knowsTime = self.__data.get('known_time')
-        if knowsTime is not None:
-            self.knownTime = knowsTime
-        else:
-            self.knownTime = True
+
 
 
         self.sex = self.__data.get('sex')
@@ -88,7 +91,7 @@ class User:
         self.neptune = self.natal_chart.get('Neptune')
         self.pluto = self.natal_chart.get('Pluto')
         self.chiron = self.natal_chart.get('Chiron')
-        if self.knownTime:
+        if self.known_time:
             self.asc = self.natal_chart.get('Asc')
             self.mc = self.natal_chart.get('MC')
         else:
@@ -142,7 +145,7 @@ class User:
 
     #returns all of the planets
     def planets(self):
-        if not self.knownTime:
+        if not self.known_time:
             self.asc = None
             self.mc = None
 

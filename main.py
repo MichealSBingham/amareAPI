@@ -286,7 +286,7 @@ def natal(request):
                     if providedCoordinates:
                         try:
                             date = Datetime(birthday, time)
-                            user = User(birthday=date, hometown=Location(latitude=latitude, longitude=longitude), knownTime=providedTime)
+                            user = User(birthday=date, hometown=Location(latitude=latitude, longitude=longitude), known_time=providedTime)
 
                             planets = user.planets()
                             planetsDic = {}
@@ -324,7 +324,7 @@ def natal(request):
 
                             try:
                                 date = Datetime(birthday, time)
-                                user = User(birthday=date, hometown=city, knownTime=providedTime)
+                                user = User(birthday=date, hometown=city, known_time=providedTime)
 
                                 planets = user.planets()
                                 planetsDic = {}
