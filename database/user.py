@@ -146,8 +146,11 @@ class User:
         else:
             if self.__was_read_from_database:
                 # we should have a timestamp object (datetime google apis)
-                bday_string = self.birthday.replace(tzinfo=self.birthday.tzinfo).astimezone(
-                    tz=tz).strftime("%a %d %b %Y %H:%M:%S %Z")
+                if self.known_time:
+                    bday_string = self.birthday.replace(tzinfo=self.birthday.tzinfo).astimezone(
+                        tz=tz).strftime("%a %d %b %Y %H:%M:%S %Z")
+                else:
+                    bday_string = self.birthday.strftime("%a %d %b %Y")
             else:
                 bday_string = str(self.birthday)
 
@@ -253,9 +256,13 @@ class User:
 
         if self.__was_read_from_database:
             # we should have a timestamp object (datetime google apis)
-            tz = self.hometown.timezone
-            bday_string = self.birthday.replace(tzinfo=self.birthday.tzinfo).astimezone(
+            tz = self.hometown.timezone()
+            if self.known_time:
+                bday_string = self.birthday.replace(tzinfo=self.birthday.tzinfo).astimezone(
                 tz=tz).strftime("%a %d %b %Y %H:%M:%S %Z")
+            else:
+                bday_string = self.birthday.strftime("%a %d %b %Y")
+
         else:
             bday_string = str(self.birthday)
 
