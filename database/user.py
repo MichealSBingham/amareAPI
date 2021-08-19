@@ -188,6 +188,9 @@ class User:
         else:
             return [self.ic, self.mc, self.desc, self.asc]
 
+#returns everything we use for synastry to get aspects, gets the planets and angles currently
+    def __all_for_synastry(self):
+        return self.planets() + self.angles()
 
     #returns all aspects between each planet , even if there is 'NO ASPECT' between them
     # returns [DetailedAspect]
@@ -195,7 +198,7 @@ class User:
         aspects = []
         if user2 is None:
             #aspects = []
-            planets = self.planets()
+            planets = self.__all_for_synastry()
             for pair in itertools.combinations(planets, 2):
                 try:
                     aspect = NatalChart.DetailedAspect(pair[0], pair[1], aspectsToGet=aspectsToGet)
@@ -204,8 +207,8 @@ class User:
                     print("Failed to get aspect between " + pair[0].id + " and " + pair[1].id)
                     pass
         if not (user2 is None):
-            for user1planet in self.planets():
-                for user2planet in user2.planets():
+            for user1planet in self.__all_for_synastry():
+                for user2planet in user2.__all_for_synastry():
                     try:
                         aspect = NatalChart.DetailedAspect(user1planet, user2planet, aspectsToGet=aspectsToGet)
 
