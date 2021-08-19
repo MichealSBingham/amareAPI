@@ -261,17 +261,21 @@ def natal(request):
             if providedId:
 
 
-                try:  ## Should just pull from database.. this creates it from scratch
+                try:
                     user = User(id=id)
-                    planets = user.planets()
-                    planetsDic = {}
-                    for planet in planets:
-                        planetsDic[planet.id] = planetToDict(planet)
-                    return jsonify(success=True,
-                                   planets=planetsDic,
-                                   houses="UNDER CONSTRUCTION",
-                                   aspects="UNDER CONSTRUCTION"
-                            )
+
+                    if not user.exists:   #user does not exist
+                        return jsonify(success=False,
+                                       error={
+                                           'code': 404,
+                                           'description': "USER NOT FOUND. User with id " + id + " does not exist."}
+                                       )
+
+                    chart = user.natal(set_orb=natal_orb)
+
+                    #add success to response
+                    chart["success"] = True
+                    return jsonify(**chart)
 
 
                 except Exception as e:  #could not get the planets
@@ -297,7 +301,7 @@ def natal(request):
 
                             natal_response = user.natal(set_orb=natal_orb)
                             natal_response["success"] = True
-                            return jsonify(natal_response)
+                            return jsonify(**natal_response)
 
 
                         except Exception as e:
@@ -312,10 +316,10 @@ def natal(request):
                     if providedLocationToSearch:
 
 
-                        city = Location(search=location)
-                        coordinates = city.coordinates()
+                        location = Location(search=location)
 
-                        if coordinates is None:  #// COuld not find the location the user entered
+
+                        if location.latitude is None or location.longitude is None:  #// COuld not find the location the user entered
                             return jsonify(success=False,
                                            error={
                                                'code': 404,
@@ -325,12 +329,12 @@ def natal(request):
 
                             try:
                                 date = Datetime(birthday, time)
-                                user = User(birthday=date, hometown=city, known_time=providedTime)
+                                user = User(birthday=date, hometown=location, known_time=providedTime)
                                 natal_response = user.natal(set_orb=natal_orb)
 
 
                                 natal_response["success"] = True
-                                return jsonify(natal_response)
+                                return jsonify(**natal_response)
 
 
 

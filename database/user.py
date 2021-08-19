@@ -49,7 +49,7 @@ class User:
         else:
             self.exists = True
 
-        if userWasReadFromDatabase:
+        if userWasReadFromDatabase and self.exists:
 
             self.name = self.__data.get('name')
             self.profile_image_url = self.__data.get('profile_image_url')
