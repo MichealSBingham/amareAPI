@@ -63,7 +63,7 @@ def angleToDic(angle, set_orb=3):
 
     sign = angle.sign
     element = getElementFromSign(sign)
-    angle = angle.signlon
+    measured_angle = angle.signlon
     cusp_sign = isOnCuspOf(angle, set_orb)
     cusp_element = getElementFromSign(cusp_sign)
 
@@ -80,7 +80,7 @@ def angleToDic(angle, set_orb=3):
 
         "sign": sign,
         "element": element,
-        "angle": angle,
+        "angle": measured_angle,
         "is_on_cusp": is_on_cusp,
         "almost": almost
 
@@ -109,19 +109,20 @@ aspect.type // 120 , returns Int of degrees the aspect is ...>
 
 # Utility Functions ...
 
-#date: date timestamp from database, if you pass a date here manually past a list: [date, time] ex: ['2021/07/21', '19:52']
+#date: date Timestamp from database OR flatlib.datetime Datetime object
 #birth_location : Location  (must have lattidude and longitude)
 def get_natal_chart(date, birth_location):
 
+    lat, lon = birth_location.coordinates()
     if ( date is None ) or (birth_location is None):
         return None
-    if type(date) is Datetime:  #it's already a datetime object no need to convert it to otherwise
-
+    if type(date) is Datetime:  #it's already a flatlib.datetime Datetime object no need to convert it to otherwise
         date_ = date
-    else:
 
+    else: # It's a timestamp from the database
         date_ = __proper_date__(date)
-    return Chart(date_, GeoPos(birth_location.latitude, birth_location.longitude), IDs=const.LIST_OBJECTS)
+
+    return Chart(date_, GeoPos(lat, lon), IDs=const.LIST_OBJECTS)
 
 # converts a datetime object to the proper 'Datetime' object for the natal chart api
 def __proper_date__(date):

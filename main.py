@@ -295,15 +295,9 @@ def natal(request):
                             date = Datetime(birthday, time)
                             user = User(birthday=date, hometown=Location(latitude=latitude, longitude=longitude), known_time=providedTime)
 
-                            planets = user.planets()
-                            planetsDic = {}
-                            for planet in planets:
-                                planetsDic[planet.id] = planetToDict(planet, set_orb=natal_orb)
-                            return jsonify(success=True,
-                                           planets=planetsDic,
-                                           houses="UNDER CONSTRUCTION",
-                                           aspects="UNDER CONSTRUCTION"
-                                           )
+                            natal_response = user.natal(set_orb=natal_orb)
+                            natal_response["success"] = True
+                            return jsonify(natal_response)
 
 
                         except Exception as e:
@@ -332,16 +326,11 @@ def natal(request):
                             try:
                                 date = Datetime(birthday, time)
                                 user = User(birthday=date, hometown=city, known_time=providedTime)
+                                natal_response = user.natal(set_orb=natal_orb)
 
-                                planets = user.planets()
-                                planetsDic = {}
-                                for planet in planets:
-                                    planetsDic[planet.id] = planetToDict(planet, set_orb=natal_orb)
-                                return jsonify(success=True,
-                                               planets=planetsDic,
-                                               houses="UNDER CONSTRUCTION",
-                                               aspects="UNDER CONSTRUCTION"
-                                               )
+
+                                natal_response["success"] = True
+                                return jsonify(natal_response)
 
 
 

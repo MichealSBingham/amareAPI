@@ -22,63 +22,78 @@ class User:
     def __init__(self, id=None, data=None,
                            hometown=None,
                            residence=None,
-                           birthday=None,
+                           birthday=None,  #Only a flatlib.datetime Datetime object
                            name=None,
                           profile_image_url=None,
                            sex=None,
                            orientation=None,
                            natal_chart = None,
                            exists = False,
-                           known_time=False):
+                           known_time=False,
+                           ):
+
         self.id = id
+
         if self.id is None or self.id == '':
-            self.__data = {}
-            self.known_time = known_time
+            self.__data = {} #if .__data is {} or None, this object wasn't read from the database
+            userWasReadFromDatabase = False
+            self.__was_read_from_database = userWasReadFromDatabase
         else:
             self.__data = self.users_ref.document(f'{id}').get().to_dict()
-            knowsTime = self.__data.get('known_time')
-            if knowsTime is not None:
-                self.known_time = knowsTime
-            else:
-                self.known_time = False
+            userWasReadFromDatabase = True
+            self.__was_read_from_database = userWasReadFromDatabase
 
 
-
-
-
-        if (self.__data is None) or data == {}:
-            self.__data = {}
+        if self.__data is None or self.__data == {}:
+            self.exists = False
         else:
             self.exists = True
 
+        if userWasReadFromDatabase:
 
-        self.name = self.__data.get('name')
-        self.profile_image_url = self.__data.get('profile_image_url')
+            self.name = self.__data.get('name')
+            self.profile_image_url = self.__data.get('profile_image_url')
+            self.sex = self.__data.get('sex')
+            self.orientation = self.__data.get('orientation')
+            self.known_time = self.__data.get('known_time', False)
+
+            location = Location(info_dict=self.__data.get('hometown', {}))
+            if location.info_dict == {} or location.info_dict is None:
+                self.hometown = {}
+            else:
+                self.hometown = Location(info_dict=self.__data.get('hometown', {}))
+
+            residence = Location(info_dict=self.__data.get('residence'))
+            if residence.info_dict == {} or residence.info_dict is None:
+                self.residence = {}
+            else:
+                self.residence = Location(info_dict=self.__data.get('residence', {}))
+
+            #Retreiving timestampe from database
+            bdayObjectFromDatabase = self.__data.get('birthday')
+            if bdayObjectFromDatabase is not None:
+                self.birthday = bdayObjectFromDatabase.get('timestamp') #returns TIMESTAMP(datetime) object
+            else:
+                self.birthday = None  #No birthday saved.
+
+        else: #User object was instantiated manually
+            self.name = name
+            self.hometown = hometown #Should be a Location object
+            self.residence = residence # ^
+            self.birthday = birthday # should be a flatlib.datetime Datetime object
+            self.profile_image_url = profile_image_url
+            self.sex = sex
+            self.orientation = orientation
+            self.known_time = known_time
 
 
-        self.hometown = Location(info_dict=self.__data.get('hometown', {}))
 
-        if self.hometown.info_dict is None or self.hometown.info_dict == {}:
-            self.hometown = hometown   # set the value given to it
-        self.residence = Location(info_dict=self.__data.get('residence'))
-
-        #let's get the datetime object
-        bday = self.__data.get('birthday')
-        if bday is not None:
-            self.birthday = bday.get('timestamp')
-        else:
-            self.birthday = birthday
-
-
-
-
-        self.sex = self.__data.get('sex')
-        self.orientation = self.__data.get('orientation')
-
+        # Gets the natal chart based on Date
+        #self.birthday should be Timestamp or flatlib.datetime.Datetime
 
         self.natal_chart = NatalChart.get_natal_chart(self.birthday, self.hometown)
         if self.natal_chart is None:
-            self.natal_chart = {}
+            self.natal_chart = {}  #could not create natal chart from info
 
         self.sun = self.natal_chart.get('Sun')
         self.moon = self.natal_chart.get('Moon')
@@ -91,7 +106,7 @@ class User:
         self.neptune = self.natal_chart.get('Neptune')
         self.pluto = self.natal_chart.get('Pluto')
         self.chiron = self.natal_chart.get('Chiron')
-        if self.known_time:
+        if (self.known_time == True):
             self.asc = self.natal_chart.get('Asc')
             self.mc = self.natal_chart.get('MC')
             self.ic = self.natal_chart.get('IC')
@@ -99,7 +114,7 @@ class User:
         else:
             self.asc = None
             self.mc = None
-            self.ic - None
+            self.ic = None
             self.desc = None
         self.north_node = self.natal_chart.get('North Node')
         self.south_node = self.natal_chart.get('South Node')
@@ -129,13 +144,20 @@ class User:
         if self.birthday is None:
             bday_string = None
         else:
-            bday_string = self.birthday.replace(tzinfo=self.birthday.tzinfo).astimezone(
-                tz=tz).strftime("%a %d %b %Y %H:%M:%S %Z")
+            if self.__was_read_from_database:
+                # we should have a timestamp object (datetime google apis)
+                bday_string = self.birthday.replace(tzinfo=self.birthday.tzinfo).astimezone(
+                    tz=tz).strftime("%a %d %b %Y %H:%M:%S %Z")
+            else:
+                bday_string = str(self.birthday)
+
+
 
         user_data_dict = {
             "name": self.name,
             "sex": self.sex,
            "birthday": bday_string,
+            "known_time": self.known_time,
            "orientation": self.orientation,
            "profile_image_url": self.profile_image_url,
            "hometown": htown,
@@ -154,11 +176,7 @@ class User:
 
     #returns all of the planets used for synastry.. will include MC and ASC even though they are not planets
     def planets(self):
-        if not self.known_time:
-            self.asc = None
-            self.mc = None
-
-        ps = [self.sun, self.moon, self.mercury, self.venus, self.mars, self.jupiter, self.saturn, self.uranus, self.neptune, self.pluto, self.north_node, self.south_node, self.chiron, self.asc, self.mc]
+        ps = [self.sun, self.moon, self.mercury, self.venus, self.mars, self.jupiter, self.saturn, self.uranus, self.neptune, self.pluto, self.north_node, self.south_node, self.chiron]
         return [p for p in ps if p ] # removes all 'None'
 
     def angles(self):
@@ -226,20 +244,52 @@ class User:
         return Aspects(syn)
 
     # Return the natal chart as a dictionary
-    def natal(self):
-        from astrology.NatalChart import planetToDict
+    def natal(self, set_orb=3):
+        from astrology.NatalChart import planetToDict, angleToDic
 
-        planets = self.planets()  #includes MC, ASC, but not IC
+        name = self.name
+        sex = self.sex
+        birth_place = self.hometown.dict()
+
+        if self.__was_read_from_database:
+            # we should have a timestamp object (datetime google apis)
+            tz = self.hometown.timezone
+            bday_string = self.birthday.replace(tzinfo=self.birthday.tzinfo).astimezone(
+                tz=tz).strftime("%a %d %b %Y %H:%M:%S %Z")
+        else:
+            bday_string = str(self.birthday)
+
+
+        natal_dic = {}
+
+        planets = self.planets()
         planetsDic = {}
         for planet in planets:
-            planetsDic[planet.id] = planetToDict(planet)
+            planetsDic[planet.id] = planetToDict(planet, set_orb=set_orb)
+
+
+        angles = self.angles()
+        anglesDic = {}
+        if angles != None:
+            for angle in angles:
+                anglesDic[angle.id] = angleToDic(angle, set_orb=set_orb)
 
 
 
-        chart = {
 
-        }
-        pass
+        natal_dic["houses"] = "UNDER CONSTRUCTION"
+        natal_dic["aspects"] = "UNDER CONSTRUCTION"
+        natal_dic["name"] = name
+        natal_dic["birthday"] = bday_string
+        natal_dic["birth_place"] = birth_place
+        natal_dic["planets"] = planetsDic
+        natal_dic["angles"] = anglesDic
+
+
+        cleaned_natal_data = {k: v for k, v in natal_dic.items() if
+                              v is not None and v != '' and (v != {}) and (v != [])}
+
+        return cleaned_natal_data
 
 
 

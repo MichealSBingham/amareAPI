@@ -30,18 +30,23 @@ class Location:
         self.country = info_dict.get("country")
         self.searched_address_result = None
 
+        if self.search != None or self.search != "":
+            lat, lon = self.coordinates()
+
 
     def dict(self):
-        if self.info_dict is None or self.info_dict == {}:
+        if self.latitude is None or self.longitude is None:
             return {}
 
+        lat, lon = self.coordinates() # this will so finish generating location data if only lat/lon providded or a location search
         return {
             "city": self.city,
             "geohash": self.geohash,
-            "latitude": self.latitude,
-            "longitude": self.longitude,
+            "latitude": lat,
+            "longitude": lon,
             "state": self.state,
             "country": self.country,
+            "address": self.searched_address_result
         }
 
 # Returns the timezone or None if could not find it given location
@@ -66,12 +71,12 @@ class Location:
                 self.longitude = location.longitude
                 return (location.latitude, location.longitude)
             except:
-                return None
+                return (None, None)
 
 
 
 
-        pass
+
 
 
 
