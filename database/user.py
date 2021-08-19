@@ -94,11 +94,20 @@ class User:
         if self.known_time:
             self.asc = self.natal_chart.get('Asc')
             self.mc = self.natal_chart.get('MC')
+            self.ic = self.natal_chart.get('IC')
+            self.desc = self.natal_chart.get('Desc')
         else:
             self.asc = None
             self.mc = None
+            self.ic - None
+            self.desc = None
         self.north_node = self.natal_chart.get('North Node')
         self.south_node = self.natal_chart.get('South Node')
+
+        self.syzygy = self.natal_chart.get('Syzygy')
+        self.pars_fortuna = self.natal_chart.get('Pars Fortuna')
+
+
 
 
     def dict(self):
@@ -143,14 +152,21 @@ class User:
     def __eq__(self, other):
         return (self.id == other.id)
 
-    #returns all of the planets
+    #returns all of the planets used for synastry.. will include MC and ASC even though they are not planets
     def planets(self):
         if not self.known_time:
             self.asc = None
             self.mc = None
 
-        ps = [self.sun, self.moon, self.mercury, self.venus, self.mars, self.jupiter, self.saturn, self.uranus, self.neptune, self.pluto, self.north_node, self.chiron, self.asc, self.mc]
+        ps = [self.sun, self.moon, self.mercury, self.venus, self.mars, self.jupiter, self.saturn, self.uranus, self.neptune, self.pluto, self.north_node, self.south_node, self.chiron, self.asc, self.mc]
         return [p for p in ps if p ] # removes all 'None'
+
+    def angles(self):
+        if not self.known_time:
+            return [] #cannot compute angles without known birth_time
+        else:
+            return [self.ic, self.mc, self.desc, self.asc]
+
 
     #returns all aspects between each planet , even if there is 'NO ASPECT' between them
     # returns [DetailedAspect]
@@ -209,7 +225,21 @@ class User:
                     print("Failed to get aspect between " + p1.id + " and" + p2.id)
         return Aspects(syn)
 
+    # Return the natal chart as a dictionary
+    def natal(self):
+        from astrology.NatalChart import planetToDict
 
+        planets = self.planets()  #includes MC, ASC, but not IC
+        planetsDic = {}
+        for planet in planets:
+            planetsDic[planet.id] = planetToDict(planet)
+
+
+
+        chart = {
+
+        }
+        pass
 
 
 

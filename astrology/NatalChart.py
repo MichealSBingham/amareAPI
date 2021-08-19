@@ -59,6 +59,37 @@ def planetToDict(planet, set_orb=3):
 
     return cleaned_planet_data
 
+def angleToDic(angle, set_orb=3):
+
+    sign = angle.sign
+    element = getElementFromSign(sign)
+    angle = angle.signlon
+    cusp_sign = isOnCuspOf(angle, set_orb)
+    cusp_element = getElementFromSign(cusp_sign)
+
+    if cusp_sign is not None:
+        almost = {"cusp_sign": cusp_sign, "cusp_element": cusp_element}
+        is_on_cusp = True
+    else:
+        is_on_cusp = False
+        almost = None
+
+
+
+    angle_data  = {
+
+        "sign": sign,
+        "element": element,
+        "angle": angle,
+        "is_on_cusp": is_on_cusp,
+        "almost": almost
+
+    }
+
+    cleaned_angle_data = {k: v for k, v in angle_data.items() if
+                           v is not None and v != '' and (v != {}) and (v != [])}
+    return cleaned_angle_data
+
 
 """
 // Aspects 
@@ -343,8 +374,6 @@ class Aspects:
         self.list = aspects
         self.users = self.__getUsersThatBelongToThisChart()
 
-
-
     def __str__(self):
         s = ""
         for aspect in self.all:
@@ -355,12 +384,32 @@ class Aspects:
     def __len__(self):
         return len(self.list)
 
+    def __iter__(self):
+        return (x for x in self.list)
+
     ## Gets a particular aspect, example: Mars/Venus aspect --> get('Mars', 'Venus')
     def get(self, planet1, planet2):
         for aspect in self.list:
             if aspect.first.id == planet1:
                 if aspect.second.id == planet2:
                     return aspect
+
+    def Get(self, planet1, planet2):
+
+        a1 = None
+        a2 = None
+
+        for aspect in self.list:
+            if aspect.first.id == planet1:
+                if aspect.second.id == planet2:
+                    a1 = aspect
+
+        for aspect in self.list:
+            if aspect.second.id == planet1:
+                if aspect.first.id == planet2:
+                    a2 = aspect
+
+        return (a1, a2)
 
 
 
