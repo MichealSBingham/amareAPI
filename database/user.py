@@ -249,7 +249,7 @@ class User:
                     print("Failed to get aspect between " + p1.id + " and" + p2.id)
         return Aspects(syn)
 
-    # Return the natal chart as a dictionary
+    # Return the natal chart as a dictionary, will create the natal chart and set it in database
     def natal(self, set_orb=3):
         from astrology.NatalChart import planetToDict, angleToDic
 
@@ -300,6 +300,10 @@ class User:
                               v is not None and v != '' and (v != {}) and (v != [])}
 
         return cleaned_natal_data
+
+#set's the natal chart in the database
+    def set_natal_chart(self, set_orb=3):
+        self.users_ref.document(self.id).set({"natal_chart": self.natal(set_orb=set_orb)}, merge=True)
 
 
 
