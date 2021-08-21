@@ -440,64 +440,44 @@ def create_natal_chart(data, context):
         except Exception as error:
             print(f"This data does not exist in the database yet {error}")
 
+def listen_for_new_user(data, context):
+    """"
+  # Run this to deploy. Reads
+      gcloud functions deploy listen_for_new_user \
+    --runtime python37 \
+    --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+    --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
+      """
+
+    from analytics.app_data import new_user
+
+    new_user()
+
+
+def listen_for_deleted_user(data, context):
+    """"
+  # Run this to deploy. Reads
+      gcloud functions deploy listen_for_deleted_user \
+    --runtime python37 \
+    --trigger-event "providers/cloud.firestore/eventTypes/document.delete" \
+    --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
+      """
+
+    from analytics.app_data import less_user
+
+    less_user()
 
 
 
 
-"""
-
-
-    oldjson = data["oldValue"]
-    newjson = data["value"]
-
-    oldfields = oldjson["fields"]
-    newfields = newjson["fields"]
-
-
-    print(f"The old data fields are  ... {oldjson} \n The new data fields are  {newjson}")
-
-    try:
-        print("Trying to get old value")
-        old_latitude = oldjson.get("fields").get("hometown").get("mapValue").get("fields").get("latitude").get("doubleValue")
-        old_longitude = oldjson.get("fields").get("hometown").get("mapValue").get("fields").get("longitude").get("doubleValue")
-        old_birthday = oldjson.get("fields").get("birthday").get("mapValue").get("fields").get("timestamp").get("timestampValue")
-        old_knows_time = oldjson.get("fields").get("known_time").get("booleanValue")
-    except Exception as e:
-        # There was no old birthday and location data set
-        print(f"*** failed trying to get old data to get with error {e}  ")
-        old_latitude = None
-        old_longitude = None
-        old_birthday = None
-        old_knows_time = None
 
 
 
-    try:
-        print("Trying to get new values")
-        #These are all of the new values set
-        latitude = newjson.get("fields").get("hometown").get("mapValue").get("fields").get("latitude").get("doubleValue")
-        longitude = newjson.get("fields").get("hometown").get("mapValue").get("fields").get("longitude").get("doubleValue")
-        birthday = newjson.get("fields").get("birthday").get("mapValue").get("fields").get("timestamp").get("timestampValue")
-        knows_time = newjson.get("fields").get("known_time").get("booleanValue")
-    except Exception as e:
-        print(f"***failed trying tog get new data to get with error {e} ")
-        latitude = None
-        longitude = None
-        birthday = None
-        knows_time = None
 
 
 
-    userChangedInfoThatWouldAffectNatalChart =  (old_latitude != latitude or old_longitude != longitude or old_birthday != birthday or old_knows_time != knows_time )
 
-    if userChangedInfoThatWouldAffectNatalChart:
-        print("***User made changes that will affect natal chart")
-        #Change the natal chart
-        user = User(id=id, do_not_fetch=True, known_time= knows_time, hometown=Location(latitude=latitude, longitude=longitude), birthday=birthday)
-        user.set_natal_chart()
-    else:
-        print("**User made no change on the natal chart ")
-"""
+
 
 
 
