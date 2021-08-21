@@ -30,11 +30,12 @@ class User:
                            natal_chart = None,
                            exists = False,
                            known_time=False,
+                        do_not_fetch=False # If true, data will not be fetched from database even if you provide ID (to prevent a read)
                            ):
 
         self.id = id
 
-        if self.id is None or self.id == '':
+        if self.id is None or self.id == '' or do_not_fetch == True:
             self.__data = {} #if .__data is {} or None, this object wasn't read from the database
             userWasReadFromDatabase = False
             self.__was_read_from_database = userWasReadFromDatabase
