@@ -394,7 +394,7 @@ def create_natal_chart_alpha(data, context):
     """
     from database.user import db
     from database.Location import Location
-    #import json
+    import iso8601
 
     path_parts = context.resource.split('/documents/')[1].split('/')
     collection_path = path_parts[0]
@@ -424,8 +424,7 @@ def create_natal_chart_alpha(data, context):
             print(f"The bday  map value  ... {user_data['fields']['birthday']['mapValue']}")
 
             bday = user_data['fields']['birthday']['mapValue']['fields']['timestamp']['timestampValue']
-
-            print(f"The bday is {bday} of type {type(bday)}")
+            date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
             try:
                 known_time = user_data['fields']['known_time']['booleanValue']
             except:
@@ -434,7 +433,7 @@ def create_natal_chart_alpha(data, context):
             user = User(id=id,
                         do_not_fetch=True,
                         hometown=Location(latitude=lat, longitude=location),
-                        birthday=bday,
+                        birthday=date,
                         known_time=known_time
                         )
             # Set it in database now
