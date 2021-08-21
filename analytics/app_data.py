@@ -39,6 +39,7 @@ def new_trans_female():
 def less_trans_female():
     db.collection('amare').document('app').set({"users": {"female_trans": Increment(-1)}}, merge=True)
 
+
 def new_non_binary():
     db.collection('amare').document('app').set({"users": {"non_binary": Increment(1)}}, merge=True)
 
@@ -46,9 +47,3 @@ def new_non_binary():
 def less_non_binary():
     db.collection('amare').document('app').set({"users": {"non_binary": Increment(-1)}}, merge=True)
 
-
-def new_trans_female():
-    db.collection('amare').document('app').set({"users": {"female_trans": Increment(1)}}, merge=True)
-
-def new_non_binary_person():
-    db.collection('amare').document('app').set({"users": {"non_binary": Increment(1)}}, merge=True)

@@ -381,12 +381,13 @@ def natal(request):
 
 
 # Converts strings added to /messages/{pushId}/original to uppercase
-#Creates a natal chart for the user and adds it to the database when they sign up
-def create_natal_chart(data, context):
+#- Creates a natal chart for the user and adds it to the database when they sign up
+#- Checks user gender and +1 for gender ( to keep statistics on amount of women/men on platform)
+def monitor_user_data(data, context):
     """"
 
 # Run this to deploy. Reads
-    gcloud functions deploy create_natal_chart \
+    gcloud functions deploy monitor_user_data \
   --runtime python37 \
   --trigger-event "providers/cloud.firestore/eventTypes/document.update" \
   --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
@@ -395,6 +396,7 @@ def create_natal_chart(data, context):
     from database.user import db
     from database.Location import Location
     import iso8601
+    import analytics.app_data as analytics
 
     path_parts = context.resource.split('/documents/')[1].split('/')
     collection_path = path_parts[0]
@@ -409,9 +411,61 @@ def create_natal_chart(data, context):
 
     updated_attributes =  data["updateMask"]["fieldPaths"] #returns list of attributes updated on commit in firebase  ex: ['hometown']
     user_data = data["value"]
+    old_user_data = data['oldValue']
 
     #chart should update if 'hometown' , 'birthday', 'known_time', are modified.
     # and if both hometown and birthday exist in the database, if known_time isn't assume false.
+
+    if 'sex' in updated_attributes:
+        new_sex = user_data['fields']['sex']['stringValue']
+        try:
+            old_sex = old_user_data['fields']['sex']['stringValue']
+
+            if old_sex != new_sex:    #the sex changed so we should decrment the old one and increment new one
+
+                if old_sex == "male":
+                    analytics.less_male()
+                elif old_sex == 'female':
+                    analytics.less_female()
+                elif old_sex == 'transfemale':
+                    analytics.less_trans_female()
+                elif old_sex == 'transmale':
+                    analytics.less_trans_male()
+                elif old_sex == 'non-binary':
+                    analytics.less_non_binary()
+                else:
+                    pass
+
+                if new_sex == "male":
+                    analytics.new_male()
+                elif new_sex == 'female':
+                    analytics.new_female()
+                elif new_sex == 'transfemale':
+                    analytics.new_trans_female()
+                elif new_sex == 'transmale':
+                    analytics.new_trans_male()
+                elif new_sex == 'non-binary':
+                    analytics.new_non_binary()
+                else:
+                    pass
+
+        except:
+            # No old value found for sex so it's probably newly created
+            if new_sex == "male":
+                analytics.new_male()
+            elif new_sex == 'female':
+                analytics.new_female()
+            elif new_sex == 'transfemale':
+                analytics.new_trans_female()
+            elif new_sex == 'transmale':
+                analytics.new_trans_male()
+            elif new_sex == 'non-binary':
+                analytics.new_non_binary()
+            else:
+                pass
+
+
+
 
     if 'hometown' in updated_attributes or 'birthday' in updated_attributes or 'known_time' in updated_attributes:
 
@@ -439,6 +493,8 @@ def create_natal_chart(data, context):
             user.set_natal_chart()
         except Exception as error:
             print(f"This data does not exist in the database yet {error}")
+
+
 
 def listen_for_new_user(data, context):
     """"
