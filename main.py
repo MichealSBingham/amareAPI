@@ -382,11 +382,11 @@ def natal(request):
 
 # Converts strings added to /messages/{pushId}/original to uppercase
 #Creates a natal chart for the user and adds it to the database when they sign up
-def create_natal_chart_alpha(data, context):
+def create_natal_chart(data, context):
     """"
 
 # Run this to deploy. Reads
-    gcloud functions deploy create_natal_chart_alpha \
+    gcloud functions deploy create_natal_chart \
   --runtime python37 \
   --trigger-event "providers/cloud.firestore/eventTypes/document.update" \
   --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
@@ -420,8 +420,7 @@ def create_natal_chart_alpha(data, context):
             lat = user_data['fields']['hometown']['mapValue']['fields']['latitude']['doubleValue']
             lon = user_data['fields']['hometown']['mapValue']['fields']['longitude']['doubleValue']
             location = Location(latitude=lat, longitude=lon)
-            print(f"The bday  is ... {user_data['fields']['birthday']}")
-            print(f"The bday  map value  ... {user_data['fields']['birthday']['mapValue']}")
+
 
             bday = user_data['fields']['birthday']['mapValue']['fields']['timestamp']['timestampValue']
             date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
@@ -432,7 +431,7 @@ def create_natal_chart_alpha(data, context):
 
             user = User(id=id,
                         do_not_fetch=True,
-                        hometown=Location(latitude=lat, longitude=location),
+                        hometown=location,
                         birthday=date,
                         known_time=known_time
                         )
