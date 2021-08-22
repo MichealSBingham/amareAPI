@@ -277,7 +277,7 @@ class User:
         planetsDic = {}
         for planet in planets:
             planetsDic[planet.id] = planetToDict(planet, set_orb=set_orb)
-
+    # {"sun" : { planet info } #
 
         angles = self.angles()
         anglesDic = {}
@@ -302,14 +302,68 @@ class User:
 
         return cleaned_natal_data
 
-#set's the natal chart in the database
+#set s the natal chart in the database
     def set_natal_chart(self, set_orb=3):
-        self.users_ref.document(self.id).set({"natal_chart": self.natal(set_orb=set_orb)}, merge=True)
+
+        def toArray(dictOfObjects):
+            array = []
+            for obj_name in dictOfObjects:
+                this_object = dictOfObjects[obj_name]
+                this_object['name'] = obj_name
+                array.append(this_object)
+            return array
+
+
+
+        natal_chart_dict = self.natal(set_orb=set_orb)
+
+        all_planets = toArray(natal_chart_dict['planets'])
+        natal_chart_dict['planets'] = all_planets
+
+
+        all_aspects = []#all_aspects = toArray(natal_chart_dict['aspects']) does not work yet
+        natal_chart_dict['aspects'] = all_aspects
+
+        if self.known_time:
+            all_angles = toArray(natal_chart_dict['angles'])
+            natal_chart_dict['angles'] = all_angles
+
+            all_houses = [] #all_houses = toArray(natal_chart_dict['houses']) not finished yet
+            natal_chart_dict['houses'] = all_houses
+        else:
+            natal_chart_dict['angles'] = []
+            natal_chart_dict['houses'] = []
 
 
 
 
 
+        self.users_ref.document(self.id).set({"natal_chart": natal_chart_dict}, merge=True)
+
+
+
+
+"""
+
+natal["angles"] = [angle]
+
+natal chart dictionary should 
+(map) natal_chart : {             n
+    
+          (array)  "angles" : [
+                    
+                    { ... // map ...} , 
+                    { ... / map ... } 
+          ], 
+          
+          ... 
+    
+
+
+}
+
+
+"""
 
 
 

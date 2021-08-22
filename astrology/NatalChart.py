@@ -111,6 +111,9 @@ aspect.type // 120 , returns Int of degrees the aspect is ...>
 
 #date: date Timestamp from database OR flatlib.datetime Datetime object
 #birth_location : Location  (must have lattidude and longitude)
+# WARNING - to be safe, please ONLY pass a flatlib.datetime Datime object here OR a timestamp
+# IF YOU PASS A regular datetime like datetime.now() IT WILL NOT COMPUTE PROPER NATAL CHART
+# BECAUSE when it converts it to flatlib.Datetime it will assume UTC time and not return proper date
 def get_natal_chart(date, birth_location):
 
     lat, lon = birth_location.coordinates()
@@ -128,9 +131,14 @@ def get_natal_chart(date, birth_location):
 def __proper_date__(date):
     date_string = str(date.date()).replace('-', '/')
     time = date.time().strftime("%H:%M:%S")
-    timezone = date.tzname().replace('UTC', '')
-    if timezone == '':
-        timezone = '+00:00'
+    try:
+        timezone = date.tzname().replace('UTC', '')
+        if timezone == '':
+            timezone = '+00:00'
+    except:
+        if date.tzname() is None:
+            return Datetime(date_string, time)
+
     return Datetime(date_string, time, utcoffset=timezone)
 
 # ***Returns the name of the aspect from the degrees
