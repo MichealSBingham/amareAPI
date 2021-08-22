@@ -334,11 +334,7 @@ class User:
             natal_chart_dict['angles'] = []
             natal_chart_dict['houses'] = []
 
-
-
-
-
-        self.users_ref.document(self.id).set({"natal_chart": natal_chart_dict}, merge=True)
+        self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
 
 
 
