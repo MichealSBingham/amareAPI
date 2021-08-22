@@ -47,3 +47,4 @@ def new_non_binary():
 def less_non_binary():
     db.collection('amare').document('app').set({"users": {"non_binary": Increment(-1)}}, merge=True)
 
+

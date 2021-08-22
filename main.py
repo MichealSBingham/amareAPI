@@ -519,10 +519,30 @@ def listen_for_deleted_user(data, context):
     --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
       """
 
-    from analytics.app_data import less_user
+    import analytics.app_data as analytics
+    from analytics.app_data import  less_user
 
     less_user()
 
+    try:
+        old_user_data = data['oldValue']
+        old_sex = old_user_data['fields']['sex']['stringValue']
+
+        if old_sex == "male":
+            analytics.less_male()
+        elif old_sex == 'female':
+            analytics.less_female()
+        elif old_sex == 'transfemale':
+            analytics.less_trans_female()
+        elif old_sex == 'transmale':
+            analytics.less_trans_male()
+        elif old_sex == 'non-binary':
+            analytics.less_non_binary()
+        else:
+            pass
+
+    except Exception as e:
+        print(f"Could not delete gender count from database with error {e}")
 
 
 
