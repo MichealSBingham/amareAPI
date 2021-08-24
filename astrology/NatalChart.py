@@ -298,7 +298,7 @@ class DetailedAspect:
                  passive_planet_owner=None,
                  first_planet_owner=None,
                  second_planet_owner=None,
-                 name = None
+                 name=None
                  ):
 
         aspect = aspects.getAspect(first, second, aspectsToGet)
@@ -316,6 +316,8 @@ class DetailedAspect:
         self.elements = [getElement(first), getElement(second)]
         self.active_planet_owner = active_planet_owner
         self.passive_planet_owner = passive_planet_owner
+        self.first_planet_owner = first_planet_owner
+        self.second_planet_owner = second_planet_owner
         self.name = (first.id, second.id)
         #isspecial
 
