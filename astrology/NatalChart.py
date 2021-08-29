@@ -350,7 +350,7 @@ class DetailedAspect:
         from colorama import Fore
         from colorama import Style
 
-        desc = self.interpret()
+        desc = self.interpretation()
 
         if self.isHarmonious():
             color = Fore.GREEN
@@ -487,7 +487,6 @@ class DetailedAspect:
         description = None
 
         # Sun Sun aspect
-        #(1)
         if self.name == ('Sun', 'Sun'):
             description = ""
 
@@ -530,7 +529,65 @@ class DetailedAspect:
                     description += f"Though {SUN1} and {SUN2} are complete opposites, all is not loss and this can be a complimentary opposite.\n"
                     description += f"{SUN1} and {SUN2} can easily lean towards a love-hate relationship.\n"
 
-        #(2)
+        # Moon Moon aspect, if most exact, main theme is harmony
+        if self.name == ('Moon', 'Moon'):
+            description = ""
+
+            MOON1 = self.first_planet_owner.name
+            MOON2 = self.second_planet_owner.name
+
+            if self.isHarmonious():
+                description += f"{MOON1} and {MOON2} have similar tastes and emotional sensibilities."
+                description += f"{MOON1} and {MOON2} feel comfortable with each other."
+                description += f"{MOON1} and {MOON2} can easily create a safe, secure, and cozy home environment."
+
+                if self.type == aspectFromDeg(const.TRINE):
+                    description += f"{MOON1} and {MOON2} can intuitively sense each other's emotional and romantic needs."
+                    description += f"{MOON1} and {MOON2} have an easy emotional flow of haromony and companionship."
+
+            if self.isChallenging():
+                description += f"{MOON1} and {MOON2} have difficulty being in sync emotionally."
+
+                if self.type == aspectFromDeg(const.SQUARE):
+                    description += f"It can be very hard for {MOON1} and {MOON2} to relate to each other emotionally."
+
+                if self.type == aspectFromDeg(const.OPPOSITION):
+                    description += f"{MOON1} and {MOON2} have complete opposite ways of expressing emotion but it can sometimes be complimentary as much challenging."
+
+                # Sun Venus aspect
+
+        if self.name == ('Mercury', 'Mercury'):
+            description = ""
+
+            MERCURY1 = self.first_planet_owner.name
+            MERCURY2 = self.second_planet_owner.name
+
+            if self.isHarmonious():
+                description += f"{MERCURY1} and {MERCURY2} communicate in similar ways."
+
+                if self.type == aspectFromDeg(const.CONJUNCTION):
+                    description += f"{MERCURY1} and {MERCURY2} speak and think is very similar ways."
+                    description += f"{MERCURY1} and {MERCURY2} approach problem solving in similar ways."
+                    description += f"{MERCURY1} and {MERCURY2} have good chemistry and little confusion on what each other meant when they speak."
+
+                if self.type == aspectFromDeg(const.TRINE):
+                    description += f"There is much harmony between how {MERCURY1} and {MERCURY2} communicate and speak."
+                    description += f"{MERCURY1} and {MERCURY2} approach problems in similar and complementary ways."
+                    description += f"{MERCURY1} and {MERCURY2} enjoy talking to each other and sharing ideas."
+
+            if self.isChallenging():
+                description += f"{MOON1} and {MOON2} have difficulty being in sync emotionally."
+
+                if self.type == aspectFromDeg(const.SQUARE):
+                    description += f"It can be very hard for {MOON1} and {MOON2} to relate to each other emotionally."
+
+                if self.type == aspectFromDeg(const.OPPOSITION):
+                    description += f"{MOON1} and {MOON2} have complete opposite ways of expressing emotion but it can sometimes be complimentary as much challenging."
+
+                # Sun Venus aspect
+
+
+
         if self.name == ('Venus', 'Venus'):
             description = ""
 
@@ -588,13 +645,6 @@ class DetailedAspect:
 
 
 
-        # Moon Moon aspect
-        if self.name == ('Moon', 'Moon'):
-            pass
-
-
-
-                # Sun Venus aspect
         if self.name == ('Sun', 'Venus'):
             description = ""
 
@@ -640,6 +690,39 @@ class DetailedAspect:
 
 
         return description
+
+
+# reads interpretation from cvs file
+    def interpretation(self):
+        # Load the csv file
+        try:
+            import pandas as pd
+            df = pd.read_csv('astrology/interpretations.csv')
+            df.set_index('ASPECT', inplace=True)
+        except:
+            return
+
+        (p1, p2) = self.name
+        aspect_name = f'{p1}_{p2}'
+        aspect_angle = self.type  #TRINE, CONJUNCTION, etc
+
+
+        try:
+            description = df.loc[aspect_name, aspect_angle]
+
+            # Replaces the place holders with their names
+
+            if p1 == p2:
+                x = description.replace(f'{p1}1', self.first_planet_owner.name)
+                y = x.replace(f'{p2}2', self.second_planet_owner.name)
+            else:
+                x = description.replace(p1, self.first_planet_owner.name)
+                y = x.replace(p2, self.second_planet_owner.name)
+
+
+            return y.strip()
+        except:
+            return ''
 
 
 
