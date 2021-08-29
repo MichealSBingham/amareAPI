@@ -279,6 +279,17 @@ def angleBetween(planet1, planet2):
 
 class DetailedAspect:
 
+    harmonious_aspects = [ aspectFromDeg(const.TRINE),
+                           aspectFromDeg(const.CONJUNCTION),
+                           aspectFromDeg(const.SEXTILE),
+                           aspectFromDeg(const.SEMIQUINTILE),
+                           aspectFromDeg(const.QUINTILE),
+                           aspectFromDeg(const.SESQUIQUINTILE),
+                           aspectFromDeg(const.BIQUINTILE)
+
+                            ]
+
+
 ## Consider out of sign conjunctions etc
     def __init__(self,
                  first=None,            #  First planet in the aspect (Sun, Moon, ... )
@@ -335,7 +346,27 @@ class DetailedAspect:
         return "%s-%s %s %s-%s" % ( self.active_planet_owner.name, self.active, self.type, self.passive, self.passive_planet_owner.name)
 
     def __str__(self):
-        return "<%s %s %s %s  @ %s  // .........%s......... (%s/%s) ................ || [%s and %s] >" % (self.active, self.type, self.passive, self.degree, angle.toString(self.angle()), self.__aspectTypeString__(), getSignAndIncludeCusp(self.first), getSignAndIncludeCusp(self.second), self.elements[0], self.elements[1])
+
+        from colorama import Fore
+        from colorama import Style
+
+        desc = self.interpret()
+
+        if self.isHarmonious():
+            color = Fore.GREEN
+        elif self.isChallenging():
+            color = Fore.RED
+        else:
+            color = Fore.WHITE
+
+
+
+        if desc != None:
+            return f"\n{Fore.WHITE}<{color}%s %s %s {Fore.WHITE}%s  @ %s  // .........%s......... (%s/%s) ................ || [%s and %s]>\n{color}%s{Fore.WHITE}" % (self.first.id, self.type, self.second.id, self.degree, angle.toString(self.angle()), self.__aspectTypeString__(), getSignAndIncludeCusp(self.first), getSignAndIncludeCusp(self.second), self.elements[0], self.elements[1], desc)
+        else:
+            return f"\n{Fore.WHITE}<{color}%s %s %s{Fore.WHITE} %s  @ %s  // .........%s......... (%s/%s) ................ || [%s and %s]>" % (self.first.id, self.type, self.second.id, self.degree, angle.toString(self.angle()), self.__aspectTypeString__(), getSignAndIncludeCusp(self.first), getSignAndIncludeCusp(self.second), self.elements[0], self.elements[1])
+
+
 
     def __hash__(self):
         return hash((self.type, self.degree, self.active, self.passive))
@@ -373,6 +404,243 @@ class DetailedAspect:
         s = self.active + self.passive
         s2 = other.active + other.passive
         return s >= s2
+
+
+# z (intensity) = f(orb, aspect_angle, elementaL_harmony, aspect_itself)
+#TODO
+    def intensity(self):
+        pass
+
+# Returns how harmonious the aspect is (Bool, Int)
+# Example: trine --> (True, 3) (3 is the intensity)
+    def harmony(self):
+
+        if self.name == ('Sun', 'Venus'):
+
+            if self.type == const.CONJUNCTION:
+                return (True, 2)
+            if self.type == const.SEXTILE:
+                return (True, 1)
+            if self.type == const.TRINE:
+                return (True, 3)
+
+
+            if self.type == const.SQUARE:
+                return (False, -3)
+            if self.type == const.QUINCUNX:
+                return (False, -2)
+            if self.type == const.CONJUNCTION:
+                return (False, -1)
+
+            if self.type == const.NO_ASPECT:
+                return (None, 0)
+
+            else:
+                pass
+
+
+    # Returns if the aspect is `traditionally` harmonious.
+    def isHarmonious(self):
+        if self.type in DetailedAspect.harmonious_aspects:
+            return True
+        elif self.type == aspectFromDeg(const.NO_ASPECT):
+            return None
+        else:
+            return False
+
+
+    # Example: Water/Water , Fire/Air, Earth/Air, Fire/Fire all return true
+    def elementalHarmony(self):
+        (element1, element2) = (getElement(self.first, set_orb=0), getElement(self.second, set_orb=0))
+
+        if element1 == element2:
+            return True
+
+        if (element1, element2) == ('Water', 'Fire') or (element1, element2) == ('Fire', 'Water'):
+            return False
+
+        if (element1, element2) == ('Water', 'Air') or (element1, element2) == ('Air', 'Water'):
+            return False
+
+        return True
+
+    # returns opposite of elementary harmony
+    def elementalChallenge(self):
+        return not self.elementalHarmony()
+
+    # Returns if the aspect is `traditonally` challenging.
+    # NOTE - we use the term `traditionally `
+    def isChallenging(self):
+        if self.type == aspectFromDeg(const.NO_ASPECT):
+            return None
+        else:
+            return not (self.isHarmonious())
+
+
+
+
+# Provides an interpretation of this particular aspect, None if there is none.
+    def interpret(self):
+
+
+
+        description = None
+
+        # Sun Sun aspect
+        #(1)
+        if self.name == ('Sun', 'Sun'):
+            description = ""
+
+            SUN1 = self.first_planet_owner.name
+            SUN2 = self.second_planet_owner.name
+
+            if self.isHarmonious():
+
+                if self.type == aspectFromDeg(const.TRINE):
+                    description += f"{SUN1} and {SUN2} have much harmony between their core personalites and identities.\n"
+                    description += f"{SUN1} and {SUN2} appreciate much about each other and understand each other.\n"
+                    description += f"{SUN1} and {SUN2} understand each other's outlook on life.\n"
+                    description += f"{SUN1} and {SUN2} have very similar outlooks and personalities, but enough compatible differences to be interesting.\n"
+
+                if self.type == aspectFromDeg(const.SEXTILE):
+                    description += f"{SUN1}  {SUN2} have a mutally beneficial personality.\n"
+                    description += f"{SUN1} and {SUN2} appreciate much about each other and understand each other.\n"
+                    description += f"{SUN1} and {SUN2} understand each other's outlook on life.\n"
+                    description += f"{SUN1} and {SUN2} have extremely different outlooks on life, but it's not at all frictional.\n"
+
+                if self.type == aspectFromDeg(const.CONJUNCTION):
+                    description += f"{SUN1} and {SUN2} have similiar identities and characteristics.\n"
+                    description += f"It's easy for {SUN1} and {SUN2} to be together.\n"
+                    description += f"There is an innate understanding and appreciation between {SUN1} and {SUN2}\n"
+
+
+            if self.isChallenging():
+                description += f"{SUN1} and {SUN2} can have strong reactions towards each other... whether good or bad.\n"
+                description += f"There can be ego conflicts between {SUN1} and {SUN2} due to a clash in personality identities.\n"
+                description += f"There has to be much acceptance and understanding for things to work between {SUN1} and {SUN2}.\n"
+
+                if self.type == aspectFromDeg(const.SQUARE):
+                    description += f"There is a significant challenge due conflicting core identities between {SUN1} and {SUN2}.\n"
+                    description += f"{SUN1} and {SUN2} can fall out over what appear to be simple things because of conflicting identities.\n"
+                    description += f"Feelings of love because {SUN1} and {SUN2} can easily turn to hate.\n"
+                    description += f"{SUN1} and {SUN2}'s core personalities are not ideal for a lasting , harmonious relationship with each other.\n"
+
+                if self.type == aspectFromDeg(const.OPPOSITION):
+                    description += f"{SUN1} and {SUN2} have opposite personalities, but it can be the root of either attraction or hatred. This can tip in one or the other direction.\n"
+                    description += f"Though {SUN1} and {SUN2} are complete opposites, all is not loss and this can be a complimentary opposite.\n"
+                    description += f"{SUN1} and {SUN2} can easily lean towards a love-hate relationship.\n"
+
+        #(2)
+        if self.name == ('Venus', 'Venus'):
+            description = ""
+
+            VENUS1 = self.first_planet_owner.name
+            VENUS2 = self.second_planet_owner.name
+
+            if self.isHarmonious():
+                description += f"{VENUS1} and {VENUS2} appreciate how each other expresses and receives love.\n"
+                description += f"{VENUS1} and {VENUS2} like each other's tastes, decoration, and dressing styles.\n"
+                description += f"{VENUS1} and {VENUS2} have similiar values which can help with decision making together.\n"
+                description += f"There is ease and harmony when {VENUS1} and {VENUS2} are together.\n"
+
+                if self.type == aspectFromDeg(const.CONJUNCTION):
+                    description += f"{VENUS1} and {VENUS2} tend to like the same things and view love the same way.\n"
+                    description += f"{VENUS1} and {VENUS2} likely have initial attraction.\n"
+                    description += f"{VENUS1} and {VENUS2} may like the same clothing, decoration, and dressing styles.\n"
+                    description += f"{VENUS1} and {VENUS2} have similar definitions of beauty.\n"
+
+                if self.type == aspectFromDeg(const.TRINE): #Seen in friends/business partners as well
+                    description += f"{VENUS1} and {VENUS2} perceive love in very similar and compatible ways.\n"
+                    description += f"{VENUS1} and {VENUS2} feels very comfortable around each other.\n"
+                    description += f"{VENUS1} and {VENUS2} may like similar clothing, decoration, and dressing styles.\n"
+                    description += f"{VENUS1} and {VENUS2} have similar definitions of beauty.\n"
+                    description += f"{VENUS1} and {VENUS2} have much harmony together and good romantic capability.\n"
+                    description += f"{VENUS1} and {VENUS2} help each other discover new things each other would like.\n"
+
+                if self.type == aspectFromDeg(const.SEXTILE): # good friendship
+                    description += f"{VENUS1} and {VENUS2} have supporting loving styles.\n"
+                    description += f"{VENUS1} and {VENUS2} have compatible loving styles that may not always be apparent, but not at all disharmonious.\n"
+                    description += f"{VENUS1} and {VENUS2} have good friendship with one another.\n"
+                    description += f"{VENUS1} and {VENUS2} may have different clothing styles, decoration, and ways of showing love but they are not at all incompatible.\n"
+
+
+            if self.isChallenging():
+                description += f"{VENUS1} and {VENUS2} have different values when it comes to love which becomes more and more obvious over time.\n"
+                description += f"{VENUS1} and {VENUS2} have disimilar ways of expressing and receiving love in very important ways.\n"
+                description += f"{VENUS1} and {VENUS2} likely do not know how to instinctively please each other.\n"
+                description += f"{VENUS1} and {VENUS2} can easily argue over basic taste and their incompatible social lives.\n"
+                description += f"{VENUS1} and {VENUS2} have dissimilar ways of managing money which can cause issues.\n"
+
+                if self.type == aspectFromDeg(const.OPPOSITION):
+                    description += f"{VENUS1} and {VENUS2} may feel a strong connection right away, opposites attract.\n"
+                    description += f"{VENUS1} and {VENUS2} can easily develop a natural bond.\n"
+                    description += f"{VENUS1} and {VENUS2} have opposite ways of expressing love that will cause tension overtime.\n"
+                    description += f"Though {VENUS1} and {VENUS2} may have strong attraction, they will find eventually they don't have a lot in common in regards to ideas of beauty.\n"
+                    description += f"{VENUS1} and {VENUS2} have strong sexual attraction due to the friction caused by being opposites.\n"
+
+                if self.type == aspectFromDeg(const.SQUARE):
+                        description += f"{VENUS1} and {VENUS2} have intense attraction that falsely feels like a soulmate connection.\n"
+                        description += f"Over time, {VENUS1} and {VENUS2} will find they have troublesome differences with how each other views and accepts love.\n"
+                        description += f"{VENUS1} and {VENUS2} will have much difficulty overtime due to inherit incompatbilites with how love is viewed and expressed.\n"
+                        description += f"{VENUS1} and {VENUS2} see beauty and love in very different, inharmonious ways.\n"
+
+
+
+
+
+        # Moon Moon aspect
+        if self.name == ('Moon', 'Moon'):
+            pass
+
+
+
+                # Sun Venus aspect
+        if self.name == ('Sun', 'Venus'):
+            description = ""
+
+            SUN = self.first_planet_owner.name
+            VENUS = self.second_planet_owner.name
+
+
+            if self.isHarmonious():
+                description += f"There is some harmony and common interest between {SUN} and {VENUS}.\n"
+                description += f"{SUN} feels more loving in {VENUS}'s presence.\n"
+                description += f"{VENUS} thinks {SUN} is charming and interesting.\n"
+                description += f"{VENUS} admires and wants to please {SUN}.\n"
+                description += f"There is a pleasing and supportive attraction between {VENUS} and {SUN}.\n"
+                description += f"{SUN} and {VENUS} agree on how to save and spend money.\n"
+
+                if self.type == aspectFromDeg(const.TRINE):
+                    description += f"{SUN} and {VENUS} truly value each other.\n"
+
+                if self.type == aspectFromDeg(const.CONJUNCTION):
+                    description += f"{SUN} and {VENUS} like a lot of things about each other.\n"
+
+                if self.type == aspectFromDeg(const.SEXTILE):
+                    description += f"{SUN} and {VENUS} have mutual respect for each other and see value.\n"
+
+
+            if self.isChallenging():
+                description += f"{VENUS}'s value system conflicts with {SUN}'s outlook on life and life path.\n"
+                description += f"{SUN} and {VENUS} will like each other one day and then be fustrasted with each other the next.\n"
+                description += f"{VENUS} may resent {SUN} because {VENUS} tries to please {SUN}, getting nothing in return.\n"
+                description += f"{SUN} may not appreciate {VENUS}.\n"
+                description += f"{VENUS} may be taken for granted.\n"
+
+                if self.type == aspectFromDeg(const.SQUARE):
+                    description += f"Relationship looks promising in the beginning but fails to meet expectations.\n"
+                    description += f"There is unequal give/take between {SUN} and {VENUS}.\n"
+                    description += f"{VENUS} resorts to playing games because the scales are unbalanced.\n"
+                    description += f"When one gives, the other feels obligated to give in return.\n"
+                    description += f"If {SUN} and {VENUS} separate love can easily turn to hate.\n"
+
+                if self.type == aspectFromDeg(const.OPPOSITION):
+                    description += f"There is some challenge and a chase but potentially can be rewarding. Not very problematic.\n"
+
+
+
+        return description
+
 
 
 #// Collection of detailed aspects, between 2 persons or 2 natal charts
