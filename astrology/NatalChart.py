@@ -91,6 +91,25 @@ def angleToDic(angle, set_orb=3):
     return cleaned_angle_data
 
 
+def aspectToDict(detailed_aspect):
+    a = detailed_aspect
+    
+    
+    info = { 
+        "type": a.type, #TRINE, etc
+        "isMutual": a.isMutual,  # Bool
+        "mutualMovement": a.mutualMovement, # Bool
+        "orb":  a.orb,  # Double, degress as double
+        "first": a.first.id, #first planet
+        "second": a.second.id,
+        "interpretation": a.interpretation()}
+    
+    
+    cleaned_info = {k: v for k, v in info.items() if v is not None and v != '' and (v != {}) and (v != [])}
+
+    
+    return cleaned_info
+
 """
 // Aspects 
 aspects.isAspecting(planet1, planet2, const.ALL_ASPECTS) // returns if planet1 aspects planet2 within its orb 

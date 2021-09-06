@@ -178,7 +178,7 @@ class User:
     def __eq__(self, other):
         return (self.id == other.id)
 
-    #returns all of the planets used for synastry.. will include MC and ASC even though they are not planets
+
     def planets(self):
         ps = [self.sun, self.moon, self.mercury, self.venus, self.mars, self.jupiter, self.saturn, self.uranus, self.neptune, self.pluto, self.north_node, self.south_node, self.chiron]
         return [p for p in ps if p ] # removes all 'None'
@@ -241,8 +241,8 @@ class User:
     #  Returns the synastry aspects between `Self` and User 2. Self will be the user/partner on the outer part of the synastry chart. This returns all aspects, between each planet between each other
     def synastry(self, user2, aspectsToGet=const.ALL_ASPECTS):
         syn = []
-        for p1 in self.planets():
-            for p2 in user2.planets():
+        for p1 in self.__all_for_synastry():
+            for p2 in user2.__all_for_synastry():
                 try:
                     asp = NatalChart.DetailedAspect(p1, p2, first_planet_owner=self, second_planet_owner=user2)
                     syn.append(asp)
@@ -252,7 +252,7 @@ class User:
 
     # Return the natal chart as a dictionary, will create the natal chart and set it in database
     def natal(self, set_orb=3):
-        from astrology.NatalChart import planetToDict, angleToDic
+        from astrology.NatalChart import planetToDict, angleToDic, aspectToDict
 
         name = self.name
         sex = self.sex
@@ -289,7 +289,19 @@ class User:
 
 
         natal_dic["houses"] = "UNDER CONSTRUCTION"
-        natal_dic["aspects"] = "UNDER CONSTRUCTION"
+        
+        
+        # Get the aspects
+        aspects = self.aspects()
+        aspectDic = {}
+        if aspects != None:
+            for aspect in aspects:
+                    id = f"{aspect.name[0]} {aspect.name[1]}"
+                    aspectDic[id] = aspectToDict(aspect)
+                    
+                    
+        natal_dic["aspects"] = aspectDic
+        
         natal_dic["name"] = name
         natal_dic["birthday"] = bday_string
         natal_dic["birth_place"] = birth_place
@@ -321,7 +333,7 @@ class User:
         natal_chart_dict['planets'] = all_planets
 
 
-        all_aspects = []#all_aspects = toArray(natal_chart_dict['aspects']) does not work yet
+        all_aspects = toArray(natal_chart_dict['aspects'])
         natal_chart_dict['aspects'] = all_aspects
 
         if self.known_time:
