@@ -18,6 +18,8 @@ planet.movement() // returns 'Direct' or 'Retrograde'
 planet.isRetrograde() // returns True or False if planet is in Retrograde 
 """
 
+### ******************************* Utility Functions for building a Natal Chart Dict for API response *******************************
+
 #Converts Object (flatlib.object) [planet] to a dictionary. Orb decides on a cusp
 def planetToDict(planet, set_orb=3):
     sign = planet.sign              #Sign (String) 'Cancer', 'Scorpio', etc
@@ -109,6 +111,41 @@ def aspectToDict(detailed_aspect):
 
     
     return cleaned_info
+
+#Bodies --> planet or angle 
+def houseToDict(house, bodies):
+    sign = house.sign # Sign the house begins in 
+    angle = house.signlon  #Float value of angle it is in the sign ex: Virgo 22.45543
+    size = house.size # Size of the house in degrees 
+    condition = house.condition()
+    #gender = house.gender()
+    ruling_bodies = []
+    for body in bodies: 
+        if house.hasObject(body):
+            ruling_bodies.append(body.id)
+
+    house_data = {
+
+        "sign": sign, 
+        "angle": angle, 
+        "size": size, 
+        "condition": condition, 
+      #  "gender": gender,  causes an error in 9th house for me at least, mine is in libra
+        "contains": ruling_bodies
+
+    }
+
+    cleaned_house_data = {k: v for k, v in house_data.items() if
+                             v is not None and v != '' and (v != {}) and (v != [])}
+
+    return cleaned_house_data
+
+
+
+
+
+
+## ******************************* End of Utility Functions  *******************************
 
 """
 // Aspects 

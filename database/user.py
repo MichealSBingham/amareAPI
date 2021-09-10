@@ -124,6 +124,23 @@ class User:
         self.pars_fortuna = self.natal_chart.get('Pars Fortuna')
 
 
+        # Get the houses 
+        self.house1 = self.natal_chart.get('House1')
+        self.house2 = self.natal_chart.get('House2')
+        self.house3 = self.natal_chart.get('House3')
+        self.house4 = self.natal_chart.get('House4')
+
+        self.house5 = self.natal_chart.get('House5')
+        self.house6 = self.natal_chart.get('House6')
+        self.house7 = self.natal_chart.get('House7')
+        self.house8 = self.natal_chart.get('House8')
+
+        self.house9 = self.natal_chart.get('House9')
+        self.house10 = self.natal_chart.get('House10')
+        self.house11 = self.natal_chart.get('House11')
+        self.house12 = self.natal_chart.get('House12')
+
+
 
 
     def dict(self):
@@ -189,6 +206,14 @@ class User:
         else:
             return [self.ic, self.mc, self.desc, self.asc]
 
+    def houses(self): 
+        if not self.known_time: 
+            return []
+        else: 
+            return [self.house1, self.house2, self.house3, self.house4, 
+                    self.house5, self.house6, self.house7, self.house8, 
+                    self.house9, self.house10, self.house11, self.house12]
+
 #returns everything we use for synastry to get aspects, gets the planets and angles currently
     def __all_for_synastry(self):
         return self.planets() + self.angles()
@@ -252,7 +277,7 @@ class User:
 
     # Return the natal chart as a dictionary, will create the natal chart and set it in database
     def natal(self, set_orb=3):
-        from astrology.NatalChart import planetToDict, angleToDic, aspectToDict
+        from astrology.NatalChart import planetToDict, angleToDic, aspectToDict, houseToDict
 
         name = self.name
         sex = self.sex
@@ -286,9 +311,18 @@ class User:
                 anglesDic[angle.id] = angleToDic(angle, set_orb=set_orb)
 
 
+        if self.known_time:
+            houses = self.houses()
+            housesDic = {}
+            for house in houses: 
+                housesDic[int( house.id.replace('House', '') )] = houseToDict(house, planets+angles )
+
+            natal_dic['houses'] = housesDic
+        else: 
+            natal_dic['houses'] = None
 
 
-        natal_dic["houses"] = "UNDER CONSTRUCTION"
+
         
         
         # Get the aspects
@@ -340,7 +374,7 @@ class User:
             all_angles = toArray(natal_chart_dict['angles'])
             natal_chart_dict['angles'] = all_angles
 
-            all_houses = [] #all_houses = toArray(natal_chart_dict['houses']) not finished yet
+            all_houses = toArray(natal_chart_dict['houses']) 
             natal_chart_dict['houses'] = all_houses
         else:
             natal_chart_dict['angles'] = []
