@@ -390,14 +390,15 @@ class User:
     def balanceOfElements(self):
 
         from astrology.NatalChart import getElementFromSign, isOnCuspOf
+        from astrology.Rulers import  Rulers
 
         balance = {"Water": 0.0, "Earth": 0.0, "Fire": 0.0, "Air": 0.0}
 
         bodies = self.planets() + self.angles()
-        print(f"The bodies are {bodies}")
+
 
         for body in bodies:
-            print(f"On body: {body}")
+
             pointsForSign = 0.0
             pointsForCusp = 0.0
             # Check Sun/Moon Element
@@ -429,10 +430,14 @@ class User:
 
 
 
+        asc_rules = Rulers.ruler_of(self.asc.sign)  # ruler of the ascendant (planet)
+        elem = getElementFromSign(self.natal_chart.get(asc_rules).sign)
+        balance[elem] += 1
 
+        sun_rules = Rulers.ruler_of(self.sun.sign)  # ruler of the ascendant (planet)
+        elem = getElementFromSign(self.natal_chart.get(sun_rules).sign)
+        balance[elem] += 1
 
-
-            #TODO check rulers and dispositors
         return balance
 
 
