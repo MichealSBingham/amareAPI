@@ -341,6 +341,7 @@ class User:
         natal_dic["birth_place"] = birth_place
         natal_dic["planets"] = planetsDic
         natal_dic["angles"] = anglesDic
+        natal_dic["part_of_fortune"] = angleToDic(self.pars_fortuna)
 
 
         cleaned_natal_data = {k: v for k, v in natal_dic.items() if
@@ -348,9 +349,13 @@ class User:
 
         return cleaned_natal_data
 
-#set s the natal chart in the database
-    def set_natal_chart(self, set_orb=3):
 
+    def set_natal_chart(self, set_orb=3):
+        """
+    Writes the user's (self) natal chart to the database.
+        :param set_orb: The orb to use when determining cusps and aspects, by default 3 degrees. Do not change without approval.
+        :return: Void
+        """
         def toArray(dictOfObjects):
             array = []
             for obj_name in dictOfObjects:

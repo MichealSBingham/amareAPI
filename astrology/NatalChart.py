@@ -92,6 +92,36 @@ def angleToDic(angle, set_orb=3):
                            v is not None and v != '' and (v != {}) and (v != [])}
     return cleaned_angle_data
 
+def angleToDic(angle, set_orb=3):
+
+    sign = angle.sign
+    element = getElementFromSign(sign)
+    measured_angle = angle.signlon
+    cusp_sign = isOnCuspOf(angle, set_orb)
+    cusp_element = getElementFromSign(cusp_sign)
+
+    if cusp_sign is not None:
+        almost = {"cusp_sign": cusp_sign, "cusp_element": cusp_element}
+        is_on_cusp = True
+    else:
+        is_on_cusp = False
+        almost = None
+
+
+
+    angle_data  = {
+
+        "sign": sign,
+        "element": element,
+        "angle": measured_angle,
+        "is_on_cusp": is_on_cusp,
+        "almost": almost
+
+    }
+
+    cleaned_angle_data = {k: v for k, v in angle_data.items() if
+                           v is not None and v != '' and (v != {}) and (v != [])}
+    return cleaned_angle_data
 
 def aspectToDict(detailed_aspect):
     a = detailed_aspect
