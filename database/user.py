@@ -387,6 +387,64 @@ class User:
 
         self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
 
+    def balanceOfElements(self):
+
+        from astrology.NatalChart import getElementFromSign, isOnCuspOf
+
+        balance = {"Water": 0.0, "Earth": 0.0, "Fire": 0.0, "Air": 0.0}
+
+        bodies = self.planets() + self.angles()
+        print(f"The bodies are {bodies}")
+
+        for body in bodies:
+            print(f"On body: {body}")
+            pointsForSign = 0.0
+            pointsForCusp = 0.0
+            # Check Sun/Moon Element
+            element = getElementFromSign(body.sign)
+            cusp_sign = isOnCuspOf(body, 1)
+            print(body.id)
+            if cusp_sign == None:
+                # No cusp element so proceed normally
+                if body.id == 'Sun' or body.id == 'Moon':
+                    pointsForSign = 2
+                
+                elif body.id in ['Asc', 'MC', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']:
+                    print("It is in here")
+                    pointsForSign = 1
+
+                balance[element] += pointsForSign
+            else:
+                # Split the point between it and the cusp element
+                cusp_element = getElementFromSign(cusp_sign)
+                if body.id == 'Sun' or body.id == 'Moon':
+                    pointsForCusp = 1
+
+                elif body.id in ['Asc', 'MC', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']:
+                    print("It is in here")
+                    pointsForCusp = 0.5
+
+                balance[element] += pointsForCusp*2
+                balance[cusp_element] += pointsForCusp * 2
+
+
+
+
+
+
+            #TODO check rulers and dispositors
+        return balance
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -8,6 +8,15 @@ from flatlib import aspects
 from flatlib import angle
 from flatlib.object import Object as Obj
 
+
+
+
+
+
+
+
+
+
 """
 Example Usage of Planet Obj : 
 planet = user.sun # Object from flatlib 
@@ -300,6 +309,13 @@ def getElement(planet, set_orb=3):
         return getElementFromSign(sign) + '(' + getElementFromSign(cusp_sign) + ')'
 
 def getElementFromSign(sign):
+    """
+    Returns the Element of a particular sign
+    :param sign: The sign of the element. E.g. 'Cancer', 'Scorpio'
+    :type sign: str
+    :return: Element of the sign. 'Fire', 'Air', 'Earth', or 'Water'
+    :rtype: str
+    """
     if sign == 'Aries':
         return 'Fire'
     if sign == 'Taurus':
