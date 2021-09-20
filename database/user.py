@@ -446,7 +446,7 @@ class User:
                 "percentage": balance["Water"] / 13.0 ,
                 "isDominant": (balance["Water"] >= 5),
                 "isOverlyDominant": (balance["Water"] >= 6),
-                "isWeak": (balance["Water"] >= 2)
+                "isWeak": (balance["Water"] <= 2)
             },
 
             "Earth": {
@@ -454,7 +454,7 @@ class User:
                 "percentage": balance["Earth"] / 13.0,
                 "isDominant": (balance["Earth"] >= 5),
                 "isOverlyDominant": (balance["Earth"] >= 6),
-                "isWeak": (balance["Earth"] >= 2)
+                "isWeak": (balance["Earth"] <= 2)
             },
 
             "Fire": {
@@ -462,7 +462,7 @@ class User:
                 "percentage": balance["Fire"] / 13.0,
                 "isDominant": (balance["Fire"] >= 5),
                 "isOverlyDominant": (balance["Fire"] >= 6),
-                "isWeak": (balance["Fire"] >= 2),
+                "isWeak": (balance["Fire"] <= 2),
             },
 
             "Air": {
@@ -470,7 +470,7 @@ class User:
                 "percentage": balance["Air"] / 13.0,
                 "isDominant": (balance["Air"] >= 5),
                 "isOverlyDominant": (balance["Air"] >= 6),
-                "isWeak": (balance["Air"] >= 2)
+                "isWeak": (balance["Air"] <= 2)
             }
         }
 
