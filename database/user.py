@@ -388,9 +388,13 @@ class User:
         self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
 
     def balanceOfElements(self):
+        """
+        Returns the distribution of elements of the particular natal chart of
+        :return: A dictionary with information eg {'Water': {'points': 7.0, 'percentage': 0.5384615384615384, 'isDominant': True, 'isOverlyDominant': True}, 'Earth': {'points': 5.0, 'percentage': 0.38461538461538464, 'isDominant': True, 'isOverlyDominant': False}, 'Fire': {'points': 1.0, 'percentage': 0.07692307692307693, 'isDominant': False, 'isOverlyDominant': False}, 'Air': {'points': 0.0, 'percentage': 0.0, 'isDominant': False, 'isOverlyDominant': False}}
 
+        """
         from astrology.NatalChart import getElementFromSign, isOnCuspOf
-        from astrology.Rulers import  Rulers
+        from astrology.Rulers import Rulers
 
         balance = {"Water": 0.0, "Earth": 0.0, "Fire": 0.0, "Air": 0.0}
 
@@ -404,14 +408,13 @@ class User:
             # Check Sun/Moon Element
             element = getElementFromSign(body.sign)
             cusp_sign = isOnCuspOf(body, 1)
-            print(body.id)
+
             if cusp_sign == None:
                 # No cusp element so proceed normally
                 if body.id == 'Sun' or body.id == 'Moon':
                     pointsForSign = 2
                 
                 elif body.id in ['Asc', 'MC', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']:
-                    print("It is in here")
                     pointsForSign = 1
 
                 balance[element] += pointsForSign
@@ -422,7 +425,6 @@ class User:
                     pointsForCusp = 1
 
                 elif body.id in ['Asc', 'MC', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']:
-                    print("It is in here")
                     pointsForCusp = 0.5
 
                 balance[element] += pointsForCusp*2
@@ -434,13 +436,66 @@ class User:
         elem = getElementFromSign(self.natal_chart.get(asc_rules).sign)
         balance[elem] += 1
 
-        sun_rules = Rulers.ruler_of(self.sun.sign)  # ruler of the ascendant (planet)
+        sun_rules = Rulers.ruler_of(self.sun.sign)  # ruler of the sun
         elem = getElementFromSign(self.natal_chart.get(sun_rules).sign)
         balance[elem] += 1
 
-        return balance
+        summary = {
+            "Water": {
+                "points": balance["Water"],
+                "percentage": balance["Water"] / 13.0 ,
+                "isDominant": (balance["Water"] >= 5),
+                "isOverlyDominant": (balance["Water"] >= 6),
+                "isWeak": (balance["Water"] >= 2)
+            },
+
+            "Earth": {
+                "points": balance["Earth"],
+                "percentage": balance["Earth"] / 13.0,
+                "isDominant": (balance["Earth"] >= 5),
+                "isOverlyDominant": (balance["Earth"] >= 6),
+                "isWeak": (balance["Earth"] >= 2)
+            },
+
+            "Fire": {
+                "points": balance["Fire"],
+                "percentage": balance["Fire"] / 13.0,
+                "isDominant": (balance["Fire"] >= 5),
+                "isOverlyDominant": (balance["Fire"] >= 6),
+                "isWeak": (balance["Fire"] >= 2),
+            },
+
+            "Air": {
+                "points": balance["Air"],
+                "percentage": balance["Air"] / 13.0,
+                "isDominant": (balance["Air"] >= 5),
+                "isOverlyDominant": (balance["Air"] >= 6),
+                "isWeak": (balance["Air"] >= 2)
+            }
+        }
+
+        return summary
 
 
+    def hasDominant(self, element: str) -> bool:
+        """
+        Returns whether the element given is dominant in the user's natal chart
+        :rtype: bool
+        :param element: 'Water', 'Earth', 'Fire', or 'Air'
+        :return: If the element is dominant
+        """
+        balanceOfElements = self.balanceOfElements()
+        return balanceOfElements[element]["isDominant"]
+
+    def hasWeak(self, element: str) -> bool:
+        """
+        Returns whether the element given is weak in the user's natal chart
+        :rtype: bool
+        :param element: 'Water', 'Earth', 'Fire', or 'Air'
+        :return: If the element is weak
+        """
+        balanceOfElements = self.balanceOfElements()
+        return balanceOfElements[element]["isWeak"]
 
 
 
