@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+#from google.cloud import firestore
 from database.Location import Location
 from astrology import NatalChart
 from flatlib import const
@@ -140,6 +141,39 @@ class User:
         self.house11 = self.natal_chart.get('House11')
         self.house12 = self.natal_chart.get('House12')
 
+
+
+
+    @classmethod
+    def random(cls):
+        from faker import Faker
+        from database.Location import Location
+        import random
+        fake = Faker()
+        random_hometown = Location().random()
+        random_residence = Location().random()
+        random_date = fake.date_time_between(start_date='-30y', end_date='now')
+        knows_birthtime = bool(random.getrandbits(1))
+        return cls(do_not_fetch=True, hometown=random_hometown, residence=random_residence, birthday=random_date, known_time=knows_birthtime)
+
+
+    #Creates the new user object in the database. Should only be used when generating random data or creating a user here manually for some reason
+    def new(self):
+        newuserdic = {
+
+            "birthday": { "day": self.birthday.day, "month": "TODO:/RandomDataMonthBorn", "year": self.birthday.year, "timestamp": self.birthday},
+            "hometown": self.hometown.dict(),
+            "residence": self.residence.dict(),
+            "images": [], #TODO: random data for images
+            "known_time": self.known_time,
+            "name": self.name,
+            "orientation": ["female"], #TODO: random data for orientaion
+            "profile_image_url": "hello.com", #TODO
+            "sex": "male" #TODO: random data for sex
+
+        }
+        self.users_ref.add(newuserdic)
+        self.set_natal_chart() #TODO: this should automatically happen whenever a new user is created but it's because the cloud function only detect when birthday data is changed, not created
 
 
 
