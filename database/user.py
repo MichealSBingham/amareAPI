@@ -143,22 +143,67 @@ class User:
 
 
 
+    @classmethod
+    def random_new_user(cls):
+        """Creates new user randomly and sets in database """
+        rand = User.random()
+        rand.new()
 
     @classmethod
     def random(cls):
+        """ Creates a random user object without setting in database"""
         from faker import Faker
         from database.Location import Location
         import random
+        from randomuser import RandomUser
+
         fake = Faker()
+
         random_hometown = Location().random()
         random_residence = Location().random()
         random_date = fake.date_time_between(start_date='-30y', end_date='now')
         knows_birthtime = bool(random.getrandbits(1))
-        return cls(do_not_fetch=True, hometown=random_hometown, residence=random_residence, birthday=random_date, known_time=knows_birthtime)
+
+        # Random User Data
+        random_gender = random.choice(['female', 'male', 'transfemale', 'transmale', 'non_binary'])
+        if random_gender == 'male' or random_gender == 'female':
+            user = RandomUser({'gender': random_gender})
+        elif random_gender == 'transfemale':
+            user = RandomUser({'gender': 'female'})
+        elif random_gender == 'transmale':
+            user = RandomUser({'gender': 'male'})
+        else:
+            user = RandomUser()
+
+        random_name = user.get_full_name()
+
+        ## Generating orientation randomly, from male POV
+        genders = ['male', 'female', 'non_binary', 'transmale', 'transfemale']
+        randNum = random.randrange(1,5)  # can be 1 to 6
+        random_orientation = []
+        for _ in range(randNum):
+            random_orientation.append(random.choice(genders))
+        random_orientation = list(set(random_orientation))
 
 
-    #Creates the new user object in the database. Should only be used when generating random data or creating a user here manually for some reason
+
+
+        random_profile_pic = user.get_picture()
+
+        return cls(do_not_fetch=True,
+                   id=user.get_login_uuid(),
+                   hometown=random_hometown,
+                   residence=random_residence,
+                   birthday=random_date,
+                   known_time=knows_birthtime,
+                   orientation=random_orientation,
+                   profile_image_url=random_profile_pic,
+                   sex=random_gender,
+                   name=random_name)
+
+
     def new(self):
+        """Sets the newly created user object in the database """
         newuserdic = {
 
             "birthday": { "day": self.birthday.day, "month": "TODO:/RandomDataMonthBorn", "year": self.birthday.year, "timestamp": self.birthday},
@@ -167,12 +212,12 @@ class User:
             "images": [], #TODO: random data for images
             "known_time": self.known_time,
             "name": self.name,
-            "orientation": ["female"], #TODO: random data for orientaion
-            "profile_image_url": "hello.com", #TODO
-            "sex": "male" #TODO: random data for sex
+            "orientation": self.orientation,
+            "profile_image_url": self.profile_image_url,
+            "sex": self.sex
 
         }
-        self.users_ref.add(newuserdic)
+        self.users_ref.document(self.id).set(newuserdic)
         self.set_natal_chart() #TODO: this should automatically happen whenever a new user is created but it's because the cloud function only detect when birthday data is changed, not created
 
 
