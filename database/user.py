@@ -19,6 +19,7 @@ db = firestore.client()
 class User:
 
     users_ref = db.collection(f'users')
+    generated_users_ref = db.collection(f'generated_users')
 
     def __init__(self, id=None, data=None,
                            hometown=None,
@@ -217,8 +218,8 @@ class User:
             "sex": self.sex
 
         }
-        self.users_ref.document(self.id).set(newuserdic)
-        self.set_natal_chart() #TODO: this should automatically happen whenever a new user is created but it's because the cloud function only detect when birthday data is changed, not created
+        self.generated_users_ref.document(self.id).set(newuserdic)
+        self.set_natal_chart(real_user=False) #TODO: this should automatically happen whenever a new user is created but it's because the cloud function only detect when birthday data is changed, not created
 
 
 
@@ -429,7 +430,7 @@ class User:
         return cleaned_natal_data
 
 
-    def set_natal_chart(self, set_orb=3):
+    def set_natal_chart(self, set_orb=3, real_user=True):
         """
     Writes the user's (self) natal chart to the database.
         :param set_orb: The orb to use when determining cusps and aspects, by default 3 degrees. Do not change without approval.
@@ -464,7 +465,11 @@ class User:
             natal_chart_dict['angles'] = []
             natal_chart_dict['houses'] = []
 
-        self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
+        if real_user:
+            self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
+        else:
+            self.generated_users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
+
 
     def balanceOfElements(self):
         """
