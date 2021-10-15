@@ -794,6 +794,7 @@ class DetailedAspect:
         return description
 
 
+
 # reads interpretation from cvs file
     def interpretation(self):
         # Load the csv file
@@ -840,7 +841,7 @@ class Aspects:
 
     def __str__(self):
         s = ""
-        for aspect in self.all:
+        for aspect in self.list:
             s += "\n" + aspect.__str__()
 
         return s
@@ -851,6 +852,8 @@ class Aspects:
     def __iter__(self):
         return (x for x in self.list)
 
+    def sort(self):
+        self.list = sorted(self.valid().list, key=lambda x: x.orb, reverse=False)
     ## Gets a particular aspect, example: Mars/Venus aspect --> get('Mars', 'Venus')
     def get(self, planet1, planet2):
         for aspect in self.list:
