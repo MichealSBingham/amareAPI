@@ -510,6 +510,38 @@ def listen_for_new_user(data, context):
     new_user()
 
 
+#Winked vs Winker in database --> winks / {winked} / peopleWhoWinked / {winker}
+def listen_for_winks(data, context):
+    """"
+      # Run this to deploy. Reads
+          gcloud functions deploy listen_for_winks \
+        --runtime python37 \
+        --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+        --trigger-resource "projects/findamare/databases/(default)/documents/winks/{winked}"
+          """
+
+    from database.user import db
+    from database.notifications import PushNotifications
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    document_path = '/'.join(path_parts[1:])
+
+    affected_doc = db.collection(collection_path).document(document_path)
+    id = document_path # Should be the winked , not the winker
+
+    trigger_resource = context.resource
+    print('***Function triggered by change to: %s' % trigger_resource)
+
+    # Send notification that someone winked at them
+    PushNotifications.winked_at(id)
+
+
+
+
+
+    pass
+
+
 def listen_for_deleted_user(data, context):
     """"
   # Run this to deploy. Reads
@@ -520,7 +552,7 @@ def listen_for_deleted_user(data, context):
       """
 
     import analytics.app_data as analytics
-    from analytics.app_data import  less_user
+    from analytics.app_data import less_user
 
     less_user()
 
