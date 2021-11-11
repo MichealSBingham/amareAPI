@@ -29,11 +29,11 @@ class PushNotifications:
         )
 
     @staticmethod
-    def winked_at(userID, name="Micheal",  title="Amāre"):
+    def winked_at(userID,  title="Amāre"):
         """
-        Sends a notification to the user that they were winked at t by someone.
+        Sends a notification to the user that they were winked at  by someone.
         """
-        message = f"{name} 😉 at you, what's your response 😏?"
+        message = f"Someone 😉 at you, what's your response 😏?"
 
         response = beams_client.publish_to_interests(
             interests=[userID],

@@ -517,29 +517,37 @@ def listen_for_winks(data, context):
           gcloud functions deploy listen_for_winks \
         --runtime python37 \
         --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
-        --trigger-resource "projects/findamare/databases/(default)/documents/winks/{winked}"
+        --trigger-resource "projects/findamare/databases/(default)/documents/winks/{winked}/people_who_winked/{winker}"
           """
+
+
 
     from database.user import db
     from database.notifications import PushNotifications
     path_parts = context.resource.split('/documents/')[1].split('/')
     collection_path = path_parts[0]
-    document_path = '/'.join(path_parts[1:])
+    print("The collection_path: %s" % collection_path)
+    winked = path_parts[1]
+    print("The winked: %s" % winked)
 
-    affected_doc = db.collection(collection_path).document(document_path)
-    id = document_path # Should be the winked , not the winker
+    #affected_doc = db.collection(collection_path).document(document_path)
+    #print("The afected_doc: %s" % affected_doc)
+
+    winker = path_parts[3] # Should be the winked , not the winker
+    print("The winked: %s" % winked)
+
 
     trigger_resource = context.resource
     print('***Function triggered by change to: %s' % trigger_resource)
 
     # Send notification that someone winked at them
-    PushNotifications.winked_at(id)
+    PushNotifications.winked_at(winked)
 
 
 
 
 
-    pass
+
 
 
 def listen_for_deleted_user(data, context):
