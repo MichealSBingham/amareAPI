@@ -540,8 +540,24 @@ def listen_for_winks(data, context):
     trigger_resource = context.resource
     print('***Function triggered by change to: %s' % trigger_resource)
 
-    # Send notification that someone winked at them
-    PushNotifications.winked_at(winked)
+    # See if the it's a wink back (2 way wink)
+    # Check if /winks/{winker}/people_who_winked/{winked} exists
+    doc_ref = db.collection('winks').document(winker).collection('people_who_winked').document(winked)
+    doc = doc_ref.get()
+    if doc.exists:
+        #Two way wink
+        # Tell the 'winked' that 'winker' winked back
+        PushNotifications.winked_back(winked)
+    else:
+        # One way wink
+        # One way wink: Send notification that someone winked at them
+        PushNotifications.winked_at(winked)
+
+
+
+
+
+
 
 
 

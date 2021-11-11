@@ -8,11 +8,11 @@ beams_client = PushNotifications(
 class PushNotifications:
 
     @staticmethod
-    def winked_back(userID, name="Claire", title="Amāre"):
+    def winked_back(userID, title="Amāre"):
         """
         Sends a notification to the user that they were winked at t by someone.
         """
-        message = f"🥳 {name} 😉 back at you. Make some magic happen 🪄."
+        message = f"🥳 They 😉 back at you. Make some magic happen 🪄."
 
         response = beams_client.publish_to_interests(
             interests=[userID],
