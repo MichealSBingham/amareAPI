@@ -388,7 +388,7 @@ def monitor_user_data(data, context):
 
 # Run this to deploy. Reads
     gcloud functions deploy monitor_user_data \
-  --runtime python37 \
+  --runtime python38 \
   --trigger-event "providers/cloud.firestore/eventTypes/document.update" \
   --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
 
@@ -407,11 +407,15 @@ def monitor_user_data(data, context):
 
 
     trigger_resource = context.resource
-    print('***Function triggered by change to: %s' % trigger_resource)
+    print('***Function triggered by change to: %s and id %s: ' % (trigger_resource, id))
 
     updated_attributes =  data["updateMask"]["fieldPaths"] #returns list of attributes updated on commit in firebase  ex: ['hometown']
     user_data = data["value"]
     old_user_data = data['oldValue']
+
+    print("The updated attributes are: ")
+    print(updated_attributes)
+
 
     #chart should update if 'hometown' , 'birthday', 'known_time', are modified.
     # and if both hometown and birthday exist in the database, if known_time isn't assume false.
@@ -492,7 +496,7 @@ def monitor_user_data(data, context):
             # Set it in database now
             user.set_natal_chart()
         except Exception as error:
-            print(f"This data does not exist in the database yet {error}")
+            print(f"This data does not exist in the database yet or some error:  {error}")
 
 
 

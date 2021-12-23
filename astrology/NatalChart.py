@@ -210,6 +210,12 @@ aspect.type // 120 , returns Int of degrees the aspect is ...>
 # IF YOU PASS A regular datetime like datetime.now() IT WILL NOT COMPUTE PROPER NATAL CHART
 # BECAUSE when it converts it to flatlib.Datetime it will assume UTC time and not return proper date
 def get_natal_chart(date, birth_location):
+    import swisseph as swe
+    import os
+    # Have to add proper file to proper path so that it can read the astrology data
+    path = os.path.dirname(flatlib.__file__)
+    new_path = os.path.join(path, 'resources', 'swefiles')
+    swe.set_ephe_path(new_path)
 
     lat, lon = birth_location.coordinates()
     if ( date is None ) or (birth_location is None):

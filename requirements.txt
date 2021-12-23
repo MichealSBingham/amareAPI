@@ -38,7 +38,7 @@ pyasn1==0.4.8
 pyasn1-modules==0.2.8
 PyJWT==2.3.0
 pyparsing==2.4.7
-pyswisseph==2.8.0.post1
+pyswisseph==2.08.00-1
 python-dateutil==2.8.2
 pytz==2021.1
 randomuser==1.6
