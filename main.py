@@ -504,14 +504,74 @@ def listen_for_new_user(data, context):
     """"
   # Run this to deploy. Reads
       gcloud functions deploy listen_for_new_user \
-    --runtime python37 \
+    --runtime python38 \
     --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
     --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
       """
 
     from analytics.app_data import new_user
+    from database.user import db
+    from database.Location import Location
+    import iso8601
 
-    new_user()
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    document_path = '/'.join(path_parts[1:])
+
+    affected_doc = db.collection(collection_path).document(document_path)
+    id = document_path
+
+    dataHere = data["value"]['fields']
+    print("Data that's already here after new user added is: ")
+    print(dataHere)
+
+    if 'hometown' in dataHere and 'birthday' in dataHere:
+
+        try:
+
+            lat = dataHere['hometown']['mapValue']['fields']['latitude']['doubleValue']
+            lon = dataHere['hometown']['mapValue']['fields']['longitude']['doubleValue']
+            location = Location(latitude=lat, longitude=lon)
+
+
+            bday = dataHere['birthday']['mapValue']['fields']['timestamp']['timestampValue']
+            date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
+            try:
+                known_time = dataHere['known_time']['booleanValue']
+            except:
+                known_time = False
+
+            user = User(id=id,
+                        do_not_fetch=True,
+                        hometown=location,
+                        birthday=date,
+                        known_time=known_time
+                        )
+            # Set it in database now
+            user.set_natal_chart()
+        except Exception as error:
+            print(f"This data does not exist in the database yet or some error:  {error}")
+
+    else:  #Update analytics because this is probably a new user
+        new_user()
+
+""""
+    #updated_attributes = data["updateMask"][
+       # "fieldPaths"]  # returns list of attributes updated on commit in firebase  ex: ['hometown']
+    user_data = data["value"]
+    #old_user_data = data['oldValue']
+
+    #print("The updated attributes are: ")
+    #print(updated_attributes)
+
+    print("The user data is ... value: ")
+    print(user_data)
+
+    print("the data in general is ... ")
+    print(data)
+    """
+
+
 
 
 #Winked vs Winker in database --> winks / {winked} / peopleWhoWinked / {winker}
