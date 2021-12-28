@@ -26,6 +26,7 @@ class User:
                            residence=None,
                            birthday=None,  #Only a flatlib.datetime Datetime object
                            name=None,
+                           username=None,
                           profile_image_url=None,
                            sex=None,
                            orientation=None,
@@ -57,6 +58,7 @@ class User:
             self.name = self.__data.get('name')
             self.profile_image_url = self.__data.get('profile_image_url')
             self.sex = self.__data.get('sex')
+            self.username = self.__data.get('username')
             self.orientation = self.__data.get('orientation')
             self.known_time = self.__data.get('known_time', False)
 
@@ -88,6 +90,7 @@ class User:
             self.sex = sex
             self.orientation = orientation
             self.known_time = known_time
+            self.username = username
 
 
 
@@ -215,7 +218,8 @@ class User:
             "name": self.name,
             "orientation": self.orientation,
             "profile_image_url": self.profile_image_url,
-            "sex": self.sex
+            "sex": self.sex,
+            "username": self.username
 
         }
         self.generated_users_ref.document(self.id).set(newuserdic)
