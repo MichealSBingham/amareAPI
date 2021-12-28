@@ -8,11 +8,15 @@ beams_client = PushNotifications(
 class PushNotifications:
 
     @staticmethod
-    def winked_back(userID, title="Amāre"):
+    def winked_back(userID, winker, title="Amāre"):
+        from database.user import User
         """
         Sends a notification to the user that they were winked at t by someone.
         """
-        message = f"🥳 They 😉 back at you. Make some magic happen 🪄."
+
+        person = User(id=winker)
+
+        message = f"🥳 @{person.username} 😉 back at you. Make some magic happen 🪄."
 
         response = beams_client.publish_to_interests(
             interests=[userID],
@@ -24,16 +28,20 @@ class PushNotifications:
                             "body": message
                         }
                     },
+                    'winked': userID,
+                    'winker': winker
                 },
             },
         )
 
     @staticmethod
-    def winked_at(userID,  title="Amāre"):
+    def winked_at(userID, winker,  title="Amāre"):
+        from database.user import User
         """
         Sends a notification to the user that they were winked at  by someone.
         """
-        message = f"Someone 😉 at you, what's your response 😏?"
+        person = User(id=winker)
+        message = f"@{person.username} 😉 at you, what's your response 😏?"
 
         response = beams_client.publish_to_interests(
             interests=[userID],
@@ -45,6 +53,8 @@ class PushNotifications:
                             "body": message
                         }
                     },
+                    'winked': userID,
+                    'winker': winker
                 },
             },
         )
@@ -62,7 +72,9 @@ class PushNotifications:
                     'alert': {
                         "title": title,
                         "body": message
-                    }
+
+                    },
+                    'checked': userID
                 },
             },
         },

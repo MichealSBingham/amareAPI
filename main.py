@@ -611,11 +611,11 @@ def listen_for_winks(data, context):
     if doc.exists:
         #Two way wink
         # Tell the 'winked' that 'winker' winked back
-        PushNotifications.winked_back(winked)
+        PushNotifications.winked_back(winked, winker)
     else:
         # One way wink
         # One way wink: Send notification that someone winked at them
-        PushNotifications.winked_at(winked)
+        PushNotifications.winked_at(winked, winker)
 
 
 
