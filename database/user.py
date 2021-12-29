@@ -160,13 +160,16 @@ class User:
         from database.Location import Location
         import random
         from randomuser import RandomUser
+        from random_username.generate import generate_username
 
         fake = Faker()
+        fake.seed_locale('en_US', 0)
 
         random_hometown = Location().random()
         random_residence = Location().random()
         random_date = fake.date_time_between(start_date='-30y', end_date='now')
         knows_birthtime = bool(random.getrandbits(1))
+        random_username = generate_username()[0]
 
         # Random User Data
         random_gender = random.choice(['female', 'male', 'transfemale', 'transmale', 'non_binary'])
