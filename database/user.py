@@ -206,6 +206,7 @@ class User:
                    orientation=random_orientation,
                    profile_image_url=random_profile_pic,
                    sex=random_gender,
+                   username=random_username,
                    name=random_name)
 
 
@@ -222,10 +223,17 @@ class User:
             "orientation": self.orientation,
             "profile_image_url": self.profile_image_url,
             "sex": self.sex,
-            "username": self.username
+            "username": self.username,
+            "isReal": False
 
         }
-        self.generated_users_ref.document(self.id).set(newuserdic)
+
+        #Add the username to the database
+        db.collection(f'usernames').document(self.username).set({'userId': self.id, 'username': self.username})
+
+        #add the user data to the database
+        self.users_ref.document(self.id).set(newuserdic)
+
         self.set_natal_chart(real_user=False) #TODO: this should automatically happen whenever a new user is created but it's because the cloud function only detect when birthday data is changed, not created
 
 
