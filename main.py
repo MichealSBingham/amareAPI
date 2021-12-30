@@ -572,6 +572,67 @@ def listen_for_new_user(data, context):
     """
 
 
+def listen_for_new_natal_chart(data, context):
+    # Triggered when a new natal chart has been added to the database
+    # Should add the user to the indexes of each aspect ; e.g -- if they're a sun in scorpio, add them to it, etc
+    # Should add them to the aspect type too
+
+    from database.user import db
+    from database.user import User
+
+    """"
+     # Run this to deploy. Reads
+         gcloud functions deploy listen_for_new_natal_chart \
+       --runtime python38 \
+       --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+       --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/public/natal_chart"
+         """
+
+
+
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    document_path = '/'.join(path_parts[1:])
+    id = path_parts[1] #ID of the user the natal chart belongs too
+
+    natal_chart_doc = db.collection(collection_path).document(document_path).get()#Document reference object
+    natal_dict = natal_chart_doc.to_dict()
+
+    print(f"The natal chart doc is : {natal_chart_doc} and dictionary is {natal_dict}")
+
+    #Going through the planets and adding each placmenet to the index; e.g. if Sun in Cancer
+    # -- add user to Sun / Cancer aspect
+    # data structure: 
+    #       /placements (collection)
+    #           / <planet> (collection)
+    #               / <cancer> (collection)
+    #                   / <user ID> (document)
+    #                       /
+
+
+    user = User(id=id)
+
+    #TODO: Add house number to planet placement
+    planets = natal_dict['planets']
+    for planet in planets:
+        is_on_cusp = planet['is_on_cusp']
+        angle = planet['angle']
+        is_retrograde = planet['is_retrograde']
+        sign = planet['sign']
+        planet_name = planet['name']
+        is_notable = user.is_notable
+
+        #Add placement to this database index
+        db.collection(f'placements').collection(f'{planet_name}').collection(f'{sign}').document(id).set({
+            'is_on_cusp': is_on_cusp,
+            'angle': angle,
+            'is_retrograde': is_retrograde,
+            'is_notable': is_notable
+        })
+
+
+
+
 
 
 #Winked vs Winker in database --> winks / {winked} / peopleWhoWinked / {winker}

@@ -33,6 +33,7 @@ class User:
                            natal_chart = None,
                            exists = False,
                            known_time=False,
+                           is_notable = False,
                         do_not_fetch=False # If true, data will not be fetched from database even if you provide ID (to prevent a read)
                            ):
 
@@ -61,6 +62,7 @@ class User:
             self.username = self.__data.get('username')
             self.orientation = self.__data.get('orientation')
             self.known_time = self.__data.get('known_time', False)
+            self.is_notable = self.__data.get('is_notable')
 
             location = Location(info_dict=self.__data.get('hometown', {}))
             if location.info_dict == {} or location.info_dict is None:
@@ -91,6 +93,7 @@ class User:
             self.orientation = orientation
             self.known_time = known_time
             self.username = username
+            self.is_notable = is_notable
 
 
 
@@ -148,13 +151,13 @@ class User:
 
 
     @classmethod
-    def random_new_user(cls):
+    def random_new_user(cls, is_notable=False):
         """Creates new user randomly and sets in database """
-        rand = User.random()
+        rand = User.random(is_notable=is_notable)
         rand.new()
 
     @classmethod
-    def random(cls):
+    def random(cls, is_notable=False):
         """ Creates a random user object without setting in database"""
         from faker import Faker
         from database.Location import Location
@@ -207,7 +210,8 @@ class User:
                    profile_image_url=random_profile_pic,
                    sex=random_gender,
                    username=random_username,
-                   name=random_name)
+                   name=random_name,
+                   is_notable=is_notable)
 
 
     def new(self):
@@ -224,12 +228,13 @@ class User:
             "profile_image_url": self.profile_image_url,
             "sex": self.sex,
             "username": self.username,
-            "isReal": False
+            "isReal": False,
+            "isNotable": self.is_notable
 
         }
 
         #Add the username to the database
-        db.collection(f'usernames').document(self.username).set({'userId': self.id, 'username': self.username})
+        db.collection(f'usernames').document(self.username).set({'userId': self.id, 'username': self.username, 'isNotable': self.is_notable})
 
         #add the user data to the database
         self.users_ref.document(self.id).set(newuserdic)
