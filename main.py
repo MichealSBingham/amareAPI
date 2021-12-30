@@ -623,7 +623,7 @@ def listen_for_new_natal_chart(data, context):
         is_notable = user.is_notable
 
         #Add placement to this database index
-        db.collection(f'placements').collection(f'{planet_name}').collection(f'{sign}').document(id).set({
+        db.collection(f'placements').document(f'{planet_name}').collection(f'{sign}').document(id).set({
             'is_on_cusp': is_on_cusp,
             'angle': angle,
             'is_retrograde': is_retrograde,
