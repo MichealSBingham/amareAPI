@@ -62,7 +62,7 @@ class User:
             self.username = self.__data.get('username')
             self.orientation = self.__data.get('orientation')
             self.known_time = self.__data.get('known_time', False)
-            self.is_notable = self.__data.get('is_notable')
+            self.is_notable = self.__data.get('isNotable')
 
             location = Location(info_dict=self.__data.get('hometown', {}))
             if location.info_dict == {} or location.info_dict is None:
