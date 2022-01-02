@@ -60,6 +60,31 @@ class PushNotifications:
         )
 
     @staticmethod
+    def send_friend_request_to(userID, requester_uid, title="Amāre"):
+        from database.user import User
+        """
+        Sends a notification to the user that they were winked at  by someone.
+        """
+        requester = User(id=requester_uid)
+        message = f"@{requester.username} sent you a friend request ✉️. Know them?"
+
+        response = beams_client.publish_to_interests(
+            interests=[userID],
+            publish_body={
+                'apns': {
+                    'aps': {
+                        'alert': {
+                            "title": title,
+                            "body": message
+                        }
+                    },
+                    'requester': requester_uid
+                },
+            },
+        )
+
+
+    @staticmethod
     def checked_out(userID, message="Someone is checking you out 👀, we won't say who though. 🤫", title="Amāre"):
         """
         Sends a notification to the user that they were checked out by someone.

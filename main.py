@@ -549,6 +549,7 @@ def listen_for_new_user(data, context):
                         )
             # Set it in database now
             user.set_natal_chart()
+            new_user()
         except Exception as error:
             print(f"This data does not exist in the database yet or some error:  {error}")
 
@@ -679,6 +680,31 @@ def listen_for_winks(data, context):
         PushNotifications.winked_at(winked, winker)
 
 
+def listen_for_friend_requests(data, context):
+    """"
+          # Run this to deploy. Reads
+              gcloud functions deploy listen_for_winks \
+            --runtime python38 \
+            --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+            --trigger-resource "projects/findamare/databases/(default)/documents/friends/{user}/requests/{requester}"
+              """
+
+    from database.user import db
+    from database.notifications import PushNotifications
+
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    person_requested = path_parts[1]
+    requester = path_parts[3]
+
+    #When a friend request is sent, we should tell the user via push notification
+    PushNotifications.send_friend_request_to(person_requested, requester)
+
+
+
+    ##When a friend request is accepted, we should add it to the friend database for both users
+    ### We should also notify them of accepted friend request
+    pass
 
 
 
