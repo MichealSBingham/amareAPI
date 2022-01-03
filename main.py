@@ -727,8 +727,8 @@ def listen_for_accepted_requests(data, context):
     didAccept = dataHere['accepted']['boolValue']
 
     if didAccept:
-        PushNotifications.ac
-    pass
+        PushNotifications.acceptFriendRequestFrom(requester, person_requested)
+
 
 
 
