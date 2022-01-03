@@ -717,6 +717,8 @@ def listen_for_accepted_requests(data, context):
                   """
 
     from database.notifications import PushNotifications
+    from database.user import db
+    from datetime import datetime
 
     path_parts = context.resource.split('/documents/')[1].split('/')
     collection_path = path_parts[0]
@@ -728,7 +730,8 @@ def listen_for_accepted_requests(data, context):
     print(f"The data is is {dataHere} and did accept: {didAccept}")
 
     if didAccept:
-        #TODO: Add to friends database
+        db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now()})
+        db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now()})
         PushNotifications.acceptFriendRequestFrom(requester, person_requested)
 
 
