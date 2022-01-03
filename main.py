@@ -683,13 +683,13 @@ def listen_for_winks(data, context):
 def listen_for_friend_requests(data, context):
     """"
           # Run this to deploy. Reads
-              gcloud functions deploy listen_for_winks \
+              gcloud functions deploy listen_for_friend_requests \
             --runtime python38 \
             --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
             --trigger-resource "projects/findamare/databases/(default)/documents/friends/{user}/requests/{requester}"
               """
 
-    from database.user import db
+    #from database.user import db
     from database.notifications import PushNotifications
 
     path_parts = context.resource.split('/documents/')[1].split('/')
@@ -705,6 +705,34 @@ def listen_for_friend_requests(data, context):
     ##When a friend request is accepted, we should add it to the friend database for both users
     ### We should also notify them of accepted friend request
     pass
+
+
+def listen_for_accepted_requests(data, context):
+    """"
+              # Run this to deploy. Reads
+                  gcloud functions deploy listen_for_accepted_requests \
+                --runtime python38 \
+                --trigger-event "providers/cloud.firestore/eventTypes/document.update" \
+                --trigger-resource "projects/findamare/databases/(default)/documents/friends/{user}/requests/{requester}"
+                  """
+
+    from database.notifications import PushNotifications
+
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    person_requested = path_parts[1]
+    requester = path_parts[3]
+
+    dataHere = data["value"]['fields']
+    didAccept = dataHere['accepted']['boolValue']
+
+    if didAccept:
+        PushNotifications.ac
+    pass
+
+
+
+
 
 
 
