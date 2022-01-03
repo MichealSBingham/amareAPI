@@ -724,9 +724,11 @@ def listen_for_accepted_requests(data, context):
     requester = path_parts[3]
 
     dataHere = data["value"]['fields']
-    didAccept = dataHere['accepted']['boolValue']
+    didAccept = dataHere['accepted']['booleanValue']
+    print(f"The data is is {dataHere} and did accept: {didAccept}")
 
     if didAccept:
+        #TODO: Add to friends database
         PushNotifications.acceptFriendRequestFrom(requester, person_requested)
 
 
