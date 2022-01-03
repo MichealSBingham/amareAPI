@@ -702,9 +702,7 @@ def listen_for_friend_requests(data, context):
 
 
 
-    ##When a friend request is accepted, we should add it to the friend database for both users
-    ### We should also notify them of accepted friend request
-    pass
+
 
 
 def listen_for_accepted_requests(data, context):
@@ -733,6 +731,36 @@ def listen_for_accepted_requests(data, context):
         db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now()})
         db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now()})
         PushNotifications.acceptFriendRequestFrom(requester, person_requested)
+
+
+def listen_for_removed_friend(data, context):
+    """"
+      # Run this to deploy. Reads
+          gcloud functions deploy listen_for_removed_friend \
+        --runtime python37 \
+        --trigger-event "providers/cloud.firestore/eventTypes/document.delete" \
+        --trigger-resource "projects/findamare/databases/(default)/documents/friends/{A}/myFriends/{B}"
+          """
+
+    # Let user 'A' remove user 'B' as a friend using mobile app.
+    # If 'A' removes 'B' as a friend. (Trigger) /friends/A/myFriends/B (detect a deletion)
+        # WE should 1. remove 'A' from 'B' and 2. remove friend requests from both (in case they exist)
+
+    from database.user import db
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    user_A = path_parts[1]
+    user_B = path_parts[3]
+
+    print(f"Should be deleting {user_A} from {user_B} friend list and 2-way friend request")
+    db.collection("friends").document(user_B).collection("myFriends").document(user_A).delete()
+    db.collection("friends").document(user_A).collection("requests").document(user_B).delete()
+    db.collection("friends").document(user_B).collection("requests").document(user_A).delete()
+
+
+
+
+
+
 
 
 
