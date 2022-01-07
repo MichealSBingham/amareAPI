@@ -1,6 +1,8 @@
 import pytz
 import timezonefinder, pytz
 from geopy.geocoders import Nominatim
+from randomuser import RandomUser
+
 
 class Location:
 
@@ -32,6 +34,12 @@ class Location:
 
         if self.search != None or self.search != "":
             lat, lon = self.coordinates()
+
+
+    @classmethod
+    def random(cls):
+        random_city = RandomUser().get_city()
+        return cls(search=random_city)
 
 
     def dict(self):

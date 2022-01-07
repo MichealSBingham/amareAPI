@@ -388,7 +388,7 @@ def monitor_user_data(data, context):
 
 # Run this to deploy. Reads
     gcloud functions deploy monitor_user_data \
-  --runtime python37 \
+  --runtime python38 \
   --trigger-event "providers/cloud.firestore/eventTypes/document.update" \
   --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
 
@@ -407,11 +407,15 @@ def monitor_user_data(data, context):
 
 
     trigger_resource = context.resource
-    print('***Function triggered by change to: %s' % trigger_resource)
+    print('***Function triggered by change to: %s and id %s: ' % (trigger_resource, id))
 
     updated_attributes =  data["updateMask"]["fieldPaths"] #returns list of attributes updated on commit in firebase  ex: ['hometown']
     user_data = data["value"]
     old_user_data = data['oldValue']
+
+    print("The updated attributes are: ")
+    print(updated_attributes)
+
 
     #chart should update if 'hometown' , 'birthday', 'known_time', are modified.
     # and if both hometown and birthday exist in the database, if known_time isn't assume false.
@@ -492,7 +496,7 @@ def monitor_user_data(data, context):
             # Set it in database now
             user.set_natal_chart()
         except Exception as error:
-            print(f"This data does not exist in the database yet {error}")
+            print(f"This data does not exist in the database yet or some error:  {error}")
 
 
 
@@ -500,14 +504,278 @@ def listen_for_new_user(data, context):
     """"
   # Run this to deploy. Reads
       gcloud functions deploy listen_for_new_user \
-    --runtime python37 \
+    --runtime python38 \
     --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
     --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
       """
 
     from analytics.app_data import new_user
+    from database.user import db
+    from database.Location import Location
+    import iso8601
 
-    new_user()
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    document_path = '/'.join(path_parts[1:])
+
+    affected_doc = db.collection(collection_path).document(document_path)
+    id = document_path
+
+    dataHere = data["value"]['fields']
+    print("Data that's already here after new user added is: ")
+    print(dataHere)
+
+    if 'hometown' in dataHere and 'birthday' in dataHere:
+
+        try:
+
+            lat = dataHere['hometown']['mapValue']['fields']['latitude']['doubleValue']
+            lon = dataHere['hometown']['mapValue']['fields']['longitude']['doubleValue']
+            location = Location(latitude=lat, longitude=lon)
+
+
+            bday = dataHere['birthday']['mapValue']['fields']['timestamp']['timestampValue']
+            date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
+            try:
+                known_time = dataHere['known_time']['booleanValue']
+            except:
+                known_time = False
+
+            user = User(id=id,
+                        do_not_fetch=True,
+                        hometown=location,
+                        birthday=date,
+                        known_time=known_time
+                        )
+            # Set it in database now
+            user.set_natal_chart()
+            new_user()
+        except Exception as error:
+            print(f"This data does not exist in the database yet or some error:  {error}")
+
+    else:  #Update analytics because this is probably a new user
+        new_user()
+
+""""
+    #updated_attributes = data["updateMask"][
+       # "fieldPaths"]  # returns list of attributes updated on commit in firebase  ex: ['hometown']
+    user_data = data["value"]
+    #old_user_data = data['oldValue']
+
+    #print("The updated attributes are: ")
+    #print(updated_attributes)
+
+    print("The user data is ... value: ")
+    print(user_data)
+
+    print("the data in general is ... ")
+    print(data)
+    """
+
+
+def listen_for_new_natal_chart(data, context):
+    # Triggered when a new natal chart has been added to the database
+    # Should add the user to the indexes of each aspect ; e.g -- if they're a sun in scorpio, add them to it, etc
+    # Should add them to the aspect type too
+
+    from database.user import db
+    from database.user import User
+
+    """"
+     # Run this to deploy. Reads
+         gcloud functions deploy listen_for_new_natal_chart \
+       --runtime python38 \
+       --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+       --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/public/natal_chart"
+         """
+
+
+
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    document_path = '/'.join(path_parts[1:])
+    id = path_parts[1] #ID of the user the natal chart belongs too
+
+    natal_chart_doc = db.collection(collection_path).document(document_path).get()#Document reference object
+    natal_dict = natal_chart_doc.to_dict()
+
+    print(f"The natal chart doc is : {natal_chart_doc} and dictionary is {natal_dict}")
+
+    #Going through the planets and adding each placmenet to the index; e.g. if Sun in Cancer
+    # -- add user to Sun / Cancer aspect
+    # data structure: 
+    #       /placements (collection)
+    #           / <planet> (collection)
+    #               / <cancer> (collection)
+    #                   / <user ID> (document)
+    #                       /
+
+
+    user = User(id=id)
+
+    #TODO: Add house number to planet placement
+    planets = natal_dict['planets']
+    for planet in planets:
+        is_on_cusp = planet['is_on_cusp']
+        angle = planet['angle']
+        is_retrograde = planet['is_retrograde']
+        sign = planet['sign']
+        planet_name = planet['name']
+        is_notable = user.is_notable
+
+        #Add placement to this database index
+        db.collection(f'placements').document(f'{planet_name}').collection(f'{sign}').document(id).set({
+            'is_on_cusp': is_on_cusp,
+            'angle': angle,
+            'is_retrograde': is_retrograde,
+            'is_notable': is_notable
+        })
+
+
+
+
+
+
+#Winked vs Winker in database --> winks / {winked} / peopleWhoWinked / {winker}
+def listen_for_winks(data, context):
+    """"
+      # Run this to deploy. Reads
+          gcloud functions deploy listen_for_winks \
+        --runtime python37 \
+        --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+        --trigger-resource "projects/findamare/databases/(default)/documents/winks/{winked}/people_who_winked/{winker}"
+          """
+
+
+
+    from database.user import db
+    from database.notifications import PushNotifications
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    print("The collection_path: %s" % collection_path)
+    winked = path_parts[1]
+    print("The winked: %s" % winked)
+
+    #affected_doc = db.collection(collection_path).document(document_path)
+    #print("The afected_doc: %s" % affected_doc)
+
+    winker = path_parts[3] # Should be the winked , not the winker
+    print("The winked: %s" % winked)
+
+
+    trigger_resource = context.resource
+    print('***Function triggered by change to: %s' % trigger_resource)
+
+    # See if the it's a wink back (2 way wink)
+    # Check if /winks/{winker}/people_who_winked/{winked} exists
+    doc_ref = db.collection('winks').document(winker).collection('people_who_winked').document(winked)
+    doc = doc_ref.get()
+    if doc.exists:
+        #Two way wink
+        # Tell the 'winked' that 'winker' winked back
+        PushNotifications.winked_back(winked, winker)
+    else:
+        # One way wink
+        # One way wink: Send notification that someone winked at them
+        PushNotifications.winked_at(winked, winker)
+
+
+def listen_for_friend_requests(data, context):
+    """"
+          # Run this to deploy. Reads
+              gcloud functions deploy listen_for_friend_requests \
+            --runtime python38 \
+            --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+            --trigger-resource "projects/findamare/databases/(default)/documents/friends/{user}/requests/{requester}"
+              """
+
+    #from database.user import db
+    from database.notifications import PushNotifications
+
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    person_requested = path_parts[1]
+    requester = path_parts[3]
+
+    #When a friend request is sent, we should tell the user via push notification
+    PushNotifications.send_friend_request_to(person_requested, requester)
+
+
+
+
+
+
+def listen_for_accepted_requests(data, context):
+    """"
+              # Run this to deploy. Reads
+                  gcloud functions deploy listen_for_accepted_requests \
+                --runtime python38 \
+                --trigger-event "providers/cloud.firestore/eventTypes/document.update" \
+                --trigger-resource "projects/findamare/databases/(default)/documents/friends/{user}/requests/{requester}"
+                  """
+
+    from database.notifications import PushNotifications
+    from database.user import db
+    from datetime import datetime
+
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    collection_path = path_parts[0]
+    person_requested = path_parts[1]
+    requester = path_parts[3]
+
+    dataHere = data["value"]['fields']
+    didAccept = dataHere['accepted']['booleanValue']
+    print(f"The data is is {dataHere} and did accept: {didAccept}")
+
+    if didAccept:
+        db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now()})
+        db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now()})
+        PushNotifications.acceptFriendRequestFrom(requester, person_requested)
+
+
+def listen_for_removed_friend(data, context):
+    """"
+      # Run this to deploy. Reads
+          gcloud functions deploy listen_for_removed_friend \
+        --runtime python37 \
+        --trigger-event "providers/cloud.firestore/eventTypes/document.delete" \
+        --trigger-resource "projects/findamare/databases/(default)/documents/friends/{A}/myFriends/{B}"
+          """
+
+    # Let user 'A' remove user 'B' as a friend using mobile app.
+    # If 'A' removes 'B' as a friend. (Trigger) /friends/A/myFriends/B (detect a deletion)
+        # WE should 1. remove 'A' from 'B' and 2. remove friend requests from both (in case they exist)
+
+    from database.user import db
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    user_A = path_parts[1]
+    user_B = path_parts[3]
+
+    print(f"Should be deleting {user_A} from {user_B} friend list and 2-way friend request")
+    db.collection("friends").document(user_B).collection("myFriends").document(user_A).delete()
+    db.collection("friends").document(user_A).collection("requests").document(user_B).delete()
+    db.collection("friends").document(user_B).collection("requests").document(user_A).delete()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def listen_for_deleted_user(data, context):
@@ -520,7 +788,7 @@ def listen_for_deleted_user(data, context):
       """
 
     import analytics.app_data as analytics
-    from analytics.app_data import  less_user
+    from analytics.app_data import less_user
 
     less_user()
 

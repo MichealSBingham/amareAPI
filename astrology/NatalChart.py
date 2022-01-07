@@ -8,6 +8,15 @@ from flatlib import aspects
 from flatlib import angle
 from flatlib.object import Object as Obj
 
+
+
+
+
+
+
+
+
+
 """
 Example Usage of Planet Obj : 
 planet = user.sun # Object from flatlib 
@@ -17,6 +26,8 @@ planet.signlon // returns '28.8120704...' Int representation of angle.
 planet.movement() // returns 'Direct' or 'Retrograde'
 planet.isRetrograde() // returns True or False if planet is in Retrograde 
 """
+
+### ******************************* Utility Functions for building a Natal Chart Dict for API response *******************************
 
 #Converts Object (flatlib.object) [planet] to a dictionary. Orb decides on a cusp
 def planetToDict(planet, set_orb=3):
@@ -90,6 +101,90 @@ def angleToDic(angle, set_orb=3):
                            v is not None and v != '' and (v != {}) and (v != [])}
     return cleaned_angle_data
 
+def angleToDic(angle, set_orb=3):
+
+    sign = angle.sign
+    element = getElementFromSign(sign)
+    measured_angle = angle.signlon
+    cusp_sign = isOnCuspOf(angle, set_orb)
+    cusp_element = getElementFromSign(cusp_sign)
+
+    if cusp_sign is not None:
+        almost = {"cusp_sign": cusp_sign, "cusp_element": cusp_element}
+        is_on_cusp = True
+    else:
+        is_on_cusp = False
+        almost = None
+
+
+
+    angle_data  = {
+
+        "sign": sign,
+        "element": element,
+        "angle": measured_angle,
+        "is_on_cusp": is_on_cusp,
+        "almost": almost
+
+    }
+
+    cleaned_angle_data = {k: v for k, v in angle_data.items() if
+                           v is not None and v != '' and (v != {}) and (v != [])}
+    return cleaned_angle_data
+
+def aspectToDict(detailed_aspect):
+    a = detailed_aspect
+    
+    
+    info = { 
+        "type": a.type, #TRINE, etc
+        "isMutual": a.isMutual,  # Bool
+        "mutualMovement": a.mutualMovement, # Bool
+        "orb":  a.orb,  # Double, degress as double
+        "first": a.first.id, #first planet
+        "second": a.second.id,
+        "interpretation": a.interpretation()}
+    
+    
+    cleaned_info = {k: v for k, v in info.items() if v is not None and v != '' and (v != {}) and (v != [])}
+
+    
+    return cleaned_info
+
+#Bodies --> planet or angle 
+def houseToDict(house, bodies):
+    sign = house.sign # Sign the house begins in 
+    angle = house.signlon  #Float value of angle it is in the sign ex: Virgo 22.45543
+    size = house.size # Size of the house in degrees 
+    condition = house.condition()
+    #gender = house.gender()
+    ruling_bodies = []
+    for body in bodies: 
+        if house.hasObject(body):
+            ruling_bodies.append(body.id)
+
+    house_data = {
+
+        "sign": sign, 
+        "angle": angle, 
+        "size": size, 
+        "condition": condition, 
+      #  "gender": gender,  causes an error in 9th house for me at least, mine is in libra
+        "contains": ruling_bodies
+
+    }
+
+    cleaned_house_data = {k: v for k, v in house_data.items() if
+                             v is not None and v != '' and (v != {}) and (v != [])}
+
+    return cleaned_house_data
+
+
+
+
+
+
+## ******************************* End of Utility Functions  *******************************
 
 """
 // Aspects 
@@ -115,6 +210,12 @@ aspect.type // 120 , returns Int of degrees the aspect is ...>
 # IF YOU PASS A regular datetime like datetime.now() IT WILL NOT COMPUTE PROPER NATAL CHART
 # BECAUSE when it converts it to flatlib.Datetime it will assume UTC time and not return proper date
 def get_natal_chart(date, birth_location):
+    import swisseph as swe
+    import os
+    # Have to add proper file to proper path so that it can read the astrology data
+    path = os.path.dirname(flatlib.__file__)
+    new_path = os.path.join(path, 'resources', 'swefiles')
+    swe.set_ephe_path(new_path)
 
     lat, lon = birth_location.coordinates()
     if ( date is None ) or (birth_location is None):
@@ -214,6 +315,13 @@ def getElement(planet, set_orb=3):
         return getElementFromSign(sign) + '(' + getElementFromSign(cusp_sign) + ')'
 
 def getElementFromSign(sign):
+    """
+    Returns the Element of a particular sign
+    :param sign: The sign of the element. E.g. 'Cancer', 'Scorpio'
+    :type sign: str
+    :return: Element of the sign. 'Fire', 'Air', 'Earth', or 'Water'
+    :rtype: str
+    """
     if sign == 'Aries':
         return 'Fire'
     if sign == 'Taurus':
@@ -692,6 +800,7 @@ class DetailedAspect:
         return description
 
 
+
 # reads interpretation from cvs file
     def interpretation(self):
         # Load the csv file
@@ -738,7 +847,7 @@ class Aspects:
 
     def __str__(self):
         s = ""
-        for aspect in self.all:
+        for aspect in self.list:
             s += "\n" + aspect.__str__()
 
         return s
@@ -749,6 +858,8 @@ class Aspects:
     def __iter__(self):
         return (x for x in self.list)
 
+    def sort(self):
+        self.list = sorted(self.valid().list, key=lambda x: x.orb, reverse=False)
     ## Gets a particular aspect, example: Mars/Venus aspect --> get('Mars', 'Venus')
     def get(self, planet1, planet2):
         for aspect in self.list:
