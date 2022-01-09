@@ -513,6 +513,9 @@ def listen_for_new_user(data, context):
     from database.user import db
     from database.Location import Location
     import iso8601
+    from icecream import ic
+
+
 
     path_parts = context.resource.split('/documents/')[1].split('/')
     collection_path = path_parts[0]
@@ -553,8 +556,57 @@ def listen_for_new_user(data, context):
         except Exception as error:
             print(f"This data does not exist in the database yet or some error:  {error}")
 
+    if 'sex' in dataHere:
+
+        try:
+
+           old_sex = dataHere
+
+            if True:    #the sex changed so we should decrment the old one and increment new one
+
+                if old_sex == "male":
+                    analytics.less_male()
+                elif old_sex == 'female':
+                    analytics.less_female()
+                elif old_sex == 'transfemale':
+                    analytics.less_trans_female()
+                elif old_sex == 'transmale':
+                    analytics.less_trans_male()
+                elif old_sex == 'non-binary':
+                    analytics.less_non_binary()
+                else:
+                    pass
+
+                if new_sex == "male":
+                    analytics.new_male()
+                elif new_sex == 'female':
+                    analytics.new_female()
+                elif new_sex == 'transfemale':
+                    analytics.new_trans_female()
+                elif new_sex == 'transmale':
+                    analytics.new_trans_male()
+                elif new_sex == 'non-binary':
+                    analytics.new_non_binary()
+                else:
+                    pass
+
+        except:
+            # No old value found for sex so it's probably newly created
+            if new_sex == "male":
+                analytics.new_male()
+            elif new_sex == 'female':
+                analytics.new_female()
+            elif new_sex == 'transfemale':
+                analytics.new_trans_female()
+            elif new_sex == 'transmale':
+                analytics.new_trans_male()
+            elif new_sex == 'non-binary':
+                analytics.new_non_binary()
+            else:
+                pass
+
     else:  #Update analytics because this is probably a new user
-        new_user()
+        pass
 
 """"
     #updated_attributes = data["updateMask"][
