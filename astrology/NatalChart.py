@@ -448,6 +448,9 @@ class DetailedAspect:
         return angleBetween(p1, p2)
 
 
+
+
+
     def __aspectTypeString__(self):
         if self.active_planet_owner is None or self.passive_planet_owner is None:
             return ""
@@ -861,6 +864,7 @@ class Aspects:
     def sort(self):
         self.list = sorted(self.valid().list, key=lambda x: x.orb, reverse=False)
     ## Gets a particular aspect, example: Mars/Venus aspect --> get('Mars', 'Venus')
+    ##TODO: confirm , I think planet 1 is the outer chart's planet. (self) object
     def get(self, planet1, planet2):
         for aspect in self.list:
             if aspect.first.id == planet1:
@@ -956,6 +960,14 @@ class Aspects:
 
     def quincunxes(self):
         return Aspects(get_aspects_of_type(self.list, 'QUINCUNX'))
+
+    def toDict(self):
+        aspectDic = {}
+        if self != None:
+            for aspect in self:
+                id = f"{aspect.name[0]} {aspect.name[1]}"
+                aspectDic[id] = aspectToDict(aspect)
+        return aspectDic
 
 
 

@@ -701,10 +701,6 @@ def listen_for_friend_requests(data, context):
     PushNotifications.send_friend_request_to(person_requested, requester)
 
 
-
-
-
-
 def listen_for_accepted_requests(data, context):
     """"
               # Run this to deploy. Reads
@@ -733,6 +729,37 @@ def listen_for_accepted_requests(data, context):
         PushNotifications.acceptFriendRequestFrom(requester, person_requested)
 
 
+
+def listen_for_added_friend_and_do_synastry(data, context):
+    #Should add synastry chart to database when a new friend is added
+    """"
+          # Run this to deploy. Reads
+              gcloud functions deploy listen_for_added_friend_and_do_synastry \
+            --runtime python38 \
+            --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+            --trigger-resource "projects/findamare/databases/(default)/documents/friends/{user1}/myFriends/{user2}"
+              """
+
+    from database.user import db
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    user1 = path_parts[1]
+    user2 = path_parts[3]
+
+    #Compute synastry both ways (with user1 as the inner chart and with user1 as the outer chart)
+
+    syn1 = user1.synastry(user2)
+    syn2 = user2.synastry(user1)
+    a1 = syn1.toDict() #aspects with user1 as the inner
+    a2 = syn2.toDict() #aspects with user2 as the inner
+
+    db.collection('synastry').document(user1).collection("outerChart").document(user2).set(a1)
+    db.collection('synastry').document(user2).collection("outerChart").document(user1).set(a2)
+
+
+    pass
+
+
+#TODO: delete synastries too
 def listen_for_removed_friend(data, context):
     """"
       # Run this to deploy. Reads
@@ -755,6 +782,7 @@ def listen_for_removed_friend(data, context):
     db.collection("friends").document(user_B).collection("myFriends").document(user_A).delete()
     db.collection("friends").document(user_A).collection("requests").document(user_B).delete()
     db.collection("friends").document(user_B).collection("requests").document(user_A).delete()
+
 
 
 
