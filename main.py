@@ -573,6 +573,7 @@ def listen_for_new_user(data, context):
     """
 
 
+#TODO: Check for part of fortune in the aspescts and synastry stuff too
 def listen_for_new_natal_chart(data, context):
     # Triggered when a new natal chart has been added to the database
     # Should add the user to the indexes of each aspect ; e.g -- if they're a sun in scorpio, add them to it, etc
@@ -630,6 +631,21 @@ def listen_for_new_natal_chart(data, context):
             'is_retrograde': is_retrograde,
             'is_notable': is_notable
         })
+
+
+    #Saving all synastry aspects globally like above
+    #       WARNING-- first/second == second/first but will not always filter. - Micheal
+    aspects = natal_dict['aspects']
+    for aspect in aspects:
+        first = aspect['first']
+        second = aspect['second']
+        name = aspect['name']
+        type = aspect['type']
+
+        #Add synastry to this database index
+        db.collection(f'aspects').document(f'{name}').collection(f'{type}').document(id).set(aspect)
+
+
 
 
 
@@ -759,6 +775,9 @@ def listen_for_added_friend_and_do_synastry(data, context):
 
     db.collection('synastry').document(user1.id).collection("outerChart").document(user2.id).set({'aspects': a1})
     db.collection('synastry').document(user2.id).collection("outerChart").document(user1.id).set({'aspects': a2})
+
+
+    # TODO: Save all  synastry asepcts like you do placements
 
 
     pass
