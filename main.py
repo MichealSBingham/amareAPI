@@ -741,19 +741,24 @@ def listen_for_added_friend_and_do_synastry(data, context):
               """
 
     from database.user import db
+    from database.user import User
     path_parts = context.resource.split('/documents/')[1].split('/')
     user1 = path_parts[1]
     user2 = path_parts[3]
+
+    user1 = User(id=user1)
+    user2 = User(id=user2)
 
     #Compute synastry both ways (with user1 as the inner chart and with user1 as the outer chart)
 
     syn1 = user1.synastry(user2)
     syn2 = user2.synastry(user1)
-    a1 = syn1.toDict() #aspects with user1 as the inner
-    a2 = syn2.toDict() #aspects with user2 as the inner
+    a1 = syn1.toArray() #aspects with user1 as the inner
+    a2 = syn2.toArray() #aspects with user2 as the inner
 
-    db.collection('synastry').document(user1).collection("outerChart").document(user2).set(a1)
-    db.collection('synastry').document(user2).collection("outerChart").document(user1).set(a2)
+
+    db.collection('synastry').document(user1.id).collection("outerChart").document(user2.id).set({'aspects': a1})
+    db.collection('synastry').document(user2.id).collection("outerChart").document(user1.id).set({'aspects': a2})
 
 
     pass

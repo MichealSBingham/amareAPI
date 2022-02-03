@@ -969,6 +969,16 @@ class Aspects:
                 aspectDic[id] = aspectToDict(aspect)
         return aspectDic
 
+    def toArray(self):
+        dictOfObjects = self.toDict()
+        array = []
+        for obj_name in dictOfObjects:
+            this_object = dictOfObjects[obj_name]
+            this_object['name'] = obj_name
+            array.append(this_object)
+        return array
+
+
 
 
 
