@@ -625,7 +625,7 @@ def listen_for_new_natal_chart(data, context):
         is_notable = user.is_notable
 
         #Add placement to this database index
-        db.collection(f'placements').document(f'{planet_name}').collection(f'{sign}').document(id).set({
+        db.collection(f'all_placements').document(f'{planet_name}').collection(f'{sign}').document(id).set({
             'is_on_cusp': is_on_cusp,
             'angle': angle,
             'is_retrograde': is_retrograde,
@@ -643,7 +643,7 @@ def listen_for_new_natal_chart(data, context):
         type = aspect['type']
 
         #Add synastry to this database index
-        db.collection(f'aspects').document(f'{name}').collection(f'{type}').document(id).set(aspect)
+        db.collection(f'all_natal_aspects').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
 
 
 
@@ -778,9 +778,84 @@ def listen_for_added_friend_and_do_synastry(data, context):
 
 
     # TODO: Save all  synastry asepcts like you do placements
+    #TODO: Add (placement only by sign attribute) for the 'NO ASPECTS' that still are aspect by sign
+
+    # Saving all of their placements to my database . This is so that for example
+    # User1 and User2 just became friends, User2 is a Scorpio Mars... User 1 needs to know he has a scorpio mars friend in database so
+    # friends > user 1 > scorpio  > sun  (collection) > user2
+
+    from astrology.NatalChart import planetToDict, aspectToDict
+
+## adding user1's placements to user2's friends index
+    for planet in user1.planets():
+        planet_name = planet.id
+        planet = planetToDict(planet)
+        is_on_cusp = planet['is_on_cusp']
+        angle = planet['angle']
+        is_retrograde = planet['is_retrograde']
+        sign = planet['sign']
+
+        is_notable = user1.is_notable
+
+        #Add placement to this database index
+        db.collection(f'friends').document(f'{user2.id}').collection(f'{planet_name}').document('doc').collection(f'{sign}').document(user1.id).set({
+            'is_on_cusp': is_on_cusp,
+            'angle': angle,
+            'is_retrograde': is_retrograde,
+            'is_notable': is_notable
+        })
+
+    ## doing the same now for user 2
+    for planet in user2.planets():
+        planet_name = planet.id
+        planet = planetToDict(planet)
+        is_on_cusp = planet['is_on_cusp']
+        angle = planet['angle']
+        is_retrograde = planet['is_retrograde']
+        sign = planet['sign']
+
+        is_notable = user1.is_notable
+
+        # Add placement to this database index
+        db.collection(f'friends').document(f'{user1.id}').collection(f'{planet_name}').document('doc').collection(f'{sign}').document(
+            user2.id).set({
+            'is_on_cusp': is_on_cusp,
+            'angle': angle,
+            'is_retrograde': is_retrograde,
+            'is_notable': is_notable
+        })
 
 
-    pass
+
+
+    # Adding user 1's aspects to user 2's aspects index for their friends.
+    #example: if user 1 has a Mars Conjunct Sun. User 2 needs to know he has a Mars Conjunct Sun friend so we add that index there
+    #Basically user 2's friendlist is now sortable by aspect
+    for aspect in user1.aspects():
+        first_planet = aspect.first.id
+        second_planet = aspect.second.id
+        a = aspectToDict(aspect)
+
+        # Add placement to this database index
+        db.collection(f'friends').document(f'{user2.id}').collection(f'{planet_name}').document('doc').collection(
+            f'{second_planet}').document('doc').collection(f'{aspect.type}').document(user1.id).set(a)
+
+
+
+    # Now doing the same for the other user
+
+    for aspect in user2.aspects():
+        first_planet = aspect.first.id
+        second_planet = aspect.second.id
+        a = aspectToDict(aspect)
+
+        # Add placement to this database index
+        db.collection(f'friends').document(f'{user1.id}').collection(f'{planet_name}').document('doc').collection(
+            f'{second_planet}').document('doc').collection(f'{aspect.type}').document(user2.id).set(a)
+
+    
+
+
 
 
 #TODO: delete synastries too
