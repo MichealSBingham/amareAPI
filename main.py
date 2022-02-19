@@ -853,7 +853,7 @@ def listen_for_added_friend_and_do_synastry(data, context):
         db.collection(f'friends').document(f'{user1.id}').collection(f'{planet_name}').document('doc').collection(
             f'{second_planet}').document('doc').collection(f'{aspect.type}').document(user2.id).set(a)
 
-    
+
 
 
 
