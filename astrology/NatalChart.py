@@ -53,6 +53,12 @@ def planetToDict(planet, set_orb=3):
         is_on_cusp = False
         almost = None
 
+
+    try:
+        house = planet.house
+    except:
+        house = None
+
     planet_data = {
 
         "sign": sign,
@@ -61,7 +67,8 @@ def planetToDict(planet, set_orb=3):
         "speed": speed,
         "is_retrograde": is_retrograde,
         "is_on_cusp": is_on_cusp,
-        "almost": almost
+        "almost": almost,
+        "house": house
 
     }
 
@@ -69,7 +76,7 @@ def planetToDict(planet, set_orb=3):
                              v is not None and v != '' and (v != {}) and (v != [])}
 
     return cleaned_planet_data
-
+""""
 def angleToDic(angle, set_orb=3):
 
     sign = angle.sign
@@ -100,7 +107,7 @@ def angleToDic(angle, set_orb=3):
     cleaned_angle_data = {k: v for k, v in angle_data.items() if
                            v is not None and v != '' and (v != {}) and (v != [])}
     return cleaned_angle_data
-
+"""
 def angleToDic(angle, set_orb=3):
 
     sign = angle.sign
@@ -116,6 +123,10 @@ def angleToDic(angle, set_orb=3):
         is_on_cusp = False
         almost = None
 
+    try:
+        house = angle.house
+    except:
+        house = None
 
 
     angle_data  = {
@@ -124,7 +135,8 @@ def angleToDic(angle, set_orb=3):
         "element": element,
         "angle": measured_angle,
         "is_on_cusp": is_on_cusp,
-        "almost": almost
+        "almost": almost,
+        "house": house
 
     }
 
