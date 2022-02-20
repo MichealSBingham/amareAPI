@@ -750,6 +750,7 @@ def listen_for_accepted_requests(data, context):
     from database.notifications import PushNotifications
     from database.user import db
     from datetime import datetime
+    from database.user import User
 
     path_parts = context.resource.split('/documents/')[1].split('/')
     collection_path = path_parts[0]
@@ -759,10 +760,13 @@ def listen_for_accepted_requests(data, context):
     dataHere = data["value"]['fields']
     didAccept = dataHere['accepted']['booleanValue']
     print(f"The data is is {dataHere} and did accept: {didAccept}")
+    #
+    requesters_profile_image_url = dataHere['profile_image_url']['stringValue']
+    requested_person = User(id=person_requested)
 
     if didAccept:
-        db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now()})
-        db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now()})
+        db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url })
+        db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now(), "profile_image_url": requesters_profile_image_url})
         PushNotifications.acceptFriendRequestFrom(requester, person_requested)
 
 
