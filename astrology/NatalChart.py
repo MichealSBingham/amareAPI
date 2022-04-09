@@ -53,6 +53,12 @@ def planetToDict(planet, set_orb=3):
         is_on_cusp = False
         almost = None
 
+
+    try:
+        house = planet.house
+    except:
+        house = None
+
     planet_data = {
 
         "sign": sign,
@@ -61,7 +67,8 @@ def planetToDict(planet, set_orb=3):
         "speed": speed,
         "is_retrograde": is_retrograde,
         "is_on_cusp": is_on_cusp,
-        "almost": almost
+        "almost": almost,
+        "house": house
 
     }
 
@@ -69,7 +76,7 @@ def planetToDict(planet, set_orb=3):
                              v is not None and v != '' and (v != {}) and (v != [])}
 
     return cleaned_planet_data
-
+""""
 def angleToDic(angle, set_orb=3):
 
     sign = angle.sign
@@ -100,7 +107,7 @@ def angleToDic(angle, set_orb=3):
     cleaned_angle_data = {k: v for k, v in angle_data.items() if
                            v is not None and v != '' and (v != {}) and (v != [])}
     return cleaned_angle_data
-
+"""
 def angleToDic(angle, set_orb=3):
 
     sign = angle.sign
@@ -116,6 +123,10 @@ def angleToDic(angle, set_orb=3):
         is_on_cusp = False
         almost = None
 
+    try:
+        house = angle.house
+    except:
+        house = None
 
 
     angle_data  = {
@@ -124,7 +135,8 @@ def angleToDic(angle, set_orb=3):
         "element": element,
         "angle": measured_angle,
         "is_on_cusp": is_on_cusp,
-        "almost": almost
+        "almost": almost,
+        "house": house
 
     }
 
@@ -446,6 +458,9 @@ class DetailedAspect:
         p1 = self.first
         p2 = self.second
         return angleBetween(p1, p2)
+
+
+
 
 
     def __aspectTypeString__(self):
@@ -861,6 +876,7 @@ class Aspects:
     def sort(self):
         self.list = sorted(self.valid().list, key=lambda x: x.orb, reverse=False)
     ## Gets a particular aspect, example: Mars/Venus aspect --> get('Mars', 'Venus')
+    ##TODO: confirm , I think planet 1 is the outer chart's planet. (self) object
     def get(self, planet1, planet2):
         for aspect in self.list:
             if aspect.first.id == planet1:
@@ -956,6 +972,24 @@ class Aspects:
 
     def quincunxes(self):
         return Aspects(get_aspects_of_type(self.list, 'QUINCUNX'))
+
+    def toDict(self):
+        aspectDic = {}
+        if self != None:
+            for aspect in self:
+                id = f"{aspect.name[0]} {aspect.name[1]}"
+                aspectDic[id] = aspectToDict(aspect)
+        return aspectDic
+
+    def toArray(self):
+        dictOfObjects = self.toDict()
+        array = []
+        for obj_name in dictOfObjects:
+            this_object = dictOfObjects[obj_name]
+            this_object['name'] = obj_name
+            array.append(this_object)
+        return array
+
 
 
 

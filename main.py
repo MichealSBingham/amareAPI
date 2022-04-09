@@ -573,6 +573,7 @@ def listen_for_new_user(data, context):
     """
 
 
+#TODO: Check for part of fortune in the aspescts and synastry stuff too
 def listen_for_new_natal_chart(data, context):
     # Triggered when a new natal chart has been added to the database
     # Should add the user to the indexes of each aspect ; e.g -- if they're a sun in scorpio, add them to it, etc
@@ -613,7 +614,7 @@ def listen_for_new_natal_chart(data, context):
 
     user = User(id=id)
 
-    #TODO: Add house number to planet placement
+
     planets = natal_dict['planets']
     for planet in planets:
         is_on_cusp = planet['is_on_cusp']
@@ -622,14 +623,50 @@ def listen_for_new_natal_chart(data, context):
         sign = planet['sign']
         planet_name = planet['name']
         is_notable = user.is_notable
+        profile_image_url = user.profile_image_url
+        try:
+            house = planet['house']
+        except:
+            house = None
 
         #Add placement to this database index
-        db.collection(f'placements').document(f'{planet_name}').collection(f'{sign}').document(id).set({
+        db.collection(f'all_placements').document(f'{planet_name}').collection(f'{sign}').document(id).set({
             'is_on_cusp': is_on_cusp,
             'angle': angle,
             'is_retrograde': is_retrograde,
-            'is_notable': is_notable
+            'is_notable': is_notable,
+            'house': house,
+            'profile_image_url': profile_image_url
         })
+
+        if house is not None: #add to index of house placements (i.e. Mars in 5th House)
+            db.collection(f'all_placements').document(f'{planet_name}').collection(f'House{house}').document(id).set({
+                'is_on_cusp': is_on_cusp,
+                'angle': angle,
+                'is_retrograde': is_retrograde,
+                'is_notable': is_notable,
+                'house': house,
+                'profile_image_url': profile_image_url
+            })
+
+
+
+    #Saving all synastry aspects globally like above
+    #       WARNING-- first/second == second/first but will not always filter. - Micheal
+    aspects = natal_dict['aspects']
+
+    for aspect in aspects:
+        first = aspect['first']
+        second = aspect['second']
+        name = aspect['name']
+        type = aspect['type']
+        aspect['profile_image_url'] = user.profile_image_url
+
+
+        #Add synastry to this database index
+        db.collection(f'all_natal_aspects').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
+
+
 
 
 
@@ -700,11 +737,7 @@ def listen_for_friend_requests(data, context):
     #When a friend request is sent, we should tell the user via push notification
     PushNotifications.send_friend_request_to(person_requested, requester)
 
-
-
-
-
-
+#TODO: add images (profile)
 def listen_for_accepted_requests(data, context):
     """"
               # Run this to deploy. Reads
@@ -733,6 +766,162 @@ def listen_for_accepted_requests(data, context):
         PushNotifications.acceptFriendRequestFrom(requester, person_requested)
 
 
+
+def listen_for_added_friend_and_do_synastry(data, context):
+    #Should add synastry chart to database when a new friend is added
+    """"
+          # Run this to deploy. Reads
+              gcloud functions deploy listen_for_added_friend_and_do_synastry \
+            --runtime python38 \
+            --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+            --trigger-resource "projects/findamare/databases/(default)/documents/friends/{user1}/myFriends/{user2}"
+              """
+
+    from database.user import db
+    from database.user import User
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    user1 = path_parts[1]
+    user2 = path_parts[3]
+
+    user1 = User(id=user1)
+    user2 = User(id=user2)
+
+    #Compute synastry both ways (with user1 as the inner chart and with user1 as the outer chart)
+
+    syn1 = user1.synastry(user2)
+    syn2 = user2.synastry(user1)
+    a1 = syn1.toArray() #aspects with user1 as the inner
+    a2 = syn2.toArray() #aspects with user2 as the inner
+
+
+    db.collection('synastry').document(user1.id).collection("outerChart").document(user2.id).set({'aspects': a1})
+    db.collection('synastry').document(user2.id).collection("outerChart").document(user1.id).set({'aspects': a2})
+
+
+    # TODO: Save all  synastry asepcts like you do placements
+    #TODO: Add (placement only by sign attribute) for the 'NO ASPECTS' that still are aspect by sign
+
+    # Saving all of their placements to my database . This is so that for example
+    # User1 and User2 just became friends, User2 is a Scorpio Mars... User 1 needs to know he has a scorpio mars friend in database so
+    # friends > user 1 > scorpio  > sun  (collection) > user2
+
+    from astrology.NatalChart import planetToDict, aspectToDict
+
+## adding user1's placements to user2's friends index
+    for planet in user1.planets():
+        planet_name = planet.id
+        planet = planetToDict(planet)
+        is_on_cusp = planet['is_on_cusp']
+        angle = planet['angle']
+        is_retrograde = planet['is_retrograde']
+        sign = planet['sign']
+
+        is_notable = user1.is_notable
+        try:
+            house = planet['house']
+        except:
+            house = None
+
+        #Add placement to this friends database index
+        db.collection(f'friends').document(f'{user2.id}').collection(f'{planet_name}').document('doc').collection(f'{sign}').document(user1.id).set({
+            'is_on_cusp': is_on_cusp,
+            'angle': angle,
+            'is_retrograde': is_retrograde,
+            'is_notable': is_notable,
+            'house': house,
+            'profile_image_url': user1.profile_image_url
+        })
+
+        #Now add house placements to friends database index
+        if house is not None:
+            db.collection(f'friends').document(f'{user2.id}').collection(f'{planet_name}').document('doc').collection(
+                f'House{house}').document(user1.id).set({
+                'is_on_cusp': is_on_cusp,
+                'angle': angle,
+                'is_retrograde': is_retrograde,
+                'is_notable': is_notable,
+                'house': house,
+                'profile_image_url': user1.profile_image_url
+            })
+
+
+
+    ## doing the same now for user 2
+    for planet in user2.planets():
+        planet_name = planet.id
+        planet = planetToDict(planet)
+        is_on_cusp = planet['is_on_cusp']
+        angle = planet['angle']
+        is_retrograde = planet['is_retrograde']
+        sign = planet['sign']
+
+        is_notable = user1.is_notable
+
+        try:
+            house = planet['house']
+        except:
+            house = None
+
+        # Add placement to this database index
+        db.collection(f'friends').document(f'{user1.id}').collection(f'{planet_name}').document('doc').collection(f'{sign}').document(
+            user2.id).set({
+            'is_on_cusp': is_on_cusp,
+            'angle': angle,
+            'is_retrograde': is_retrograde,
+            'is_notable': is_notable,
+            'house': house,
+            'profile_image_url': user2.profile_image_url
+        })
+
+        #Now add house placements to their friends index
+        if house is not None:
+            db.collection(f'friends').document(f'{user1.id}').collection(f'{planet_name}').document('doc').collection(
+                f'House{house}').document(user2.id).set({
+                'is_on_cusp': is_on_cusp,
+                'angle': angle,
+                'is_retrograde': is_retrograde,
+                'is_notable': is_notable,
+                'house': house,
+                'profile_image_url': user2.profile_image_url
+            })
+
+
+
+
+
+    # Adding user 1's aspects to user 2's aspects index for their friends.
+    #example: if user 1 has a Mars Conjunct Sun. User 2 needs to know he has a Mars Conjunct Sun friend so we add that index there
+    #Basically user 2's friendlist is now sortable by aspect
+    for aspect in user1.aspects():
+        first_planet = aspect.first.id
+        second_planet = aspect.second.id
+        a = aspectToDict(aspect)
+        a['profile_image_url'] =  user1.profile_image_url
+
+        # Add placement to this database index
+        db.collection(f'friends').document(f'{user2.id}').collection(f'{planet_name}').document('doc').collection(
+            f'{second_planet}').document('doc').collection(f'{aspect.type}').document(user1.id).set(a)
+
+
+
+    # Now doing the same for the other user
+
+    for aspect in user2.aspects():
+        first_planet = aspect.first.id
+        second_planet = aspect.second.id
+        a = aspectToDict(aspect)
+        a['profile_image_url'] = user2.profile_image_url
+
+        # Add placement to this database index
+        db.collection(f'friends').document(f'{user1.id}').collection(f'{planet_name}').document('doc').collection(
+            f'{second_planet}').document('doc').collection(f'{aspect.type}').document(user2.id).set(a)
+
+
+
+
+
+
+#TODO: delete synastries too
 def listen_for_removed_friend(data, context):
     """"
       # Run this to deploy. Reads
@@ -755,6 +944,7 @@ def listen_for_removed_friend(data, context):
     db.collection("friends").document(user_B).collection("myFriends").document(user_A).delete()
     db.collection("friends").document(user_A).collection("requests").document(user_B).delete()
     db.collection("friends").document(user_B).collection("requests").document(user_A).delete()
+
 
 
 
