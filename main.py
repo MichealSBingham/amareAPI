@@ -835,7 +835,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
             'is_retrograde': is_retrograde,
             'is_notable': is_notable,
             'house': house,
-            'profile_image_url': user1.profile_image_url
+            'profile_image_url': user1.profile_image_url,
+            'name': user1.name
         })
 
         #Now add house placements to friends database index
@@ -847,7 +848,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
                 'is_retrograde': is_retrograde,
                 'is_notable': is_notable,
                 'house': house,
-                'profile_image_url': user1.profile_image_url
+                'profile_image_url': user1.profile_image_url,
+                'name': user1.name
             })
 
 
@@ -876,7 +878,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
             'is_retrograde': is_retrograde,
             'is_notable': is_notable,
             'house': house,
-            'profile_image_url': user2.profile_image_url
+            'profile_image_url': user2.profile_image_url,
+            'name': user2.name
         })
 
         #Now add house placements to their friends index
@@ -888,7 +891,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
                 'is_retrograde': is_retrograde,
                 'is_notable': is_notable,
                 'house': house,
-                'profile_image_url': user2.profile_image_url
+                'profile_image_url': user2.profile_image_url,
+                'name': user2.name
             })
 
 
@@ -903,6 +907,7 @@ def listen_for_added_friend_and_do_synastry(data, context):
         second_planet = aspect.second.id
         a = aspectToDict(aspect)
         a['profile_image_url'] =  user1.profile_image_url
+        a['name'] = user1.name
 
         # Add placement to this database index
         db.collection(f'friends').document(f'{user2.id}').collection(f'{planet_name}').document('doc').collection(
@@ -917,6 +922,7 @@ def listen_for_added_friend_and_do_synastry(data, context):
         second_planet = aspect.second.id
         a = aspectToDict(aspect)
         a['profile_image_url'] = user2.profile_image_url
+        a['name'] = user2.name
 
         # Add placement to this database index
         db.collection(f'friends').document(f'{user1.id}').collection(f'{planet_name}').document('doc').collection(
