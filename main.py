@@ -479,7 +479,7 @@ def monitor_user_data(data, context):
             lon = user_data['fields']['hometown']['mapValue']['fields']['longitude']['doubleValue']
             location = Location(latitude=lat, longitude=lon)
 
-
+            isNotable = user_data['fields']['isNotable']['booleanValue']
             bday = user_data['fields']['birthday']['mapValue']['fields']['timestamp']['timestampValue']
             date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
             try:
@@ -491,7 +491,8 @@ def monitor_user_data(data, context):
                         do_not_fetch=True,
                         hometown=location,
                         birthday=date,
-                        known_time=known_time
+                        known_time=known_time,
+                        is_notable=isNotable
                         )
             # Set it in database now
             user.set_natal_chart()
@@ -536,6 +537,7 @@ def listen_for_new_user(data, context):
 
             bday = dataHere['birthday']['mapValue']['fields']['timestamp']['timestampValue']
             date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
+            isNotable = dataHere['isNotable']['booleanValue']
             try:
                 known_time = dataHere['known_time']['booleanValue']
             except:
@@ -545,7 +547,8 @@ def listen_for_new_user(data, context):
                         do_not_fetch=True,
                         hometown=location,
                         birthday=date,
-                        known_time=known_time
+                        known_time=known_time,
+                        is_notable=isNotable
                         )
             # Set it in database now
             user.set_natal_chart()
@@ -636,7 +639,8 @@ def listen_for_new_natal_chart(data, context):
             'is_retrograde': is_retrograde,
             'is_notable': is_notable,
             'house': house,
-            'profile_image_url': profile_image_url
+            'profile_image_url': profile_image_url,
+            'name': user.name
         })
 
         if house is not None: #add to index of house placements (i.e. Mars in 5th House)
@@ -646,7 +650,8 @@ def listen_for_new_natal_chart(data, context):
                 'is_retrograde': is_retrograde,
                 'is_notable': is_notable,
                 'house': house,
-                'profile_image_url': profile_image_url
+                'profile_image_url': profile_image_url,
+                'name': user.name
             })
 
 
@@ -661,6 +666,7 @@ def listen_for_new_natal_chart(data, context):
         name = aspect['name']
         type = aspect['type']
         aspect['profile_image_url'] = user.profile_image_url
+        aspect['name_belongs_to'] = user.name
 
 
         #Add synastry to this database index
