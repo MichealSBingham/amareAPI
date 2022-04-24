@@ -760,14 +760,15 @@ def listen_for_accepted_requests(data, context):
     dataHere = data["value"]['fields']
     didAccept = dataHere['accepted']['booleanValue']
     isNotable_requester = dataHere['isNotable']['booleanValue']
+    requesters_name = dataHere['name']['stringValue']
     print(f"The data is is {dataHere} and did accept: {didAccept}")
     #
     requesters_profile_image_url = dataHere['profile_image_url']['stringValue']
     requested_person = User(id=person_requested)
 
     if didAccept:
-        db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable})
-        db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now(), "profile_image_url": requesters_profile_image_url, "isNotable": isNotable_requester})
+        db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})
+        db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now(), "profile_image_url": requesters_profile_image_url, "isNotable": isNotable_requester, "name": requesters_name})
         PushNotifications.acceptFriendRequestFrom(requester, person_requested)
 
 
