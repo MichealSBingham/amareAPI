@@ -552,6 +552,11 @@ class User:
             natal_chart_dict['angles'] = []
             natal_chart_dict['houses'] = []
 
+        if self.is_notable:
+            natal_chart_dict['isNotable'] = True
+        else:
+            natal_chart_dict['isNotable'] = False
+
         if real_user:
             self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
         else:
