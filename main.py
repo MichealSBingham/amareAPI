@@ -479,6 +479,8 @@ def monitor_user_data(data, context):
             lon = user_data['fields']['hometown']['mapValue']['fields']['longitude']['doubleValue']
             location = Location(latitude=lat, longitude=lon)
 
+            isReal = user_data['fields']['isReal']['booleanValue']
+
             isNotable = user_data['fields']['isNotable']['booleanValue']
             bday = user_data['fields']['birthday']['mapValue']['fields']['timestamp']['timestampValue']
             date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
@@ -492,7 +494,8 @@ def monitor_user_data(data, context):
                         hometown=location,
                         birthday=date,
                         known_time=known_time,
-                        is_notable=isNotable
+                        is_notable=isNotable,
+                        isReal=isReal
                         )
             # Set it in database now
             user.set_natal_chart()
@@ -538,6 +541,8 @@ def listen_for_new_user(data, context):
             bday = dataHere['birthday']['mapValue']['fields']['timestamp']['timestampValue']
             date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
             isNotable = dataHere['isNotable']['booleanValue']
+            isReal = dataHere['isReal']['booleanValue']
+
             try:
                 known_time = dataHere['known_time']['booleanValue']
             except:
@@ -548,7 +553,8 @@ def listen_for_new_user(data, context):
                         hometown=location,
                         birthday=date,
                         known_time=known_time,
-                        is_notable=isNotable
+                        is_notable=isNotable,
+                        isReal=isReal
                         )
             # Set it in database now
             user.set_natal_chart()
@@ -640,7 +646,8 @@ def listen_for_new_natal_chart(data, context):
             'is_notable': is_notable,
             'house': house,
             'profile_image_url': profile_image_url,
-            'name': user.name
+            'name': user.name,
+            'isReal': user.isReal
         })
 
         if house is not None: #add to index of house placements (i.e. Mars in 5th House)
@@ -651,7 +658,8 @@ def listen_for_new_natal_chart(data, context):
                 'is_notable': is_notable,
                 'house': house,
                 'profile_image_url': profile_image_url,
-                'name': user.name
+                'name': user.name,
+                'isReal': user.isReal
             })
 
 
@@ -667,6 +675,7 @@ def listen_for_new_natal_chart(data, context):
         type = aspect['type']
         aspect['profile_image_url'] = user.profile_image_url
         aspect['name_belongs_to'] = user.name
+        aspect['isReal'] = user.isReal
 
 
         #Add synastry to this database index
@@ -914,6 +923,7 @@ def listen_for_added_friend_and_do_synastry(data, context):
         a = aspectToDict(aspect)
         a['profile_image_url'] =  user1.profile_image_url
         a['name'] = user1.name
+        a['isReal'] = user1.isReal
 
         # Add placement to this database index
         db.collection(f'friends').document(f'{user2.id}').collection(f'{planet_name}').document('doc').collection(
@@ -929,6 +939,7 @@ def listen_for_added_friend_and_do_synastry(data, context):
         a = aspectToDict(aspect)
         a['profile_image_url'] = user2.profile_image_url
         a['name'] = user2.name
+        a['isReal'] = user2.isReal
 
         # Add placement to this database index
         db.collection(f'friends').document(f'{user1.id}').collection(f'{planet_name}').document('doc').collection(

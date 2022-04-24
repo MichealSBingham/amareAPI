@@ -34,6 +34,7 @@ class User:
                            exists = False,
                            known_time=False,
                            is_notable = False,
+                          isReal = True,
                         do_not_fetch=False # If true, data will not be fetched from database even if you provide ID (to prevent a read)
                            ):
 
@@ -63,6 +64,7 @@ class User:
             self.orientation = self.__data.get('orientation')
             self.known_time = self.__data.get('known_time', False)
             self.is_notable = self.__data.get('isNotable')
+            self.isReal = self.__data.get('isReal', True)
 
             location = Location(info_dict=self.__data.get('hometown', {}))
             if location.info_dict == {} or location.info_dict is None:
@@ -94,6 +96,7 @@ class User:
             self.known_time = known_time
             self.username = username
             self.is_notable = is_notable
+            self.isReal = isReal
 
 
 
@@ -557,11 +560,15 @@ class User:
         else:
             natal_chart_dict['isNotable'] = False
 
-        if real_user:
-            self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
+        if self.isReal:
+            natal_chart_dict['isReal'] = True
         else:
-            self.generated_users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
+            natal_chart_dict['isReal'] = False
 
+        #if real_user:
+        #    self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
+       # else:
+       #     self.generated_users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
 
     def balanceOfElements(self):
         """
