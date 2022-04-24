@@ -565,6 +565,9 @@ class User:
         else:
             natal_chart_dict['isReal'] = False
 
+        self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
+
+
         #if real_user:
         #    self.users_ref.document(self.id).collection('public').document('natal_chart').set(natal_chart_dict, merge=True)
        # else:
