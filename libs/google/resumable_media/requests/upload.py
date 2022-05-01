@@ -20,7 +20,6 @@ uploads that contain both metadata and a small file as payload.
 
 
 from google.resumable_media import _upload
-from google.resumable_media import _helpers
 from google.resumable_media.requests import _request_helpers
 
 
@@ -80,7 +79,7 @@ class SimpleUpload(_request_helpers.RequestsMixin, _upload.SimpleUpload):
 
             return result
 
-        return _helpers.wait_and_retry(
+        return _request_helpers.wait_and_retry(
             retriable_request, self._get_status_code, self._retry_strategy
         )
 
@@ -151,7 +150,7 @@ class MultipartUpload(_request_helpers.RequestsMixin, _upload.MultipartUpload):
 
             return result
 
-        return _helpers.wait_and_retry(
+        return _request_helpers.wait_and_retry(
             retriable_request, self._get_status_code, self._retry_strategy
         )
 
@@ -418,7 +417,7 @@ class ResumableUpload(_request_helpers.RequestsMixin, _upload.ResumableUpload):
 
             return result
 
-        return _helpers.wait_and_retry(
+        return _request_helpers.wait_and_retry(
             retriable_request, self._get_status_code, self._retry_strategy
         )
 
@@ -509,11 +508,11 @@ class ResumableUpload(_request_helpers.RequestsMixin, _upload.ResumableUpload):
                 method, url, data=payload, headers=headers, timeout=timeout
             )
 
-            self._process_response(result, len(payload))
+            self._process_resumable_response(result, len(payload))
 
             return result
 
-        return _helpers.wait_and_retry(
+        return _request_helpers.wait_and_retry(
             retriable_request, self._get_status_code, self._retry_strategy
         )
 
@@ -552,6 +551,6 @@ class ResumableUpload(_request_helpers.RequestsMixin, _upload.ResumableUpload):
 
             return result
 
-        return _helpers.wait_and_retry(
+        return _request_helpers.wait_and_retry(
             retriable_request, self._get_status_code, self._retry_strategy
         )

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ __protobuf__ = proto.module(
 class LocationMetadata(proto.Message):
     r"""The metadata message for
     [google.cloud.location.Location.metadata][google.cloud.location.Location.metadata].
-        """
+
+    """
 
 
 __all__ = tuple(sorted(__protobuf__.manifest))

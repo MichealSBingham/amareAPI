@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ __protobuf__ = proto.module(
 
 class StructuredQuery(proto.Message):
     r"""A Firestore query.
+
     Attributes:
         select (google.cloud.firestore_v1.types.StructuredQuery.Projection):
             The projection to return.
@@ -77,6 +78,7 @@ class StructuredQuery(proto.Message):
 
     class CollectionSelector(proto.Message):
         r"""A selection of a collection, such as ``messages as m1``.
+
         Attributes:
             collection_id (str):
                 The collection ID.
@@ -93,13 +95,27 @@ class StructuredQuery(proto.Message):
 
     class Filter(proto.Message):
         r"""A filter.
+
+        This message has `oneof`_ fields (mutually exclusive fields).
+        For each oneof, at most one member field can be set at the same time.
+        Setting any member of the oneof automatically clears all other
+        members.
+
+        .. _oneof: https://proto-plus-python.readthedocs.io/en/stable/fields.html#oneofs-mutually-exclusive-fields
+
         Attributes:
             composite_filter (google.cloud.firestore_v1.types.StructuredQuery.CompositeFilter):
                 A composite filter.
+
+                This field is a member of `oneof`_ ``filter_type``.
             field_filter (google.cloud.firestore_v1.types.StructuredQuery.FieldFilter):
                 A filter on a document field.
+
+                This field is a member of `oneof`_ ``filter_type``.
             unary_filter (google.cloud.firestore_v1.types.StructuredQuery.UnaryFilter):
                 A filter that takes exactly one argument.
+
+                This field is a member of `oneof`_ ``filter_type``.
         """
 
         composite_filter = proto.Field(
@@ -147,6 +163,7 @@ class StructuredQuery(proto.Message):
 
     class FieldFilter(proto.Message):
         r"""A filter on a specific field.
+
         Attributes:
             field (google.cloud.firestore_v1.types.StructuredQuery.FieldReference):
                 The field to filter by.
@@ -180,11 +197,16 @@ class StructuredQuery(proto.Message):
 
     class UnaryFilter(proto.Message):
         r"""A filter with a single operand.
+
+        .. _oneof: https://proto-plus-python.readthedocs.io/en/stable/fields.html#oneofs-mutually-exclusive-fields
+
         Attributes:
             op (google.cloud.firestore_v1.types.StructuredQuery.UnaryFilter.Operator):
                 The unary operator to apply.
             field (google.cloud.firestore_v1.types.StructuredQuery.FieldReference):
                 The field to which to apply the operator.
+
+                This field is a member of `oneof`_ ``operand_type``.
         """
 
         class Operator(proto.Enum):
@@ -207,6 +229,7 @@ class StructuredQuery(proto.Message):
 
     class Order(proto.Message):
         r"""An order on a field.
+
         Attributes:
             field (google.cloud.firestore_v1.types.StructuredQuery.FieldReference):
                 The field to order by.
@@ -221,6 +244,7 @@ class StructuredQuery(proto.Message):
 
     class FieldReference(proto.Message):
         r"""A reference to a field, such as ``max(messages.time) as max_time``.
+
         Attributes:
             field_path (str):
 
@@ -230,6 +254,7 @@ class StructuredQuery(proto.Message):
 
     class Projection(proto.Message):
         r"""The projection of document's fields to return.
+
         Attributes:
             fields (Sequence[google.cloud.firestore_v1.types.StructuredQuery.FieldReference]):
                 The fields to return.
@@ -254,6 +279,7 @@ class StructuredQuery(proto.Message):
 
 class Cursor(proto.Message):
     r"""A position in a query result set.
+
     Attributes:
         values (Sequence[google.cloud.firestore_v1.types.Value]):
             The values that represent a position, in the

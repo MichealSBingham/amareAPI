@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ class Field(proto.Message):
 
     Attributes:
         name (str):
-            A field name of the form
+            Required. A field name of the form
             ``projects/{project_id}/databases/{database_id}/collectionGroups/{collection_id}/fields/{field_path}``
 
             A field path may be a simple field name, e.g. ``address`` or
@@ -62,6 +62,7 @@ class Field(proto.Message):
 
     class IndexConfig(proto.Message):
         r"""The index configuration for this field.
+
         Attributes:
             indexes (Sequence[google.cloud.firestore_admin_v1.types.Index]):
                 The indexes supported for this field.

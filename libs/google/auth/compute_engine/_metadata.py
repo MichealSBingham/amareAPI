@@ -18,11 +18,13 @@ See https://cloud.google.com/compute/docs/metadata for more details.
 """
 
 import datetime
-import http.client
 import json
 import logging
 import os
-from urllib import parse as urlparse
+
+import six
+from six.moves import http_client
+from six.moves.urllib import parse as urlparse
 
 from google.auth import _helpers
 from google.auth import environment_vars
@@ -89,7 +91,7 @@ def ping(request, timeout=_METADATA_DEFAULT_TIMEOUT, retry_count=3):
 
             metadata_flavor = response.headers.get(_METADATA_FLAVOR_HEADER)
             return (
-                response.status == http.client.OK
+                response.status == http_client.OK
                 and metadata_flavor == _METADATA_FLAVOR_VALUE
             )
 
@@ -159,26 +161,26 @@ def get(
             retries += 1
     else:
         raise exceptions.TransportError(
-            "Failed to retrieve {} from the Google Compute Engine"
+            "Failed to retrieve {} from the Google Compute Engine "
             "metadata service. Compute Engine Metadata server unavailable".format(url)
         )
 
-    if response.status == http.client.OK:
+    if response.status == http_client.OK:
         content = _helpers.from_bytes(response.data)
         if response.headers["content-type"] == "application/json":
             try:
                 return json.loads(content)
             except ValueError as caught_exc:
                 new_exc = exceptions.TransportError(
-                    "Received invalid JSON from the Google Compute Engine"
+                    "Received invalid JSON from the Google Compute Engine "
                     "metadata service: {:.20}".format(content)
                 )
-                raise new_exc from caught_exc
+                six.raise_from(new_exc, caught_exc)
         else:
             return content
     else:
         raise exceptions.TransportError(
-            "Failed to retrieve {} from the Google Compute Engine"
+            "Failed to retrieve {} from the Google Compute Engine "
             "metadata service. Status: {} Response:\n{}".format(
                 url, response.status, response.data
             ),

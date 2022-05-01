@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 import warnings
 from typing import Callable, Dict, Optional, Sequence, Tuple, Union
 
-from google.api_core import grpc_helpers  # type: ignore
-from google.api_core import gapic_v1  # type: ignore
+from google.api_core import grpc_helpers
+from google.api_core import gapic_v1
 import google.auth  # type: ignore
 from google.auth import credentials as ga_credentials  # type: ignore
 from google.auth.transport.grpc import SslCredentials  # type: ignore
@@ -35,13 +35,13 @@ class FirestoreGrpcTransport(FirestoreTransport):
     """gRPC backend transport for Firestore.
 
     The Cloud Firestore service.
-    Cloud Firestore is a fast, fully managed, serverless, cloud-
-    native NoSQL document database that simplifies storing, syncing,
-    and querying data for your mobile, web, and IoT apps at global
-    scale. Its client libraries provide live synchronization and
-    offline support, while its security features and integrations
-    with Firebase and Google Cloud Platform (GCP) accelerate
-    building truly serverless apps.
+    Cloud Firestore is a fast, fully managed, serverless,
+    cloud-native NoSQL document database that simplifies storing,
+    syncing, and querying data for your mobile, web, and IoT apps at
+    global scale. Its client libraries provide live synchronization
+    and offline support, while its security features and
+    integrations with Firebase and Google Cloud Platform (GCP)
+    accelerate building truly serverless apps.
 
     This class defines the same methods as the primary client, so the
     primary client can load the underlying transport implementation
@@ -168,8 +168,11 @@ class FirestoreGrpcTransport(FirestoreTransport):
         if not self._grpc_channel:
             self._grpc_channel = type(self).create_channel(
                 self._host,
+                # use the credentials which are saved
                 credentials=self._credentials,
-                credentials_file=credentials_file,
+                # Set ``credentials_file`` to ``None`` here as
+                # the credentials that we saved earlier should be used.
+                credentials_file=None,
                 scopes=self._scopes,
                 ssl_credentials=self._ssl_channel_credentials,
                 quota_project_id=quota_project_id,
@@ -640,6 +643,9 @@ class FirestoreGrpcTransport(FirestoreTransport):
                 response_deserializer=document.Document.deserialize,
             )
         return self._stubs["create_document"]
+
+    def close(self):
+        self.grpc_channel.close()
 
 
 __all__ = ("FirestoreGrpcTransport",)

@@ -20,8 +20,12 @@ import base64
 import hashlib
 import logging
 import random
-import time
 import warnings
+
+from urllib.parse import parse_qs
+from urllib.parse import urlencode
+from urllib.parse import urlsplit
+from urllib.parse import urlunsplit
 
 from google.resumable_media import common
 
@@ -34,6 +38,7 @@ _SLOW_CRC32C_WARNING = (
     "implementation. Python 3 has a faster implementation, `google-crc32c`, "
     "which will be used if it is installed."
 )
+_GENERATION_HEADER = "x-goog-generation"
 _HASH_HEADER = "x-goog-hash"
 _MISSING_CHECKSUM = """\
 No {checksum_type} checksum was returned from the service while downloading {}
@@ -135,90 +140,18 @@ def calculate_retry_wait(base_wait, max_sleep, multiplier=2.0):
     return new_base_wait, new_base_wait + 0.001 * jitter_ms
 
 
-def wait_and_retry(func, get_status_code, retry_strategy):
-    """Attempts to retry a call to ``func`` until success.
-
-    Expects ``func`` to return an HTTP response and uses ``get_status_code``
-    to check if the response is retry-able.
-
-    ``func`` is expected to raise a failure status code as a
-    common.InvalidResponse, at which point this method will check the code
-    against the common.RETRIABLE list of retriable status codes.
-
-    Will retry until :meth:`~.RetryStrategy.retry_allowed` (on the current
-    ``retry_strategy``) returns :data:`False`. Uses
-    :func:`calculate_retry_wait` to double the wait time (with jitter) after
-    each attempt.
-
-    Args:
-        func (Callable): A callable that takes no arguments and produces
-            an HTTP response which will be checked as retry-able.
-        get_status_code (Callable[Any, int]): Helper to get a status code
-            from a response.
-        retry_strategy (~google.resumable_media.common.RetryStrategy): The
-            strategy to use if the request fails and must be retried.
-
-    Returns:
-        object: The return value of ``func``.
-    """
-    total_sleep = 0.0
-    num_retries = 0
-    # base_wait will be multiplied by the multiplier on the first retry.
-    base_wait = float(retry_strategy.initial_delay) / retry_strategy.multiplier
-
-    # Set the retriable_exception_type if possible. We expect requests to be
-    # present here and the transport to be using requests.exceptions errors,
-    # but due to loose coupling with the transport layer we can't guarantee it.
-    try:
-        connection_error_exceptions = _get_connection_error_classes()
-    except ImportError:
-        # We don't know the correct classes to use to catch connection errors,
-        # so an empty tuple here communicates "catch no exceptions".
-        connection_error_exceptions = ()
-
-    while True:  # return on success or when retries exhausted.
-        error = None
-        try:
-            response = func()
-        except connection_error_exceptions as e:
-            error = e  # Fall through to retry, if there are retries left.
-        except common.InvalidResponse as e:
-            # An InvalidResponse is only retriable if its status code matches.
-            # The `process_response()` method on a Download or Upload method
-            # will convert the status code into an exception.
-            if get_status_code(e.response) in common.RETRYABLE:
-                error = e  # Fall through to retry, if there are retries left.
-            else:
-                raise  # If the status code is not retriable, raise w/o retry.
-        else:
-            return response
-
-        base_wait, wait_time = calculate_retry_wait(
-            base_wait, retry_strategy.max_sleep, retry_strategy.multiplier
-        )
-        num_retries += 1
-        total_sleep += wait_time
-
-        # Check if (another) retry is allowed. If retries are exhausted and
-        # no acceptable response was received, raise the retriable error.
-        if not retry_strategy.retry_allowed(total_sleep, num_retries):
-            raise error
-
-        time.sleep(wait_time)
-
-
 def _get_crc32c_object():
     """Get crc32c object
     Attempt to use the Google-CRC32c package. If it isn't available, try
     to use CRCMod. CRCMod might be using a 'slow' varietal. If so, warn...
     """
     try:
-        import google_crc32c
+        import google_crc32c  # type: ignore
 
         crc_obj = google_crc32c.Checksum()
     except ImportError:
         try:
-            import crcmod
+            import crcmod  # type: ignore
 
             crc_obj = crcmod.predefined.Crc("crc-32c")
             _is_fast_crcmod()
@@ -375,20 +308,65 @@ def _get_checksum_object(checksum_type):
         raise ValueError("checksum must be ``'md5'``, ``'crc32c'`` or ``None``")
 
 
-def _get_connection_error_classes():
-    """Get the exception error classes.
+def _parse_generation_header(response, get_headers):
+    """Parses the generation header from an ``X-Goog-Generation`` value.
 
-    Requests is a soft dependency here so that multiple transport layers can be
-    added in the future. This code is in a separate function here so that the
-    test framework can override its behavior to simulate requests being
-    unavailable."""
+    Args:
+        response (~requests.Response): The HTTP response object.
+        get_headers (callable: response->dict): returns response headers.
 
-    import requests.exceptions
+    Returns:
+        Optional[long]: The object generation from the response, if it
+        can be detected from the ``X-Goog-Generation`` header; otherwise, None.
+    """
+    headers = get_headers(response)
+    object_generation = headers.get(_GENERATION_HEADER, None)
 
-    return (
-        requests.exceptions.ConnectionError,
-        requests.exceptions.ChunkedEncodingError,
-    )
+    if object_generation is None:
+        return None
+    else:
+        return int(object_generation)
+
+
+def _get_generation_from_url(media_url):
+    """Retrieve the object generation query param specified in the media url.
+
+    Args:
+        media_url (str): The URL containing the media to be downloaded.
+
+    Returns:
+        long: The object generation from the media url if exists; otherwise, None.
+    """
+
+    _, _, _, query, _ = urlsplit(media_url)
+    query_params = parse_qs(query)
+    object_generation = query_params.get("generation", None)
+
+    if object_generation is None:
+        return None
+    else:
+        return int(object_generation[0])
+
+
+def add_query_parameters(media_url, query_params):
+    """Add query parameters to a base url.
+
+    Args:
+        media_url (str): The URL containing the media to be downloaded.
+        query_params (dict): Names and values of the query parameters to add.
+
+    Returns:
+        str: URL with additional query strings appended.
+    """
+
+    if len(query_params) == 0:
+        return media_url
+
+    scheme, netloc, path, query, frag = urlsplit(media_url)
+    params = parse_qs(query)
+    new_params = {**params, **query_params}
+    query = urlencode(new_params, doseq=True)
+    return urlunsplit((scheme, netloc, path, query, frag))
 
 
 class _DoNothingHash(object):

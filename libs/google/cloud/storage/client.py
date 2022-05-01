@@ -31,7 +31,10 @@ from google.api_core import page_iterator
 from google.cloud._helpers import _LocalStack, _NOW
 from google.cloud.client import ClientWithProject
 from google.cloud.exceptions import NotFound
+from google.cloud.storage._helpers import _get_default_headers
+from google.cloud.storage._helpers import _get_environ_project
 from google.cloud.storage._helpers import _get_storage_host
+from google.cloud.storage._helpers import _BASE_STORAGE_URI
 from google.cloud.storage._helpers import _DEFAULT_STORAGE_HOST
 from google.cloud.storage._helpers import _bucket_bound_hostname_url
 from google.cloud.storage._helpers import _add_etag_match_headers
@@ -121,13 +124,6 @@ class Client(ClientWithProject):
         if project is _marker:
             project = None
 
-        super(Client, self).__init__(
-            project=project,
-            credentials=credentials,
-            client_options=client_options,
-            _http=_http,
-        )
-
         kw_args = {"client_info": client_info}
 
         # `api_endpoint` should be only set by the user via `client_options`,
@@ -147,6 +143,27 @@ class Client(ClientWithProject):
             if client_options.api_endpoint:
                 api_endpoint = client_options.api_endpoint
                 kw_args["api_endpoint"] = api_endpoint
+
+        # Use anonymous credentials and no project when
+        # STORAGE_EMULATOR_HOST or a non-default api_endpoint is set.
+        if (
+            kw_args["api_endpoint"] is not None
+            and _BASE_STORAGE_URI not in kw_args["api_endpoint"]
+        ):
+            if credentials is None:
+                credentials = AnonymousCredentials()
+            if project is None:
+                project = _get_environ_project()
+            if project is None:
+                no_project = True
+                project = "<none>"
+
+        super(Client, self).__init__(
+            project=project,
+            credentials=credentials,
+            client_options=client_options,
+            _http=_http,
+        )
 
         if no_project:
             self.project = None
@@ -858,8 +875,9 @@ class Client(ClientWithProject):
                 made via created bucket.
             location (str):
                 (Optional) The location of the bucket. If not passed,
-                the default location, US, will be used. See
-                https://cloud.google.com/storage/docs/bucket-locations
+                the default location, US, will be used. If specifying a dual-region,
+                can be specified as a string, e.g., 'US-CENTRAL1+US-WEST1'. See:
+                https://cloud.google.com/storage/docs/locations
             predefined_acl (str):
                 (Optional) Name of predefined ACL to apply to bucket. See:
                 https://cloud.google.com/storage/docs/access-control/lists#predefined-acl
@@ -917,12 +935,22 @@ class Client(ClientWithProject):
 
         """
         bucket = self._bucket_arg_to_bucket(bucket_or_name)
+        query_params = {}
 
         if project is None:
             project = self.project
 
-        if project is None:
-            raise ValueError("Client project not set:  pass an explicit project.")
+        # Use no project if STORAGE_EMULATOR_HOST is set
+        if _BASE_STORAGE_URI not in _get_storage_host():
+            if project is None:
+                project = _get_environ_project()
+            if project is None:
+                project = "<none>"
+
+        # Only include the project parameter if a project is set.
+        # If a project is not set, falls back to API validation (BadRequest).
+        if project is not None:
+            query_params = {"project": project}
 
         if requester_pays is not None:
             warnings.warn(
@@ -931,8 +959,6 @@ class Client(ClientWithProject):
                 stacklevel=1,
             )
             bucket.requester_pays = requester_pays
-
-        query_params = {"project": project}
 
         if predefined_acl is not None:
             predefined_acl = BucketACL.validate_predefined(predefined_acl)
@@ -1065,7 +1091,7 @@ class Client(ClientWithProject):
             >>> bucket = client.get_bucket('my-bucket-name')
             >>> blob = storage.Blob('path/to/blob', bucket)
 
-            >>> with open('file-to-download-to') as file_obj:
+            >>> with open('file-to-download-to', 'w') as file_obj:
             >>>     client.download_blob_to_file(blob, file_obj)  # API request.
 
 
@@ -1074,7 +1100,7 @@ class Client(ClientWithProject):
             >>> from google.cloud import storage
             >>> client = storage.Client()
 
-            >>> with open('file-to-download-to') as file_obj:
+            >>> with open('file-to-download-to', 'wb') as file_obj:
             >>>     client.download_blob_to_file(
             >>>         'gs://bucket_name/path/to/blob', file_obj)
 
@@ -1105,8 +1131,11 @@ class Client(ClientWithProject):
         headers = _get_encryption_headers(blob_or_uri._encryption_key)
         headers["accept-encoding"] = "gzip"
         _add_etag_match_headers(
-            headers, if_etag_match=if_etag_match, if_etag_not_match=if_etag_not_match,
+            headers,
+            if_etag_match=if_etag_match,
+            if_etag_not_match=if_etag_not_match,
         )
+        headers = {**_get_default_headers(self._connection.user_agent), **headers}
 
         transport = self._http
         try:
@@ -1360,13 +1389,22 @@ class Client(ClientWithProject):
         :returns: Iterator of all :class:`~google.cloud.storage.bucket.Bucket`
                   belonging to this project.
         """
+        extra_params = {}
+
         if project is None:
             project = self.project
 
-        if project is None:
-            raise ValueError("Client project not set:  pass an explicit project.")
+        # Use no project if STORAGE_EMULATOR_HOST is set
+        if _BASE_STORAGE_URI not in _get_storage_host():
+            if project is None:
+                project = _get_environ_project()
+            if project is None:
+                project = "<none>"
 
-        extra_params = {"project": project}
+        # Only include the project parameter if a project is set.
+        # If a project is not set, falls back to API validation (BadRequest).
+        if project is not None:
+            extra_params = {"project": project}
 
         if prefix is not None:
             extra_params["prefix"] = prefix
@@ -1440,7 +1478,11 @@ class Client(ClientWithProject):
             qs_params["userProject"] = user_project
 
         api_response = self._post_resource(
-            path, None, query_params=qs_params, timeout=timeout, retry=retry,
+            path,
+            None,
+            query_params=qs_params,
+            timeout=timeout,
+            retry=retry,
         )
         metadata = HMACKeyMetadata(self)
         metadata._properties = api_response["metadata"]

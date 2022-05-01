@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2020 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
 #
 import abc
 from typing import Awaitable, Callable, Dict, Optional, Sequence, Union
-import packaging.version
 import pkg_resources
 
 import google.auth  # type: ignore
-import google.api_core  # type: ignore
-from google.api_core import exceptions as core_exceptions  # type: ignore
-from google.api_core import gapic_v1  # type: ignore
-from google.api_core import retry as retries  # type: ignore
-from google.api_core import operations_v1  # type: ignore
+import google.api_core
+from google.api_core import exceptions as core_exceptions
+from google.api_core import gapic_v1
+from google.api_core import retry as retries
+from google.api_core import operations_v1
 from google.auth import credentials as ga_credentials  # type: ignore
 from google.oauth2 import service_account  # type: ignore
 
+from google.cloud.firestore_admin_v1.types import database
 from google.cloud.firestore_admin_v1.types import field
 from google.cloud.firestore_admin_v1.types import firestore_admin
 from google.cloud.firestore_admin_v1.types import index
@@ -41,15 +41,6 @@ try:
     )
 except pkg_resources.DistributionNotFound:
     DEFAULT_CLIENT_INFO = gapic_v1.client_info.ClientInfo()
-
-try:
-    # google.auth.__version__ was added in 1.26.0
-    _GOOGLE_AUTH_VERSION = google.auth.__version__
-except AttributeError:
-    try:  # try pkg_resources if it is available
-        _GOOGLE_AUTH_VERSION = pkg_resources.get_distribution("google-auth").version
-    except pkg_resources.DistributionNotFound:  # pragma: NO COVER
-        _GOOGLE_AUTH_VERSION = None
 
 
 class FirestoreAdminTransport(abc.ABC):
@@ -103,7 +94,7 @@ class FirestoreAdminTransport(abc.ABC):
             host += ":443"
         self._host = host
 
-        scopes_kwargs = self._get_scopes_kwargs(self._host, scopes)
+        scopes_kwargs = {"scopes": scopes, "default_scopes": self.AUTH_SCOPES}
 
         # Save the scopes.
         self._scopes = scopes
@@ -119,7 +110,6 @@ class FirestoreAdminTransport(abc.ABC):
             credentials, _ = google.auth.load_credentials_from_file(
                 credentials_file, **scopes_kwargs, quota_project_id=quota_project_id
             )
-
         elif credentials is None:
             credentials, _ = google.auth.default(
                 **scopes_kwargs, quota_project_id=quota_project_id
@@ -135,29 +125,6 @@ class FirestoreAdminTransport(abc.ABC):
 
         # Save the credentials.
         self._credentials = credentials
-
-    # TODO(busunkim): This method is in the base transport
-    # to avoid duplicating code across the transport classes. These functions
-    # should be deleted once the minimum required versions of google-auth is increased.
-
-    # TODO: Remove this function once google-auth >= 1.25.0 is required
-    @classmethod
-    def _get_scopes_kwargs(
-        cls, host: str, scopes: Optional[Sequence[str]]
-    ) -> Dict[str, Optional[Sequence[str]]]:
-        """Returns scopes kwargs to pass to google-auth methods depending on the google-auth version"""
-
-        scopes_kwargs = {}
-
-        if _GOOGLE_AUTH_VERSION and (
-            packaging.version.parse(_GOOGLE_AUTH_VERSION)
-            >= packaging.version.parse("1.25.0")
-        ):
-            scopes_kwargs = {"scopes": scopes, "default_scopes": cls.AUTH_SCOPES}
-        else:
-            scopes_kwargs = {"scopes": scopes or cls.AUTH_SCOPES}
-
-        return scopes_kwargs
 
     def _prep_wrapped_messages(self, client_info):
         # Precompute the wrapped methods.
@@ -254,10 +221,28 @@ class FirestoreAdminTransport(abc.ABC):
             self.import_documents: gapic_v1.method.wrap_method(
                 self.import_documents, default_timeout=60.0, client_info=client_info,
             ),
+            self.get_database: gapic_v1.method.wrap_method(
+                self.get_database, default_timeout=None, client_info=client_info,
+            ),
+            self.list_databases: gapic_v1.method.wrap_method(
+                self.list_databases, default_timeout=None, client_info=client_info,
+            ),
+            self.update_database: gapic_v1.method.wrap_method(
+                self.update_database, default_timeout=None, client_info=client_info,
+            ),
         }
 
+    def close(self):
+        """Closes resources associated with the transport.
+
+       .. warning::
+            Only call this method if the transport is NOT shared
+            with other clients - this may cause errors in other clients!
+        """
+        raise NotImplementedError()
+
     @property
-    def operations_client(self) -> operations_v1.OperationsClient:
+    def operations_client(self):
         """Return the client designed to process long-running operations."""
         raise NotImplementedError()
 
@@ -342,6 +327,36 @@ class FirestoreAdminTransport(abc.ABC):
         self,
     ) -> Callable[
         [firestore_admin.ImportDocumentsRequest],
+        Union[operations_pb2.Operation, Awaitable[operations_pb2.Operation]],
+    ]:
+        raise NotImplementedError()
+
+    @property
+    def get_database(
+        self,
+    ) -> Callable[
+        [firestore_admin.GetDatabaseRequest],
+        Union[database.Database, Awaitable[database.Database]],
+    ]:
+        raise NotImplementedError()
+
+    @property
+    def list_databases(
+        self,
+    ) -> Callable[
+        [firestore_admin.ListDatabasesRequest],
+        Union[
+            firestore_admin.ListDatabasesResponse,
+            Awaitable[firestore_admin.ListDatabasesResponse],
+        ],
+    ]:
+        raise NotImplementedError()
+
+    @property
+    def update_database(
+        self,
+    ) -> Callable[
+        [firestore_admin.UpdateDatabaseRequest],
         Union[operations_pb2.Operation, Awaitable[operations_pb2.Operation]],
     ]:
         raise NotImplementedError()

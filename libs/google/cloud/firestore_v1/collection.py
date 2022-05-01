@@ -14,8 +14,8 @@
 
 """Classes for representing collections for the Google Cloud Firestore API."""
 
-from google.api_core import gapic_v1  # type: ignore
-from google.api_core import retry as retries  # type: ignore
+from google.api_core import gapic_v1
+from google.api_core import retry as retries
 
 from google.cloud.firestore_v1.base_collection import (
     BaseCollectionReference,
@@ -237,9 +237,5 @@ class CollectionReference(BaseCollectionReference):
             # Terminate this watch
             collection_watch.unsubscribe()
         """
-        return Watch.for_query(
-            self._query(),
-            callback,
-            document.DocumentSnapshot,
-            document.DocumentReference,
-        )
+        query = self._query()
+        return Watch.for_query(query, callback, document.DocumentSnapshot)

@@ -40,13 +40,18 @@ You can also skip verification::
 
 """
 
-from collections.abc import Mapping
+try:
+    from collections.abc import Mapping
+# Python 2.7 compatibility
+except ImportError:  # pragma: NO COVER
+    from collections import Mapping  # type: ignore
 import copy
 import datetime
 import json
-import urllib
 
 import cachetools
+import six
+from six.moves import urllib
 
 from google.auth import _helpers
 from google.auth import _service_account_info
@@ -57,7 +62,7 @@ import google.auth.credentials
 try:
     from google.auth.crypt import es256
 except ImportError:  # pragma: NO COVER
-    es256 = None
+    es256 = None  # type: ignore
 
 _DEFAULT_TOKEN_LIFETIME_SECS = 3600  # 1 hour in seconds
 _DEFAULT_MAX_CACHE_SIZE = 10
@@ -65,7 +70,7 @@ _ALGORITHM_TO_VERIFIER_CLASS = {"RS256": crypt.RSAVerifier}
 _CRYPTOGRAPHY_BASED_ALGORITHMS = frozenset(["ES256"])
 
 if es256 is not None:  # pragma: NO COVER
-    _ALGORITHM_TO_VERIFIER_CLASS["ES256"] = es256.ES256Verifier
+    _ALGORITHM_TO_VERIFIER_CLASS["ES256"] = es256.ES256Verifier  # type: ignore
 
 
 def encode(signer, payload, header=None, key_id=None):
@@ -118,7 +123,7 @@ def _decode_jwt_segment(encoded_section):
         return json.loads(section_bytes.decode("utf-8"))
     except ValueError as caught_exc:
         new_exc = ValueError("Can't parse segment: {0}".format(section_bytes))
-        raise new_exc from caught_exc
+        six.raise_from(new_exc, caught_exc)
 
 
 def _unverified_decode(token):
@@ -244,16 +249,19 @@ def decode(token, certs=None, verify=True, audience=None, clock_skew_in_seconds=
 
     try:
         verifier_cls = _ALGORITHM_TO_VERIFIER_CLASS[key_alg]
-    except KeyError as caught_exc:
+    except KeyError as exc:
         if key_alg in _CRYPTOGRAPHY_BASED_ALGORITHMS:
-            msg = (
-                "The key algorithm {} requires the cryptography package "
-                "to be installed."
+            six.raise_from(
+                ValueError(
+                    "The key algorithm {} requires the cryptography package "
+                    "to be installed.".format(key_alg)
+                ),
+                exc,
             )
         else:
-            msg = "Unsupported signature algorithm {}"
-        new_exc = ValueError(msg.format(key_alg))
-        raise new_exc from caught_exc
+            six.raise_from(
+                ValueError("Unsupported signature algorithm {}".format(key_alg)), exc
+            )
 
     # If certs is specified as a dictionary of key IDs to certificates, then
     # use the certificate identified by the key ID in the token header.
@@ -549,12 +557,12 @@ class Credentials(
     def sign_bytes(self, message):
         return self._signer.sign(message)
 
-    @property
+    @property  # type: ignore
     @_helpers.copy_docstring(google.auth.credentials.Signing)
     def signer_email(self):
         return self._issuer
 
-    @property
+    @property  # type: ignore
     @_helpers.copy_docstring(google.auth.credentials.Signing)
     def signer(self):
         return self._signer
@@ -838,12 +846,12 @@ class OnDemandCredentials(
     def sign_bytes(self, message):
         return self._signer.sign(message)
 
-    @property
+    @property  # type: ignore
     @_helpers.copy_docstring(google.auth.credentials.Signing)
     def signer_email(self):
         return self._issuer
 
-    @property
+    @property  # type: ignore
     @_helpers.copy_docstring(google.auth.credentials.Signing)
     def signer(self):
         return self._signer
