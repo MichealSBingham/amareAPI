@@ -621,7 +621,7 @@ def listen_for_new_natal_chart(data, context):
     #                       /
 
 
-    user = User(id=id)
+    user = User(id=id, skip_getting_natal=True)
 
 
     planets = natal_dict['planets']
@@ -650,6 +650,52 @@ def listen_for_new_natal_chart(data, context):
             'isReal': user.isReal
         })
 
+        ## Also add this placement under the research index , for example
+        ## if it's a sports player we may have ["Vocation:Sports:Boxing"] as a note
+        ## then add /research_data/vocation/sports/boxing/id   --> this adds their id to that
+
+        try:
+            for note in user.notes:
+                n = note.split(":")  #should return array [Vocation, sports, boxing]
+                print(f'note: {note} n : {n} ')
+                db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(
+                    f'{planet_name}').collection(f'{sign}').document(id).set({
+                    'is_on_cusp': is_on_cusp,
+                    'angle': angle,
+                    'is_retrograde': is_retrograde,
+                    'is_notable': is_notable,
+                    'house': house,
+                    'profile_image_url': profile_image_url,
+                    'name': user.name,
+                    'isReal': user.isReal
+                })
+
+                db.collection(f'researchData').document(f'ByPlacement').collection(
+                    f'{planet_name}').document(f'{sign}').collection(f'{n[0]}').document(
+                    f'{n[1]}').collection(f'{n[2]}').document(id).set({
+                    'is_on_cusp': is_on_cusp,
+                    'angle': angle,
+                    'is_retrograde': is_retrograde,
+                    'is_notable': is_notable,
+                    'house': house,
+                    'profile_image_url': profile_image_url,
+                    'name': user.name,
+                    'isReal': user.isReal
+                })
+
+
+        except Exception as e:
+            print(f"CAN'T DO IT  because {e}")
+            pass
+
+
+
+
+
+
+
+        ## we also need to do, let's say /mars/scorpio/vocation/sports/boxing/id
+
         if house is not None: #add to index of house placements (i.e. Mars in 5th House)
             db.collection(f'all_placements').document(f'{planet_name}').collection(f'House{house}').document(id).set({
                 'is_on_cusp': is_on_cusp,
@@ -661,6 +707,40 @@ def listen_for_new_natal_chart(data, context):
                 'name': user.name,
                 'isReal': user.isReal
             })
+
+
+            try:
+                for note in user.notes:
+                    n = note.split(":")
+                    db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(f'{planet_name}').collection(f'House{house}').document(id).set({
+                'is_on_cusp': is_on_cusp,
+                'angle': angle,
+                'is_retrograde': is_retrograde,
+                'is_notable': is_notable,
+                'house': house,
+                'profile_image_url': profile_image_url,
+                'name': user.name,
+                'isReal': user.isReal
+            })
+
+                    db.collection(f'researchData').document(f'ByPlacement').collection(f'{planet_name}').document(f'House{house}').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(id).set({
+                'is_on_cusp': is_on_cusp,
+                'angle': angle,
+                'is_retrograde': is_retrograde,
+                'is_notable': is_notable,
+                'house': house,
+                'profile_image_url': profile_image_url,
+                'name': user.name,
+                'isReal': user.isReal
+            })
+
+            except Exception as e:
+                print(f"CAN'T DO IT  because {e}")
+                pass
+
+
+            #adding research data index to houses now
+
 
 
 
@@ -680,6 +760,17 @@ def listen_for_new_natal_chart(data, context):
 
         #Add synastry to this database index
         db.collection(f'all_natal_aspects').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
+        try:
+            for note in user.notes:
+                n = note.split(":")
+                db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
+                #by aspect
+                db.collection(f'researchData').document(f'ByAspect').collection(f'{first}').document(f'{second}').colection('doc').document(f'{type}').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(id).set(aspect)
+
+
+        except Exception as e:
+            print(f"CAN'T DO IT  because {e}")
+            pass
 
 
 
