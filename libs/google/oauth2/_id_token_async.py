@@ -58,11 +58,9 @@ library like `CacheControl`_ to create a cache-aware
 .. _CacheControl: https://cachecontrol.readthedocs.io
 """
 
+import http.client
 import json
 import os
-
-import six
-from six.moves import http_client
 
 from google.auth import environment_vars
 from google.auth import exceptions
@@ -88,7 +86,7 @@ async def _fetch_certs(request, certs_url):
     """
     response = await request(certs_url, method="GET")
 
-    if response.status != http_client.OK:
+    if response.status != http.client.OK:
         raise exceptions.TransportError(
             "Could not fetch certificates at {}".format(certs_url)
         )
@@ -99,11 +97,7 @@ async def _fetch_certs(request, certs_url):
 
 
 async def verify_token(
-    id_token,
-    request,
-    audience=None,
-    certs_url=sync_id_token._GOOGLE_OAUTH2_CERTS_URL,
-    clock_skew_in_seconds=0,
+    id_token, request, audience=None, certs_url=sync_id_token._GOOGLE_OAUTH2_CERTS_URL
 ):
     """Verifies an ID token and returns the decoded token.
 
@@ -116,25 +110,16 @@ async def verify_token(
         certs_url (str): The URL that specifies the certificates to use to
             verify the token. This URL should return JSON in the format of
             ``{'key id': 'x509 certificate'}``.
-        clock_skew_in_seconds (int): The clock skew used for `iat` and `exp`
-            validation.
 
     Returns:
         Mapping[str, Any]: The decoded token.
     """
     certs = await _fetch_certs(request, certs_url)
 
-    return jwt.decode(
-        id_token,
-        certs=certs,
-        audience=audience,
-        clock_skew_in_seconds=clock_skew_in_seconds,
-    )
+    return jwt.decode(id_token, certs=certs, audience=audience)
 
 
-async def verify_oauth2_token(
-    id_token, request, audience=None, clock_skew_in_seconds=0
-):
+async def verify_oauth2_token(id_token, request, audience=None):
     """Verifies an ID Token issued by Google's OAuth 2.0 authorization server.
 
     Args:
@@ -144,8 +129,6 @@ async def verify_oauth2_token(
         audience (str): The audience that this token is intended for. This is
             typically your application's OAuth 2.0 client ID. If None then the
             audience is not verified.
-        clock_skew_in_seconds (int): The clock skew used for `iat` and `exp`
-            validation.
 
     Returns:
         Mapping[str, Any]: The decoded token.
@@ -158,7 +141,6 @@ async def verify_oauth2_token(
         request,
         audience=audience,
         certs_url=sync_id_token._GOOGLE_OAUTH2_CERTS_URL,
-        clock_skew_in_seconds=clock_skew_in_seconds,
     )
 
     if idinfo["iss"] not in sync_id_token._GOOGLE_ISSUERS:
@@ -171,9 +153,7 @@ async def verify_oauth2_token(
     return idinfo
 
 
-async def verify_firebase_token(
-    id_token, request, audience=None, clock_skew_in_seconds=0
-):
+async def verify_firebase_token(id_token, request, audience=None):
     """Verifies an ID Token issued by Firebase Authentication.
 
     Args:
@@ -183,8 +163,6 @@ async def verify_firebase_token(
         audience (str): The audience that this token is intended for. This is
             typically your Firebase application ID. If None then the audience
             is not verified.
-        clock_skew_in_seconds (int): The clock skew used for `iat` and `exp`
-            validation.
 
     Returns:
         Mapping[str, Any]: The decoded token.
@@ -194,7 +172,6 @@ async def verify_firebase_token(
         request,
         audience=audience,
         certs_url=sync_id_token._GOOGLE_APIS_CERTS_URL,
-        clock_skew_in_seconds=clock_skew_in_seconds,
     )
 
 
@@ -264,7 +241,7 @@ async def fetch_id_token(request, audience):
                 "GOOGLE_APPLICATION_CREDENTIALS is not valid service account credentials.",
                 caught_exc,
             )
-            six.raise_from(new_exc, caught_exc)
+            raise new_exc from caught_exc
 
     # 2. Try to fetch ID token from metada server if it exists. The code works
     # for GAE and Cloud Run metadata server as well.

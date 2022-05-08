@@ -24,6 +24,7 @@ import io
 import json
 
 import requests
+import six
 
 from google.cloud import _helpers
 from google.cloud import exceptions
@@ -64,7 +65,13 @@ class MIMEApplicationHTTP(MIMEApplication):
         lines.append("")
         lines.append(body)
         payload = "\r\n".join(lines)
-        super().__init__(payload, "http", encode_noop)
+        if six.PY2:
+            # email.message.Message is an old-style class, so we
+            # cannot use 'super()'.
+            MIMEApplication.__init__(self, payload, "http", encode_noop)
+        else:  # pragma: NO COVER  Python3
+            super_init = super(MIMEApplicationHTTP, self).__init__
+            super_init(payload, "http", encode_noop)
 
 
 class _FutureDict(object):
@@ -212,7 +219,11 @@ class Batch(Connection):
             multi.attach(subrequest)
             timeout = _timeout
 
-        buf = io.StringIO()
+        # The `email` package expects to deal with "native" strings
+        if six.PY2:  # pragma: NO COVER  Python3
+            buf = io.BytesIO()
+        else:
+            buf = io.StringIO()
         generator = Generator(buf, False, 0)
         generator.flatten(multi)
         payload = buf.getvalue()
@@ -304,7 +315,10 @@ def _generate_faux_mime_message(parser, response):
         [b"Content-Type: ", content_type, b"\nMIME-Version: 1.0\n\n", response.content]
     )
 
-    return parser.parsestr(faux_message.decode("utf-8"))
+    if six.PY2:
+        return parser.parsestr(faux_message)
+    else:  # pragma: NO COVER  Python3
+        return parser.parsestr(faux_message.decode("utf-8"))
 
 
 def _unpack_batch_response(response):

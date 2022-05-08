@@ -18,7 +18,6 @@ This is used by gapic clients to provide common error mapping, retry, timeout,
 pagination, and long-running operations to gRPC methods.
 """
 
-import enum
 import functools
 
 from google.api_core import grpc_helpers
@@ -26,18 +25,7 @@ from google.api_core import timeout
 from google.api_core.gapic_v1 import client_info
 
 USE_DEFAULT_METADATA = object()
-
-
-class _MethodDefault(enum.Enum):
-    # Uses enum so that pytype/mypy knows that this is the only possible value.
-    # https://stackoverflow.com/a/60605919/101923
-    #
-    # Literal[_DEFAULT_VALUE] is an alternative, but only added in Python 3.8.
-    # https://docs.python.org/3/library/typing.html#typing.Literal
-    _DEFAULT_VALUE = object()
-
-
-DEFAULT = _MethodDefault._DEFAULT_VALUE
+DEFAULT = object()
 """Sentinel value indicating that a retry or timeout argument was unspecified,
 so the default should be used."""
 

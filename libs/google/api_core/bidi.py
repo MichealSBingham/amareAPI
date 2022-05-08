@@ -727,7 +727,7 @@ class BackgroundConsumer(object):
         """Resumes the response stream."""
         with self._wake:
             self._paused = False
-            self._wake.notify_all()
+            self._wake.notifyAll()
 
     @property
     def is_paused(self):

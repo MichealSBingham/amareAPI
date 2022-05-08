@@ -20,8 +20,6 @@ import base64
 import getpass
 import sys
 
-import six
-
 from google.auth import _helpers
 from google.auth import exceptions
 
@@ -47,8 +45,7 @@ def get_user_password(text):
     return getpass.getpass(text)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ReauthChallenge(object):
+class ReauthChallenge(object, metaclass=abc.ABCMeta):
     """Base class for reauth challenges."""
 
     @property
@@ -114,9 +111,9 @@ class SecurityKeyChallenge(ReauthChallenge):
     @_helpers.copy_docstring(ReauthChallenge)
     def obtain_challenge_input(self, metadata):
         try:
-            import pyu2f.convenience.authenticator  # type: ignore
-            import pyu2f.errors  # type: ignore
-            import pyu2f.model  # type: ignore
+            import pyu2f.convenience.authenticator
+            import pyu2f.errors
+            import pyu2f.model
         except ImportError:
             raise exceptions.ReauthFailError(
                 "pyu2f dependency is required to use Security key reauth feature. "

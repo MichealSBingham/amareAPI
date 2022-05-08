@@ -130,6 +130,30 @@ def readOne(entry):
         print(f"Cannot get because of error {e}")
 
 
+    try:
+        bio = entry.text_data.shortbiography.text
+    except Exception as e:
+        bio = None
+        print(f"Cannot get bio  because of error {e}")
+
+    try:
+        cats = entry.research_data.categories.category
+        research_notes = []
+        for cat in cats:
+            c = cat.text #example: Family : Parenting : Kids -Traumatic event
+            temp_notes = c.split(':')  # will return ['Family ', ' Parenting ', ' Kids -Traumatic event']
+            notes = []
+            for note in temp_notes:
+                notes.append(note.replace('/', '^').strip())
+            research_notes.append(':'.join(notes))
+    except Exception as e:
+        research_notes = None
+        print(f"Cannot get notes  because of error {e}")
+
+
+
+
+
 
 
 
@@ -146,7 +170,9 @@ def readOne(entry):
                 sex=gender,
                 username=''.join(name for name in name if name.isalnum()),
                 profile_image_url=profile_image,
-                orientation=[])
+                orientation=[],
+                bio=bio,
+                notes=research_notes)
 
 
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2022 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import functools
 import re
 from typing import (
     Dict,
-    Optional,
     AsyncIterable,
     Awaitable,
     AsyncIterator,
@@ -29,17 +28,12 @@ from typing import (
 )
 import pkg_resources
 
-from google.api_core.client_options import ClientOptions
-from google.api_core import exceptions as core_exceptions
-from google.api_core import gapic_v1
-from google.api_core import retry as retries
+import google.api_core.client_options as ClientOptions  # type: ignore
+from google.api_core import exceptions as core_exceptions  # type: ignore
+from google.api_core import gapic_v1  # type: ignore
+from google.api_core import retry as retries  # type: ignore
 from google.auth import credentials as ga_credentials  # type: ignore
 from google.oauth2 import service_account  # type: ignore
-
-try:
-    OptionalRetry = Union[retries.Retry, gapic_v1.method._MethodDefault]
-except AttributeError:  # pragma: NO COVER
-    OptionalRetry = Union[retries.Retry, object]  # type: ignore
 
 from google.cloud.firestore_v1.services.firestore import pagers
 from google.cloud.firestore_v1.types import common
@@ -57,13 +51,13 @@ from .client import FirestoreClient
 
 class FirestoreAsyncClient:
     """The Cloud Firestore service.
-    Cloud Firestore is a fast, fully managed, serverless,
-    cloud-native NoSQL document database that simplifies storing,
-    syncing, and querying data for your mobile, web, and IoT apps at
-    global scale. Its client libraries provide live synchronization
-    and offline support, while its security features and
-    integrations with Firebase and Google Cloud Platform (GCP)
-    accelerate building truly serverless apps.
+    Cloud Firestore is a fast, fully managed, serverless, cloud-
+    native NoSQL document database that simplifies storing, syncing,
+    and querying data for your mobile, web, and IoT apps at global
+    scale. Its client libraries provide live synchronization and
+    offline support, while its security features and integrations
+    with Firebase and Google Cloud Platform (GCP) accelerate
+    building truly serverless apps.
     """
 
     _client: FirestoreClient
@@ -122,42 +116,6 @@ class FirestoreAsyncClient:
         return FirestoreClient.from_service_account_file.__func__(FirestoreAsyncClient, filename, *args, **kwargs)  # type: ignore
 
     from_service_account_json = from_service_account_file
-
-    @classmethod
-    def get_mtls_endpoint_and_cert_source(
-        cls, client_options: Optional[ClientOptions] = None
-    ):
-        """Return the API endpoint and client cert source for mutual TLS.
-
-        The client cert source is determined in the following order:
-        (1) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is not "true", the
-        client cert source is None.
-        (2) if `client_options.client_cert_source` is provided, use the provided one; if the
-        default client cert source exists, use the default one; otherwise the client cert
-        source is None.
-
-        The API endpoint is determined in the following order:
-        (1) if `client_options.api_endpoint` if provided, use the provided one.
-        (2) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is "always", use the
-        default mTLS endpoint; if the environment variabel is "never", use the default API
-        endpoint; otherwise if client cert source exists, use the default mTLS endpoint, otherwise
-        use the default API endpoint.
-
-        More details can be found at https://google.aip.dev/auth/4114.
-
-        Args:
-            client_options (google.api_core.client_options.ClientOptions): Custom options for the
-                client. Only the `api_endpoint` and `client_cert_source` properties may be used
-                in this method.
-
-        Returns:
-            Tuple[str, Callable[[], Tuple[bytes, bytes]]]: returns the API endpoint and the
-                client cert source to use.
-
-        Raises:
-            google.auth.exceptions.MutualTLSChannelError: If any errors happen.
-        """
-        return FirestoreClient.get_mtls_endpoint_and_cert_source(client_options)  # type: ignore
 
     @property
     def transport(self) -> FirestoreTransport:
@@ -221,36 +179,16 @@ class FirestoreAsyncClient:
 
     async def get_document(
         self,
-        request: Union[firestore.GetDocumentRequest, dict] = None,
+        request: firestore.GetDocumentRequest = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> document.Document:
         r"""Gets a single document.
 
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_get_document():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.GetDocumentRequest(
-                    transaction=b'transaction_blob',
-                    name="name_value",
-                )
-
-                # Make the request
-                response = client.get_document(request=request)
-
-                # Handle the response
-                print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.GetDocumentRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.GetDocumentRequest`):
                 The request object. The request for
                 [Firestore.GetDocument][google.firestore.v1.Firestore.GetDocument].
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
@@ -302,38 +240,16 @@ class FirestoreAsyncClient:
 
     async def list_documents(
         self,
-        request: Union[firestore.ListDocumentsRequest, dict] = None,
+        request: firestore.ListDocumentsRequest = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListDocumentsAsyncPager:
         r"""Lists documents.
 
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_list_documents():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.ListDocumentsRequest(
-                    transaction=b'transaction_blob',
-                    parent="parent_value",
-                    collection_id="collection_id_value",
-                )
-
-                # Make the request
-                page_result = client.list_documents(request=request)
-
-                # Handle the response
-                for response in page_result:
-                    print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.ListDocumentsRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.ListDocumentsRequest`):
                 The request object. The request for
                 [Firestore.ListDocuments][google.firestore.v1.Firestore.ListDocuments].
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
@@ -394,36 +310,18 @@ class FirestoreAsyncClient:
 
     async def update_document(
         self,
-        request: Union[firestore.UpdateDocumentRequest, dict] = None,
+        request: firestore.UpdateDocumentRequest = None,
         *,
         document: gf_document.Document = None,
         update_mask: common.DocumentMask = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> gf_document.Document:
         r"""Updates or inserts a document.
 
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_update_document():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.UpdateDocumentRequest(
-                )
-
-                # Make the request
-                response = client.update_document(request=request)
-
-                # Handle the response
-                print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.UpdateDocumentRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.UpdateDocumentRequest`):
                 The request object. The request for
                 [Firestore.UpdateDocument][google.firestore.v1.Firestore.UpdateDocument].
             document (:class:`google.cloud.firestore_v1.types.Document`):
@@ -461,7 +359,7 @@ class FirestoreAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([document, update_mask])
         if request is not None and has_flattened_params:
@@ -513,33 +411,17 @@ class FirestoreAsyncClient:
 
     async def delete_document(
         self,
-        request: Union[firestore.DeleteDocumentRequest, dict] = None,
+        request: firestore.DeleteDocumentRequest = None,
         *,
         name: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Deletes a document.
 
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_delete_document():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.DeleteDocumentRequest(
-                    name="name_value",
-                )
-
-                # Make the request
-                client.delete_document(request=request)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.DeleteDocumentRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.DeleteDocumentRequest`):
                 The request object. The request for
                 [Firestore.DeleteDocument][google.firestore.v1.Firestore.DeleteDocument].
             name (:class:`str`):
@@ -557,7 +439,7 @@ class FirestoreAsyncClient:
                 sent along with the request as metadata.
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -606,9 +488,9 @@ class FirestoreAsyncClient:
 
     def batch_get_documents(
         self,
-        request: Union[firestore.BatchGetDocumentsRequest, dict] = None,
+        request: firestore.BatchGetDocumentsRequest = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> Awaitable[AsyncIterable[firestore.BatchGetDocumentsResponse]]:
@@ -616,30 +498,8 @@ class FirestoreAsyncClient:
         Documents returned by this method are not guaranteed to
         be returned in the same order that they were requested.
 
-
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_batch_get_documents():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.BatchGetDocumentsRequest(
-                    transaction=b'transaction_blob',
-                    database="database_value",
-                )
-
-                # Make the request
-                stream = client.batch_get_documents(request=request)
-
-                # Handle the response
-                for response in stream:
-                    print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.BatchGetDocumentsRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.BatchGetDocumentsRequest`):
                 The request object. The request for
                 [Firestore.BatchGetDocuments][google.firestore.v1.Firestore.BatchGetDocuments].
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
@@ -691,36 +551,17 @@ class FirestoreAsyncClient:
 
     async def begin_transaction(
         self,
-        request: Union[firestore.BeginTransactionRequest, dict] = None,
+        request: firestore.BeginTransactionRequest = None,
         *,
         database: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> firestore.BeginTransactionResponse:
         r"""Starts a new transaction.
 
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_begin_transaction():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.BeginTransactionRequest(
-                    database="database_value",
-                )
-
-                # Make the request
-                response = client.begin_transaction(request=request)
-
-                # Handle the response
-                print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.BeginTransactionRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.BeginTransactionRequest`):
                 The request object. The request for
                 [Firestore.BeginTransaction][google.firestore.v1.Firestore.BeginTransaction].
             database (:class:`str`):
@@ -743,7 +584,7 @@ class FirestoreAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([database])
         if request is not None and has_flattened_params:
@@ -793,39 +634,19 @@ class FirestoreAsyncClient:
 
     async def commit(
         self,
-        request: Union[firestore.CommitRequest, dict] = None,
+        request: firestore.CommitRequest = None,
         *,
         database: str = None,
         writes: Sequence[gf_write.Write] = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> firestore.CommitResponse:
         r"""Commits a transaction, while optionally updating
         documents.
 
-
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_commit():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.CommitRequest(
-                    database="database_value",
-                )
-
-                # Make the request
-                response = client.commit(request=request)
-
-                # Handle the response
-                print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.CommitRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.CommitRequest`):
                 The request object. The request for
                 [Firestore.Commit][google.firestore.v1.Firestore.Commit].
             database (:class:`str`):
@@ -855,7 +676,7 @@ class FirestoreAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([database, writes])
         if request is not None and has_flattened_params:
@@ -905,35 +726,18 @@ class FirestoreAsyncClient:
 
     async def rollback(
         self,
-        request: Union[firestore.RollbackRequest, dict] = None,
+        request: firestore.RollbackRequest = None,
         *,
         database: str = None,
         transaction: bytes = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Rolls back a transaction.
 
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_rollback():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.RollbackRequest(
-                    database="database_value",
-                    transaction=b'transaction_blob',
-                )
-
-                # Make the request
-                client.rollback(request=request)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.RollbackRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.RollbackRequest`):
                 The request object. The request for
                 [Firestore.Rollback][google.firestore.v1.Firestore.Rollback].
             database (:class:`str`):
@@ -957,7 +761,7 @@ class FirestoreAsyncClient:
                 sent along with the request as metadata.
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([database, transaction])
         if request is not None and has_flattened_params:
@@ -1008,37 +812,16 @@ class FirestoreAsyncClient:
 
     def run_query(
         self,
-        request: Union[firestore.RunQueryRequest, dict] = None,
+        request: firestore.RunQueryRequest = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> Awaitable[AsyncIterable[firestore.RunQueryResponse]]:
         r"""Runs a query.
 
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_run_query():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.RunQueryRequest(
-                    transaction=b'transaction_blob',
-                    parent="parent_value",
-                )
-
-                # Make the request
-                stream = client.run_query(request=request)
-
-                # Handle the response
-                for response in stream:
-                    print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.RunQueryRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.RunQueryRequest`):
                 The request object. The request for
                 [Firestore.RunQuery][google.firestore.v1.Firestore.RunQuery].
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
@@ -1090,9 +873,9 @@ class FirestoreAsyncClient:
 
     async def partition_query(
         self,
-        request: Union[firestore.PartitionQueryRequest, dict] = None,
+        request: firestore.PartitionQueryRequest = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.PartitionQueryAsyncPager:
@@ -1102,29 +885,8 @@ class FirestoreAsyncClient:
         used by RunQuery as starting/end points for the query
         results.
 
-
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_partition_query():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.PartitionQueryRequest(
-                    parent="parent_value",
-                )
-
-                # Make the request
-                page_result = client.partition_query(request=request)
-
-                # Handle the response
-                for response in page_result:
-                    print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.PartitionQueryRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.PartitionQueryRequest`):
                 The request object. The request for
                 [Firestore.PartitionQuery][google.firestore.v1.Firestore.PartitionQuery].
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
@@ -1187,43 +949,12 @@ class FirestoreAsyncClient:
         self,
         requests: AsyncIterator[firestore.WriteRequest] = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> Awaitable[AsyncIterable[firestore.WriteResponse]]:
         r"""Streams batches of document updates and deletes, in
         order.
-
-
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_write():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.WriteRequest(
-                    database="database_value",
-                )
-
-                # This method expects an iterator which contains
-                # 'firestore_v1.WriteRequest' objects
-                # Here we create a generator that yields a single `request` for
-                # demonstrative purposes.
-                requests = [request]
-
-                def request_generator():
-                    for request in requests:
-                        yield request
-
-                # Make the request
-                stream = client.write(requests=request_generator())
-
-                # Handle the response
-                for response in stream:
-                    print(response)
 
         Args:
             requests (AsyncIterator[`google.cloud.firestore_v1.types.WriteRequest`]):
@@ -1274,45 +1005,11 @@ class FirestoreAsyncClient:
         self,
         requests: AsyncIterator[firestore.ListenRequest] = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> Awaitable[AsyncIterable[firestore.ListenResponse]]:
         r"""Listens to changes.
-
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_listen():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                add_target = firestore_v1.Target()
-                add_target.resume_token = b'resume_token_blob'
-
-                request = firestore_v1.ListenRequest(
-                    add_target=add_target,
-                    database="database_value",
-                )
-
-                # This method expects an iterator which contains
-                # 'firestore_v1.ListenRequest' objects
-                # Here we create a generator that yields a single `request` for
-                # demonstrative purposes.
-                requests = [request]
-
-                def request_generator():
-                    for request in requests:
-                        yield request
-
-                # Make the request
-                stream = client.listen(requests=request_generator())
-
-                # Handle the response
-                for response in stream:
-                    print(response)
 
         Args:
             requests (AsyncIterator[`google.cloud.firestore_v1.types.ListenRequest`]):
@@ -1363,37 +1060,17 @@ class FirestoreAsyncClient:
 
     async def list_collection_ids(
         self,
-        request: Union[firestore.ListCollectionIdsRequest, dict] = None,
+        request: firestore.ListCollectionIdsRequest = None,
         *,
         parent: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListCollectionIdsAsyncPager:
         r"""Lists all the collection IDs underneath a document.
 
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_list_collection_ids():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.ListCollectionIdsRequest(
-                    parent="parent_value",
-                )
-
-                # Make the request
-                page_result = client.list_collection_ids(request=request)
-
-                # Handle the response
-                for response in page_result:
-                    print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.ListCollectionIdsRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.ListCollectionIdsRequest`):
                 The request object. The request for
                 [Firestore.ListCollectionIds][google.firestore.v1.Firestore.ListCollectionIds].
             parent (:class:`str`):
@@ -1421,7 +1098,7 @@ class FirestoreAsyncClient:
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent])
         if request is not None and has_flattened_params:
@@ -1477,9 +1154,9 @@ class FirestoreAsyncClient:
 
     async def batch_write(
         self,
-        request: Union[firestore.BatchWriteRequest, dict] = None,
+        request: firestore.BatchWriteRequest = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> firestore.BatchWriteResponse:
@@ -1495,28 +1172,8 @@ class FirestoreAsyncClient:
         If you require an atomically applied set of writes, use
         [Commit][google.firestore.v1.Firestore.Commit] instead.
 
-
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_batch_write():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.BatchWriteRequest(
-                    database="database_value",
-                )
-
-                # Make the request
-                response = client.batch_write(request=request)
-
-                # Handle the response
-                print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.BatchWriteRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.BatchWriteRequest`):
                 The request object. The request for
                 [Firestore.BatchWrite][google.firestore.v1.Firestore.BatchWrite].
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
@@ -1567,36 +1224,16 @@ class FirestoreAsyncClient:
 
     async def create_document(
         self,
-        request: Union[firestore.CreateDocumentRequest, dict] = None,
+        request: firestore.CreateDocumentRequest = None,
         *,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> document.Document:
         r"""Creates a new document.
 
-        .. code-block:: python
-
-            from google.cloud import firestore_v1
-
-            def sample_create_document():
-                # Create a client
-                client = firestore_v1.FirestoreClient()
-
-                # Initialize request argument(s)
-                request = firestore_v1.CreateDocumentRequest(
-                    parent="parent_value",
-                    collection_id="collection_id_value",
-                )
-
-                # Make the request
-                response = client.create_document(request=request)
-
-                # Handle the response
-                print(response)
-
         Args:
-            request (Union[google.cloud.firestore_v1.types.CreateDocumentRequest, dict]):
+            request (:class:`google.cloud.firestore_v1.types.CreateDocumentRequest`):
                 The request object. The request for
                 [Firestore.CreateDocument][google.firestore.v1.Firestore.CreateDocument].
             retry (google.api_core.retry.Retry): Designation of what errors, if any,
@@ -1643,12 +1280,6 @@ class FirestoreAsyncClient:
 
         # Done; return the response.
         return response
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb):
-        await self.transport.close()
 
 
 try:

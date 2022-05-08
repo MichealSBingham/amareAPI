@@ -401,7 +401,7 @@
       }
     }
   },
-  "revision": "20220422",
+  "revision": "20210924",
   "rootUrl": "https://blogger.googleapis.com/",
   "schemas": {
     "Blog": {
@@ -799,11 +799,9 @@
           "description": "The status of the page for admin resources (either LIVE or DRAFT).",
           "enum": [
             "LIVE",
-            "DRAFT",
-            "SOFT_TRASHED"
+            "DRAFT"
           ],
           "enumDescriptions": [
-            "",
             "",
             ""
           ],
@@ -1002,11 +1000,9 @@
           "enum": [
             "LIVE",
             "DRAFT",
-            "SCHEDULED",
-            "SOFT_TRASHED"
+            "SCHEDULED"
           ],
           "enumDescriptions": [
-            "",
             "",
             "",
             ""

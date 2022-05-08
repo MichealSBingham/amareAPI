@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2022 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 #
 import proto  # type: ignore
 
-from google.cloud.firestore_admin_v1.types import database as gfa_database
 from google.cloud.firestore_admin_v1.types import field as gfa_field
 from google.cloud.firestore_admin_v1.types import index as gfa_index
 from google.protobuf import field_mask_pb2  # type: ignore
@@ -24,11 +23,6 @@ from google.protobuf import field_mask_pb2  # type: ignore
 __protobuf__ = proto.module(
     package="google.firestore.admin.v1",
     manifest={
-        "ListDatabasesRequest",
-        "ListDatabasesResponse",
-        "GetDatabaseRequest",
-        "UpdateDatabaseRequest",
-        "UpdateDatabaseMetadata",
         "CreateIndexRequest",
         "ListIndexesRequest",
         "ListIndexesResponse",
@@ -42,67 +36,6 @@ __protobuf__ = proto.module(
         "ImportDocumentsRequest",
     },
 )
-
-
-class ListDatabasesRequest(proto.Message):
-    r"""A request to list the Firestore Databases in all locations
-    for a project.
-
-    Attributes:
-        parent (str):
-            Required. A parent name of the form
-            ``projects/{project_id}``
-    """
-
-    parent = proto.Field(proto.STRING, number=1,)
-
-
-class ListDatabasesResponse(proto.Message):
-    r"""The list of databases for a project.
-
-    Attributes:
-        databases (Sequence[google.cloud.firestore_admin_v1.types.Database]):
-            The databases in the project.
-    """
-
-    databases = proto.RepeatedField(
-        proto.MESSAGE, number=1, message=gfa_database.Database,
-    )
-
-
-class GetDatabaseRequest(proto.Message):
-    r"""The request for
-    [FirestoreAdmin.GetDatabase][google.firestore.admin.v1.FirestoreAdmin.GetDatabase].
-
-    Attributes:
-        name (str):
-            Required. A name of the form
-            ``projects/{project_id}/databases/{database_id}``
-    """
-
-    name = proto.Field(proto.STRING, number=1,)
-
-
-class UpdateDatabaseRequest(proto.Message):
-    r"""The request for
-    [FirestoreAdmin.UpdateDatabase][google.firestore.admin.v1.FirestoreAdmin.UpdateDatabase].
-
-    Attributes:
-        database (google.cloud.firestore_admin_v1.types.Database):
-            Required. The database to update.
-        update_mask (google.protobuf.field_mask_pb2.FieldMask):
-            The list of fields to be updated.
-    """
-
-    database = proto.Field(proto.MESSAGE, number=1, message=gfa_database.Database,)
-    update_mask = proto.Field(
-        proto.MESSAGE, number=2, message=field_mask_pb2.FieldMask,
-    )
-
-
-class UpdateDatabaseMetadata(proto.Message):
-    r"""Metadata related to the update database operation.
-    """
 
 
 class CreateIndexRequest(proto.Message):
@@ -238,8 +171,8 @@ class ListFieldsRequest(proto.Message):
             only supports listing fields that have been explicitly
             overridden. To issue this query, call
             [FirestoreAdmin.ListFields][google.firestore.admin.v1.FirestoreAdmin.ListFields]
-            with a filter that includes
-            ``indexConfig.usesAncestorConfig:false`` .
+            with the filter set to
+            ``indexConfig.usesAncestorConfig:false``.
         page_size (int):
             The number of results to return.
         page_token (str):

@@ -1,4 +1,10 @@
-# -*- coding: utf_8 -*-
+"""
+This submodule purpose is to load attached JSON asset.
+Will be loaded once per package import / python init.
+
+The file 'frequencies.json' is mandatory for language/coherence detection. Not having it will weaker considerably
+the core detection.
+"""
 from collections import OrderedDict
 
 FREQUENCIES = OrderedDict(
@@ -1207,37 +1213,6 @@ FREQUENCIES = OrderedDict(
                 "中",
                 "五",
                 "四",
-            ],
-        ),
-        (
-            "Kazakh",
-            [
-                "а",
-                "ы",
-                "е",
-                "н",
-                "т",
-                "р",
-                "л",
-                "і",
-                "д",
-                "с",
-                "м",
-                "қ",
-                "к",
-                "о",
-                "б",
-                "и",
-                "у",
-                "ғ",
-                "ж",
-                "ң",
-                "з",
-                "ш",
-                "й",
-                "п",
-                "г",
-                "ө",
             ],
         ),
     ]

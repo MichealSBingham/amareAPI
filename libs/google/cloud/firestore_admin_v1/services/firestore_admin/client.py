@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2022 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,31 +14,25 @@
 # limitations under the License.
 #
 from collections import OrderedDict
+from distutils import util
 import os
 import re
 from typing import Dict, Optional, Sequence, Tuple, Type, Union
 import pkg_resources
 
-from google.api_core import client_options as client_options_lib
-from google.api_core import exceptions as core_exceptions
-from google.api_core import gapic_v1
-from google.api_core import retry as retries
+from google.api_core import client_options as client_options_lib  # type: ignore
+from google.api_core import exceptions as core_exceptions  # type: ignore
+from google.api_core import gapic_v1  # type: ignore
+from google.api_core import retry as retries  # type: ignore
 from google.auth import credentials as ga_credentials  # type: ignore
 from google.auth.transport import mtls  # type: ignore
 from google.auth.transport.grpc import SslCredentials  # type: ignore
 from google.auth.exceptions import MutualTLSChannelError  # type: ignore
 from google.oauth2 import service_account  # type: ignore
 
-try:
-    OptionalRetry = Union[retries.Retry, gapic_v1.method._MethodDefault]
-except AttributeError:  # pragma: NO COVER
-    OptionalRetry = Union[retries.Retry, object]  # type: ignore
-
 from google.api_core import operation as gac_operation  # type: ignore
 from google.api_core import operation_async  # type: ignore
 from google.cloud.firestore_admin_v1.services.firestore_admin import pagers
-from google.cloud.firestore_admin_v1.types import database
-from google.cloud.firestore_admin_v1.types import database as gfa_database
 from google.cloud.firestore_admin_v1.types import field
 from google.cloud.firestore_admin_v1.types import field as gfa_field
 from google.cloud.firestore_admin_v1.types import firestore_admin
@@ -46,7 +40,6 @@ from google.cloud.firestore_admin_v1.types import index
 from google.cloud.firestore_admin_v1.types import index as gfa_index
 from google.cloud.firestore_admin_v1.types import operation as gfa_operation
 from google.protobuf import empty_pb2  # type: ignore
-from google.protobuf import field_mask_pb2  # type: ignore
 from .transports.base import FirestoreAdminTransport, DEFAULT_CLIENT_INFO
 from .transports.grpc import FirestoreAdminGrpcTransport
 from .transports.grpc_asyncio import FirestoreAdminGrpcAsyncIOTransport
@@ -86,36 +79,7 @@ class FirestoreAdminClientMeta(type):
 
 
 class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
-    """The Cloud Firestore Admin API.
-
-    This API provides several administrative services for Cloud
-    Firestore.
-
-    Project, Database, Namespace, Collection, Collection Group, and
-    Document are used as defined in the Google Cloud Firestore API.
-
-    Operation: An Operation represents work being performed in the
-    background.
-
-    The index service manages Cloud Firestore indexes.
-
-    Index creation is performed asynchronously. An Operation resource is
-    created for each such asynchronous operation. The state of the
-    operation (including any errors encountered) may be queried via the
-    Operation resource.
-
-    The Operations collection provides a record of actions performed for
-    the specified Project (including any Operations in progress).
-    Operations are not created directly but through calls on other
-    collections or resources.
-
-    An Operation that is done may be deleted so that it is no longer
-    listed as part of the Operation collection. Operations are garbage
-    collected after 30 days. By default, ListOperations will only return
-    in progress and failed operations. To list completed operation,
-    issue a ListOperations request with the filter ``done: true``.
-
-    Operations are created by service ``FirestoreAdmin``, but are
+    """Operations are created by service ``FirestoreAdmin``, but are
     accessed via service ``google.longrunning.Operations``.
     """
 
@@ -321,73 +285,6 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         m = re.match(r"^projects/(?P<project>.+?)/locations/(?P<location>.+?)$", path)
         return m.groupdict() if m else {}
 
-    @classmethod
-    def get_mtls_endpoint_and_cert_source(
-        cls, client_options: Optional[client_options_lib.ClientOptions] = None
-    ):
-        """Return the API endpoint and client cert source for mutual TLS.
-
-        The client cert source is determined in the following order:
-        (1) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is not "true", the
-        client cert source is None.
-        (2) if `client_options.client_cert_source` is provided, use the provided one; if the
-        default client cert source exists, use the default one; otherwise the client cert
-        source is None.
-
-        The API endpoint is determined in the following order:
-        (1) if `client_options.api_endpoint` if provided, use the provided one.
-        (2) if `GOOGLE_API_USE_CLIENT_CERTIFICATE` environment variable is "always", use the
-        default mTLS endpoint; if the environment variabel is "never", use the default API
-        endpoint; otherwise if client cert source exists, use the default mTLS endpoint, otherwise
-        use the default API endpoint.
-
-        More details can be found at https://google.aip.dev/auth/4114.
-
-        Args:
-            client_options (google.api_core.client_options.ClientOptions): Custom options for the
-                client. Only the `api_endpoint` and `client_cert_source` properties may be used
-                in this method.
-
-        Returns:
-            Tuple[str, Callable[[], Tuple[bytes, bytes]]]: returns the API endpoint and the
-                client cert source to use.
-
-        Raises:
-            google.auth.exceptions.MutualTLSChannelError: If any errors happen.
-        """
-        if client_options is None:
-            client_options = client_options_lib.ClientOptions()
-        use_client_cert = os.getenv("GOOGLE_API_USE_CLIENT_CERTIFICATE", "false")
-        use_mtls_endpoint = os.getenv("GOOGLE_API_USE_MTLS_ENDPOINT", "auto")
-        if use_client_cert not in ("true", "false"):
-            raise ValueError(
-                "Environment variable `GOOGLE_API_USE_CLIENT_CERTIFICATE` must be either `true` or `false`"
-            )
-        if use_mtls_endpoint not in ("auto", "never", "always"):
-            raise MutualTLSChannelError(
-                "Environment variable `GOOGLE_API_USE_MTLS_ENDPOINT` must be `never`, `auto` or `always`"
-            )
-
-        # Figure out the client cert source to use.
-        client_cert_source = None
-        if use_client_cert == "true":
-            if client_options.client_cert_source:
-                client_cert_source = client_options.client_cert_source
-            elif mtls.has_default_client_cert_source():
-                client_cert_source = mtls.default_client_cert_source()
-
-        # Figure out which api endpoint to use.
-        if client_options.api_endpoint is not None:
-            api_endpoint = client_options.api_endpoint
-        elif use_mtls_endpoint == "always" or (
-            use_mtls_endpoint == "auto" and client_cert_source
-        ):
-            api_endpoint = cls.DEFAULT_MTLS_ENDPOINT
-        else:
-            api_endpoint = cls.DEFAULT_ENDPOINT
-
-        return api_endpoint, client_cert_source
-
     def __init__(
         self,
         *,
@@ -438,22 +335,50 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         if client_options is None:
             client_options = client_options_lib.ClientOptions()
 
-        api_endpoint, client_cert_source_func = self.get_mtls_endpoint_and_cert_source(
-            client_options
+        # Create SSL credentials for mutual TLS if needed.
+        use_client_cert = bool(
+            util.strtobool(os.getenv("GOOGLE_API_USE_CLIENT_CERTIFICATE", "false"))
         )
 
-        api_key_value = getattr(client_options, "api_key", None)
-        if api_key_value and credentials:
-            raise ValueError(
-                "client_options.api_key and credentials are mutually exclusive"
-            )
+        client_cert_source_func = None
+        is_mtls = False
+        if use_client_cert:
+            if client_options.client_cert_source:
+                is_mtls = True
+                client_cert_source_func = client_options.client_cert_source
+            else:
+                is_mtls = mtls.has_default_client_cert_source()
+                if is_mtls:
+                    client_cert_source_func = mtls.default_client_cert_source()
+                else:
+                    client_cert_source_func = None
+
+        # Figure out which api endpoint to use.
+        if client_options.api_endpoint is not None:
+            api_endpoint = client_options.api_endpoint
+        else:
+            use_mtls_env = os.getenv("GOOGLE_API_USE_MTLS_ENDPOINT", "auto")
+            if use_mtls_env == "never":
+                api_endpoint = self.DEFAULT_ENDPOINT
+            elif use_mtls_env == "always":
+                api_endpoint = self.DEFAULT_MTLS_ENDPOINT
+            elif use_mtls_env == "auto":
+                if is_mtls:
+                    api_endpoint = self.DEFAULT_MTLS_ENDPOINT
+                else:
+                    api_endpoint = self.DEFAULT_ENDPOINT
+            else:
+                raise MutualTLSChannelError(
+                    "Unsupported GOOGLE_API_USE_MTLS_ENDPOINT value. Accepted "
+                    "values: never, auto, always"
+                )
 
         # Save or instantiate the transport.
         # Ordinarily, we provide the transport, but allowing a custom transport
         # instance provides an extensibility point for unusual situations.
         if isinstance(transport, FirestoreAdminTransport):
             # transport is a FirestoreAdminTransport instance.
-            if credentials or client_options.credentials_file or api_key_value:
+            if credentials or client_options.credentials_file:
                 raise ValueError(
                     "When providing a transport instance, "
                     "provide its credentials directly."
@@ -465,15 +390,6 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
                 )
             self._transport = transport
         else:
-            import google.auth._default  # type: ignore
-
-            if api_key_value and hasattr(
-                google.auth._default, "get_api_key_credentials"
-            ):
-                credentials = google.auth._default.get_api_key_credentials(
-                    api_key_value
-                )
-
             Transport = type(self).get_transport_class(transport)
             self._transport = Transport(
                 credentials=credentials,
@@ -483,7 +399,10 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
                 client_cert_source_for_mtls=client_cert_source_func,
                 quota_project_id=client_options.quota_project_id,
                 client_info=client_info,
-                always_use_jwt_access=True,
+                always_use_jwt_access=(
+                    Transport == type(self).get_transport_class("grpc")
+                    or Transport == type(self).get_transport_class("grpc_asyncio")
+                ),
             )
 
     def create_index(
@@ -492,7 +411,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         *,
         parent: str = None,
         index: gfa_index.Index = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> gac_operation.Operation:
@@ -501,30 +420,6 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         which may be used to track the status of the creation. The
         metadata for the operation will be the type
         [IndexOperationMetadata][google.firestore.admin.v1.IndexOperationMetadata].
-
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_create_index():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.CreateIndexRequest(
-                    parent="parent_value",
-                )
-
-                # Make the request
-                operation = client.create_index(request=request)
-
-                print("Waiting for operation to complete...")
-
-                response = operation.result()
-
-                # Handle the response
-                print(response)
 
         Args:
             request (Union[google.cloud.firestore_admin_v1.types.CreateIndexRequest, dict]):
@@ -559,7 +454,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent, index])
         if request is not None and has_flattened_params:
@@ -610,31 +505,11 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         request: Union[firestore_admin.ListIndexesRequest, dict] = None,
         *,
         parent: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListIndexesPager:
         r"""Lists composite indexes.
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_list_indexes():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.ListIndexesRequest(
-                    parent="parent_value",
-                )
-
-                # Make the request
-                page_result = client.list_indexes(request=request)
-
-                # Handle the response
-                for response in page_result:
-                    print(response)
 
         Args:
             request (Union[google.cloud.firestore_admin_v1.types.ListIndexesRequest, dict]):
@@ -663,7 +538,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent])
         if request is not None and has_flattened_params:
@@ -710,30 +585,11 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         request: Union[firestore_admin.GetIndexRequest, dict] = None,
         *,
         name: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> index.Index:
         r"""Gets a composite index.
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_get_index():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.GetIndexRequest(
-                    name="name_value",
-                )
-
-                # Make the request
-                response = client.get_index(request=request)
-
-                # Handle the response
-                print(response)
 
         Args:
             request (Union[google.cloud.firestore_admin_v1.types.GetIndexRequest, dict]):
@@ -760,7 +616,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -801,27 +657,11 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         request: Union[firestore_admin.DeleteIndexRequest, dict] = None,
         *,
         name: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> None:
         r"""Deletes a composite index.
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_delete_index():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.DeleteIndexRequest(
-                    name="name_value",
-                )
-
-                # Make the request
-                client.delete_index(request=request)
 
         Args:
             request (Union[google.cloud.firestore_admin_v1.types.DeleteIndexRequest, dict]):
@@ -841,7 +681,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
                 sent along with the request as metadata.
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -881,30 +721,11 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         request: Union[firestore_admin.GetFieldRequest, dict] = None,
         *,
         name: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> field.Field:
         r"""Gets the metadata and configuration for a Field.
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_get_field():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.GetFieldRequest(
-                    name="name_value",
-                )
-
-                # Make the request
-                response = client.get_field(request=request)
-
-                # Handle the response
-                print(response)
 
         Args:
             request (Union[google.cloud.firestore_admin_v1.types.GetFieldRequest, dict]):
@@ -933,7 +754,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -974,7 +795,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         request: Union[firestore_admin.UpdateFieldRequest, dict] = None,
         *,
         field: gfa_field.Field = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> gac_operation.Operation:
@@ -994,33 +815,6 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         To configure the default field settings for the database, use
         the special ``Field`` with resource name:
         ``projects/{project_id}/databases/{database_id}/collectionGroups/__default__/fields/*``.
-
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_update_field():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                field = firestore_admin_v1.Field()
-                field.name = "name_value"
-
-                request = firestore_admin_v1.UpdateFieldRequest(
-                    field=field,
-                )
-
-                # Make the request
-                operation = client.update_field(request=request)
-
-                print("Waiting for operation to complete...")
-
-                response = operation.result()
-
-                # Handle the response
-                print(response)
 
         Args:
             request (Union[google.cloud.firestore_admin_v1.types.UpdateFieldRequest, dict]):
@@ -1051,7 +845,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([field])
         if request is not None and has_flattened_params:
@@ -1102,7 +896,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         request: Union[firestore_admin.ListFieldsRequest, dict] = None,
         *,
         parent: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> pagers.ListFieldsPager:
@@ -1113,29 +907,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         only supports listing fields that have been explicitly
         overridden. To issue this query, call
         [FirestoreAdmin.ListFields][google.firestore.admin.v1.FirestoreAdmin.ListFields]
-        with the filter set to ``indexConfig.usesAncestorConfig:false``
-        .
-
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_list_fields():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.ListFieldsRequest(
-                    parent="parent_value",
-                )
-
-                # Make the request
-                page_result = client.list_fields(request=request)
-
-                # Handle the response
-                for response in page_result:
-                    print(response)
+        with the filter set to ``indexConfig.usesAncestorConfig:false``.
 
         Args:
             request (Union[google.cloud.firestore_admin_v1.types.ListFieldsRequest, dict]):
@@ -1164,7 +936,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([parent])
         if request is not None and has_flattened_params:
@@ -1211,7 +983,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         request: Union[firestore_admin.ExportDocumentsRequest, dict] = None,
         *,
         name: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> gac_operation.Operation:
@@ -1225,34 +997,6 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         operation is done. If an export operation is cancelled
         before completion it may leave partial data behind in
         Google Cloud Storage.
-
-        For more details on export behavior and output format,
-        refer to:
-        https://cloud.google.com/firestore/docs/manage-data/export-import
-
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_export_documents():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.ExportDocumentsRequest(
-                    name="name_value",
-                )
-
-                # Make the request
-                operation = client.export_documents(request=request)
-
-                print("Waiting for operation to complete...")
-
-                response = operation.result()
-
-                # Handle the response
-                print(response)
 
         Args:
             request (Union[google.cloud.firestore_admin_v1.types.ExportDocumentsRequest, dict]):
@@ -1283,7 +1027,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -1332,7 +1076,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         request: Union[firestore_admin.ImportDocumentsRequest, dict] = None,
         *,
         name: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        retry: retries.Retry = gapic_v1.method.DEFAULT,
         timeout: float = None,
         metadata: Sequence[Tuple[str, str]] = (),
     ) -> gac_operation.Operation:
@@ -1343,30 +1087,6 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
         is created. If an ImportDocuments operation is
         cancelled, it is possible that a subset of the data has
         already been imported to Cloud Firestore.
-
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_import_documents():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.ImportDocumentsRequest(
-                    name="name_value",
-                )
-
-                # Make the request
-                operation = client.import_documents(request=request)
-
-                print("Waiting for operation to complete...")
-
-                response = operation.result()
-
-                # Handle the response
-                print(response)
 
         Args:
             request (Union[google.cloud.firestore_admin_v1.types.ImportDocumentsRequest, dict]):
@@ -1405,7 +1125,7 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
 
         """
         # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
+        # Sanity check: If we got a request object, we should *not* have
         # gotten any keyword arguments that map to the request.
         has_flattened_params = any([name])
         if request is not None and has_flattened_params:
@@ -1448,312 +1168,6 @@ class FirestoreAdminClient(metaclass=FirestoreAdminClientMeta):
 
         # Done; return the response.
         return response
-
-    def get_database(
-        self,
-        request: Union[firestore_admin.GetDatabaseRequest, dict] = None,
-        *,
-        name: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
-        metadata: Sequence[Tuple[str, str]] = (),
-    ) -> database.Database:
-        r"""Gets information about a database.
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_get_database():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.GetDatabaseRequest(
-                    name="name_value",
-                )
-
-                # Make the request
-                response = client.get_database(request=request)
-
-                # Handle the response
-                print(response)
-
-        Args:
-            request (Union[google.cloud.firestore_admin_v1.types.GetDatabaseRequest, dict]):
-                The request object. The request for
-                [FirestoreAdmin.GetDatabase][google.firestore.admin.v1.FirestoreAdmin.GetDatabase].
-            name (str):
-                Required. A name of the form
-                ``projects/{project_id}/databases/{database_id}``
-
-                This corresponds to the ``name`` field
-                on the ``request`` instance; if ``request`` is provided, this
-                should not be set.
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
-            timeout (float): The timeout for this request.
-            metadata (Sequence[Tuple[str, str]]): Strings which should be
-                sent along with the request as metadata.
-
-        Returns:
-            google.cloud.firestore_admin_v1.types.Database:
-                A Cloud Firestore Database.
-                   Currently only one database is allowed per cloud
-                   project; this database must have a database_id of
-                   '(default)'.
-
-        """
-        # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
-        # gotten any keyword arguments that map to the request.
-        has_flattened_params = any([name])
-        if request is not None and has_flattened_params:
-            raise ValueError(
-                "If the `request` argument is set, then none of "
-                "the individual field arguments should be set."
-            )
-
-        # Minor optimization to avoid making a copy if the user passes
-        # in a firestore_admin.GetDatabaseRequest.
-        # There's no risk of modifying the input as we've already verified
-        # there are no flattened fields.
-        if not isinstance(request, firestore_admin.GetDatabaseRequest):
-            request = firestore_admin.GetDatabaseRequest(request)
-            # If we have keyword arguments corresponding to fields on the
-            # request, apply these.
-            if name is not None:
-                request.name = name
-
-        # Wrap the RPC method; this adds retry and timeout information,
-        # and friendly error handling.
-        rpc = self._transport._wrapped_methods[self._transport.get_database]
-
-        # Certain fields should be provided within the metadata header;
-        # add these here.
-        metadata = tuple(metadata) + (
-            gapic_v1.routing_header.to_grpc_metadata((("name", request.name),)),
-        )
-
-        # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
-
-        # Done; return the response.
-        return response
-
-    def list_databases(
-        self,
-        request: Union[firestore_admin.ListDatabasesRequest, dict] = None,
-        *,
-        parent: str = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
-        metadata: Sequence[Tuple[str, str]] = (),
-    ) -> firestore_admin.ListDatabasesResponse:
-        r"""List all the databases in the project.
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_list_databases():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.ListDatabasesRequest(
-                    parent="parent_value",
-                )
-
-                # Make the request
-                response = client.list_databases(request=request)
-
-                # Handle the response
-                print(response)
-
-        Args:
-            request (Union[google.cloud.firestore_admin_v1.types.ListDatabasesRequest, dict]):
-                The request object. A request to list the Firestore
-                Databases in all locations for a project.
-            parent (str):
-                Required. A parent name of the form
-                ``projects/{project_id}``
-
-                This corresponds to the ``parent`` field
-                on the ``request`` instance; if ``request`` is provided, this
-                should not be set.
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
-            timeout (float): The timeout for this request.
-            metadata (Sequence[Tuple[str, str]]): Strings which should be
-                sent along with the request as metadata.
-
-        Returns:
-            google.cloud.firestore_admin_v1.types.ListDatabasesResponse:
-                The list of databases for a project.
-        """
-        # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
-        # gotten any keyword arguments that map to the request.
-        has_flattened_params = any([parent])
-        if request is not None and has_flattened_params:
-            raise ValueError(
-                "If the `request` argument is set, then none of "
-                "the individual field arguments should be set."
-            )
-
-        # Minor optimization to avoid making a copy if the user passes
-        # in a firestore_admin.ListDatabasesRequest.
-        # There's no risk of modifying the input as we've already verified
-        # there are no flattened fields.
-        if not isinstance(request, firestore_admin.ListDatabasesRequest):
-            request = firestore_admin.ListDatabasesRequest(request)
-            # If we have keyword arguments corresponding to fields on the
-            # request, apply these.
-            if parent is not None:
-                request.parent = parent
-
-        # Wrap the RPC method; this adds retry and timeout information,
-        # and friendly error handling.
-        rpc = self._transport._wrapped_methods[self._transport.list_databases]
-
-        # Certain fields should be provided within the metadata header;
-        # add these here.
-        metadata = tuple(metadata) + (
-            gapic_v1.routing_header.to_grpc_metadata((("parent", request.parent),)),
-        )
-
-        # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
-
-        # Done; return the response.
-        return response
-
-    def update_database(
-        self,
-        request: Union[firestore_admin.UpdateDatabaseRequest, dict] = None,
-        *,
-        database: gfa_database.Database = None,
-        update_mask: field_mask_pb2.FieldMask = None,
-        retry: OptionalRetry = gapic_v1.method.DEFAULT,
-        timeout: float = None,
-        metadata: Sequence[Tuple[str, str]] = (),
-    ) -> gac_operation.Operation:
-        r"""Updates a database.
-
-        .. code-block:: python
-
-            from google.cloud import firestore_admin_v1
-
-            def sample_update_database():
-                # Create a client
-                client = firestore_admin_v1.FirestoreAdminClient()
-
-                # Initialize request argument(s)
-                request = firestore_admin_v1.UpdateDatabaseRequest(
-                )
-
-                # Make the request
-                operation = client.update_database(request=request)
-
-                print("Waiting for operation to complete...")
-
-                response = operation.result()
-
-                # Handle the response
-                print(response)
-
-        Args:
-            request (Union[google.cloud.firestore_admin_v1.types.UpdateDatabaseRequest, dict]):
-                The request object. The request for
-                [FirestoreAdmin.UpdateDatabase][google.firestore.admin.v1.FirestoreAdmin.UpdateDatabase].
-            database (google.cloud.firestore_admin_v1.types.Database):
-                Required. The database to update.
-                This corresponds to the ``database`` field
-                on the ``request`` instance; if ``request`` is provided, this
-                should not be set.
-            update_mask (google.protobuf.field_mask_pb2.FieldMask):
-                The list of fields to be updated.
-                This corresponds to the ``update_mask`` field
-                on the ``request`` instance; if ``request`` is provided, this
-                should not be set.
-            retry (google.api_core.retry.Retry): Designation of what errors, if any,
-                should be retried.
-            timeout (float): The timeout for this request.
-            metadata (Sequence[Tuple[str, str]]): Strings which should be
-                sent along with the request as metadata.
-
-        Returns:
-            google.api_core.operation.Operation:
-                An object representing a long-running operation.
-
-                The result type for the operation will be :class:`google.cloud.firestore_admin_v1.types.Database` A Cloud Firestore Database.
-                   Currently only one database is allowed per cloud
-                   project; this database must have a database_id of
-                   '(default)'.
-
-        """
-        # Create or coerce a protobuf request object.
-        # Quick check: If we got a request object, we should *not* have
-        # gotten any keyword arguments that map to the request.
-        has_flattened_params = any([database, update_mask])
-        if request is not None and has_flattened_params:
-            raise ValueError(
-                "If the `request` argument is set, then none of "
-                "the individual field arguments should be set."
-            )
-
-        # Minor optimization to avoid making a copy if the user passes
-        # in a firestore_admin.UpdateDatabaseRequest.
-        # There's no risk of modifying the input as we've already verified
-        # there are no flattened fields.
-        if not isinstance(request, firestore_admin.UpdateDatabaseRequest):
-            request = firestore_admin.UpdateDatabaseRequest(request)
-            # If we have keyword arguments corresponding to fields on the
-            # request, apply these.
-            if database is not None:
-                request.database = database
-            if update_mask is not None:
-                request.update_mask = update_mask
-
-        # Wrap the RPC method; this adds retry and timeout information,
-        # and friendly error handling.
-        rpc = self._transport._wrapped_methods[self._transport.update_database]
-
-        # Certain fields should be provided within the metadata header;
-        # add these here.
-        metadata = tuple(metadata) + (
-            gapic_v1.routing_header.to_grpc_metadata(
-                (("database.name", request.database.name),)
-            ),
-        )
-
-        # Send the request.
-        response = rpc(request, retry=retry, timeout=timeout, metadata=metadata,)
-
-        # Wrap the response in an operation future.
-        response = gac_operation.from_gapic(
-            response,
-            self._transport.operations_client,
-            gfa_database.Database,
-            metadata_type=firestore_admin.UpdateDatabaseMetadata,
-        )
-
-        # Done; return the response.
-        return response
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        """Releases underlying transport's resources.
-
-        .. warning::
-            ONLY use as a context manager if the transport is NOT shared
-            with other clients! Exiting the with block will CLOSE the transport
-            and may cause errors in other clients!
-        """
-        self.transport.close()
 
 
 try:

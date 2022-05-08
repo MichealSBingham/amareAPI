@@ -211,10 +211,7 @@ class HMACKeyMetadata(object):
                 qs_params["userProject"] = self.user_project
 
             self._client._get_resource(
-                self.path,
-                query_params=qs_params,
-                timeout=timeout,
-                retry=retry,
+                self.path, query_params=qs_params, timeout=timeout, retry=retry,
             )
         except NotFound:
             return False
@@ -242,10 +239,7 @@ class HMACKeyMetadata(object):
             qs_params["userProject"] = self.user_project
 
         self._properties = self._client._get_resource(
-            self.path,
-            query_params=qs_params,
-            timeout=timeout,
-            retry=retry,
+            self.path, query_params=qs_params, timeout=timeout, retry=retry,
         )
 
     def update(self, timeout=_DEFAULT_TIMEOUT, retry=DEFAULT_RETRY_IF_ETAG_IN_JSON):
@@ -269,11 +263,7 @@ class HMACKeyMetadata(object):
 
         payload = {"state": self.state}
         self._properties = self._client._put_resource(
-            self.path,
-            payload,
-            query_params=qs_params,
-            timeout=timeout,
-            retry=retry,
+            self.path, payload, query_params=qs_params, timeout=timeout, retry=retry,
         )
 
     def delete(self, timeout=_DEFAULT_TIMEOUT, retry=DEFAULT_RETRY):
@@ -299,8 +289,5 @@ class HMACKeyMetadata(object):
             qs_params["userProject"] = self.user_project
 
         self._client._delete_resource(
-            self.path,
-            query_params=qs_params,
-            timeout=timeout,
-            retry=retry,
+            self.path, query_params=qs_params, timeout=timeout, retry=retry,
         )

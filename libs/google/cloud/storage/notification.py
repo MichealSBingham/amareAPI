@@ -156,22 +156,26 @@ class BucketNotification(object):
 
     @property
     def topic_project(self):
-        """Project ID of topic to which notifications are published."""
+        """Project ID of topic to which notifications are published.
+        """
         return self._topic_project
 
     @property
     def custom_attributes(self):
-        """Custom attributes passed with notification events."""
+        """Custom attributes passed with notification events.
+        """
         return self._properties.get("custom_attributes")
 
     @property
     def event_types(self):
-        """Event types for which notification events are published."""
+        """Event types for which notification events are published.
+        """
         return self._properties.get("event_types")
 
     @property
     def blob_name_prefix(self):
-        """Prefix of blob names for which notification events are published."""
+        """Prefix of blob names for which notification events are published.
+        """
         return self._properties.get("object_name_prefix")
 
     @property
@@ -249,8 +253,6 @@ class BucketNotification(object):
         :type retry: google.api_core.retry.Retry or google.cloud.storage.retry.ConditionalRetryPolicy
         :param retry:
             (Optional) How to retry the RPC. See: :ref:`configuring_retries`
-
-        :raises ValueError: if the notification already exists.
         """
         if self.notification_id is not None:
             raise ValueError(
@@ -265,20 +267,9 @@ class BucketNotification(object):
 
         path = "/b/{}/notificationConfigs".format(self.bucket.name)
         properties = self._properties.copy()
-
-        if self.topic_name is None:
-            properties["topic"] = _TOPIC_REF_FMT.format(self.topic_project, "")
-        else:
-            properties["topic"] = _TOPIC_REF_FMT.format(
-                self.topic_project, self.topic_name
-            )
-
+        properties["topic"] = _TOPIC_REF_FMT.format(self.topic_project, self.topic_name)
         self._properties = client._post_resource(
-            path,
-            properties,
-            query_params=query_params,
-            timeout=timeout,
-            retry=retry,
+            path, properties, query_params=query_params, timeout=timeout, retry=retry,
         )
 
     def exists(self, client=None, timeout=_DEFAULT_TIMEOUT, retry=DEFAULT_RETRY):
@@ -318,10 +309,7 @@ class BucketNotification(object):
 
         try:
             client._get_resource(
-                self.path,
-                query_params=query_params,
-                timeout=timeout,
-                retry=retry,
+                self.path, query_params=query_params, timeout=timeout, retry=retry,
             )
         except NotFound:
             return False
@@ -363,10 +351,7 @@ class BucketNotification(object):
             query_params["userProject"] = self.bucket.user_project
 
         response = client._get_resource(
-            self.path,
-            query_params=query_params,
-            timeout=timeout,
-            retry=retry,
+            self.path, query_params=query_params, timeout=timeout, retry=retry,
         )
         self._set_properties(response)
 
@@ -406,10 +391,7 @@ class BucketNotification(object):
             query_params["userProject"] = self.bucket.user_project
 
         client._delete_resource(
-            self.path,
-            query_params=query_params,
-            timeout=timeout,
-            retry=retry,
+            self.path, query_params=query_params, timeout=timeout, retry=retry,
         )
 
 

@@ -1,6 +1,6 @@
 #!/Users/michealbingham/Library/Mobile Documents/com~apple~CloudDocs/Amare Corporation/Development/pythonProject/venv/bin/python
 # -*- coding: utf-8 -*-
-# Copyright 2022 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,14 +48,11 @@ class firestore_adminCallTransformer(cst.CSTTransformer):
         'create_index': ('parent', 'index', ),
         'delete_index': ('name', ),
         'export_documents': ('name', 'collection_ids', 'output_uri_prefix', ),
-        'get_database': ('name', ),
         'get_field': ('name', ),
         'get_index': ('name', ),
         'import_documents': ('name', 'collection_ids', 'input_uri_prefix', ),
-        'list_databases': ('parent', ),
         'list_fields': ('parent', 'filter', 'page_size', 'page_token', ),
         'list_indexes': ('parent', 'filter', 'page_size', 'page_token', ),
-        'update_database': ('database', 'update_mask', ),
         'update_field': ('field', 'update_mask', ),
     }
 

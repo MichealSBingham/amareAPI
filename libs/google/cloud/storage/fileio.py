@@ -35,7 +35,6 @@ VALID_DOWNLOAD_KWARGS = {
     "if_metageneration_not_match",
     "timeout",
     "retry",
-    "raw_download",
 }
 
 # Valid keyword arguments for upload methods.
@@ -123,12 +122,9 @@ class BlobReader(io.BufferedIOBase):
         # If the read request demands more bytes than are buffered, fetch more.
         remaining_size = size - len(result)
         if remaining_size > 0 or size < 0:
-            self._pos += self._buffer.tell()
-            read_size = len(result)
-
             self._buffer.seek(0)
             self._buffer.truncate(0)  # Clear the buffer to make way for new data.
-            fetch_start = self._pos
+            fetch_start = self._pos + len(result)
             if size > 0:
                 # Fetch the larger of self._chunk_size or the remaining_size.
                 fetch_end = fetch_start + max(remaining_size, self._chunk_size)
@@ -157,8 +153,9 @@ class BlobReader(io.BufferedIOBase):
                 self._buffer.write(result[size:])
                 self._buffer.seek(0)
                 result = result[:size]
-            # Increment relative offset by true amount read.
-            self._pos += len(result) - read_size
+
+        self._pos += len(result)
+
         return result
 
     def read1(self, size=-1):
@@ -176,33 +173,29 @@ class BlobReader(io.BufferedIOBase):
         if self._blob.size is None:
             self._blob.reload(**self._download_kwargs)
 
-        initial_offset = self._pos + self._buffer.tell()
+        initial_pos = self._pos
 
         if whence == 0:
-            target_pos = pos
+            self._pos = pos
         elif whence == 1:
-            target_pos = initial_offset + pos
+            self._pos += pos
         elif whence == 2:
-            target_pos = self._blob.size + pos
+            self._pos = self._blob.size + pos
         if whence not in {0, 1, 2}:
             raise ValueError("invalid whence value")
 
-        if target_pos > self._blob.size:
-            target_pos = self._blob.size
+        if self._pos > self._blob.size:
+            self._pos = self._blob.size
 
         # Seek or invalidate buffer as needed.
-        if target_pos < self._pos:
-            # Target position < relative offset <= true offset.
-            # As data is not in buffer, invalidate buffer.
+        difference = self._pos - initial_pos
+        new_buffer_pos = self._buffer.seek(difference, 1)
+        if new_buffer_pos != difference:  # Buffer does not contain new pos.
+            # Invalidate buffer.
             self._buffer.seek(0)
             self._buffer.truncate(0)
-            new_pos = target_pos
-            self._pos = target_pos
-        else:
-            # relative offset <= target position <= size of file.
-            difference = target_pos - initial_offset
-            new_pos = self._pos + self._buffer.seek(difference, 1)
-        return new_pos
+
+        return self._pos
 
     def close(self):
         self._buffer.close()
@@ -236,23 +229,11 @@ class BlobWriter(io.BufferedIOBase):
         writes must be exactly a multiple of 256KiB as with other resumable
         uploads. The default is the chunk_size of the blob, or 40 MiB.
 
-    :type text_mode: bool
+    :type text_mode: boolean
     :param text_mode:
-        (Deprecated) A synonym for ignore_flush. For backwards-compatibility,
-        if True, sets ignore_flush to True. Use ignore_flush instead. This
-        parameter will be removed in a future release.
-
-    :type ignore_flush: bool
-    :param ignore_flush:
-        Makes flush() do nothing instead of raise an error. flush() without
-        closing is not supported by the remote service and therefore calling it
-        on this class normally results in io.UnsupportedOperation. However, that
-        behavior is incompatible with some consumers and wrappers of file
-        objects in Python, such as zipfile.ZipFile or io.TextIOWrapper. Setting
-        ignore_flush will cause flush() to successfully do nothing, for
-        compatibility with those contexts. The correct way to actually flush
-        data to the remote server is to close() (using this object as a context
-        manager is recommended).
+        Whether this class is wrapped in 'io.TextIOWrapper'. Toggling this
+        changes the behavior of flush() to conform to TextIOWrapper's
+        expectations.
 
     :type retry: google.api_core.retry.Retry or google.cloud.storage.retry.ConditionalRetryPolicy
     :param retry:
@@ -297,7 +278,6 @@ class BlobWriter(io.BufferedIOBase):
         blob,
         chunk_size=None,
         text_mode=False,
-        ignore_flush=False,
         retry=DEFAULT_RETRY_IF_GENERATION_SPECIFIED,
         **upload_kwargs
     ):
@@ -312,8 +292,9 @@ class BlobWriter(io.BufferedIOBase):
         # Resumable uploads require a chunk size of a multiple of 256KiB.
         # self._chunk_size must not be changed after the upload is initiated.
         self._chunk_size = chunk_size or blob.chunk_size or DEFAULT_CHUNK_SIZE
-        # text_mode is a deprecated synonym for ignore_flush
-        self._ignore_flush = ignore_flush or text_mode
+        # In text mode this class will be wrapped and TextIOWrapper requires a
+        # different behavior of flush().
+        self._text_mode = text_mode
         self._retry = retry
         self._upload_kwargs = upload_kwargs
 
@@ -413,14 +394,13 @@ class BlobWriter(io.BufferedIOBase):
         return self._buffer.tell() + len(self._buffer)
 
     def flush(self):
-        # flush() is not fully supported by the remote service, so raise an
-        # error here, unless self._ignore_flush is set.
-        if not self._ignore_flush:
-            raise io.UnsupportedOperation(
-                "Cannot flush without finalizing upload. Use close() instead, "
-                "or set ignore_flush=True when constructing this class (see "
-                "docstring)."
-            )
+        if self._text_mode:
+            # TextIOWrapper expects this method to succeed before calling close().
+            return
+
+        raise io.UnsupportedOperation(
+            "Cannot flush without finalizing upload. Use close() instead."
+        )
 
     def close(self):
         self._checkClosed()  # Raises ValueError if closed.

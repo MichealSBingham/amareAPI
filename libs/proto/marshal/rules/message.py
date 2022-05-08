@@ -29,16 +29,7 @@ class MessageRule:
         if isinstance(value, self._wrapper):
             return self._wrapper.pb(value)
         if isinstance(value, dict) and not self.is_map:
-            # We need to use the wrapper's marshaling to handle
-            # potentially problematic nested messages.
-            try:
-                # Try the fast path first.
-                return self._descriptor(**value)
-            except TypeError as ex:
-                # If we have a type error,
-                # try the slow path in case the error
-                # was an int64/string issue
-                return self._wrapper(value)._pb
+            return self._descriptor(**value)
         return value
 
     @property

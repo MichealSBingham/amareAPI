@@ -29,21 +29,17 @@ import warnings
 try:
     import certifi
 except ImportError:  # pragma: NO COVER
-    certifi = None  # type: ignore
-
-import six
+    certifi = None
 
 try:
-    import urllib3  # type: ignore
-    import urllib3.exceptions  # type: ignore
+    import urllib3
 except ImportError as caught_exc:  # pragma: NO COVER
-    six.raise_from(
-        ImportError(
-            "The urllib3 library is not installed, please install the "
-            "urllib3 package to use the urllib3 transport."
-        ),
-        caught_exc,
+    new_exc = ImportError(
+        "The urllib3 library is not installed, please install the "
+        "urllib3 package to use the urllib3 transport."
     )
+    raise new_exc from caught_exc
+import urllib3.exceptions  # pylint: disable=ungrouped-imports
 
 from google.auth import environment_vars
 from google.auth import exceptions
@@ -141,7 +137,7 @@ class Request(transport.Request):
             return _Response(response)
         except urllib3.exceptions.HTTPError as caught_exc:
             new_exc = exceptions.TransportError(caught_exc)
-            six.raise_from(new_exc, caught_exc)
+            raise new_exc from caught_exc
 
 
 def _make_default_http():
@@ -168,7 +164,7 @@ def _make_mutual_tls_http(cert, key):
     """
     import certifi
     from OpenSSL import crypto
-    import urllib3.contrib.pyopenssl  # type: ignore
+    import urllib3.contrib.pyopenssl
 
     urllib3.contrib.pyopenssl.inject_into_urllib3()
     ctx = urllib3.util.ssl_.create_urllib3_context()
@@ -333,7 +329,7 @@ class AuthorizedHttp(urllib3.request.RequestMethods):
             import OpenSSL
         except ImportError as caught_exc:
             new_exc = exceptions.MutualTLSChannelError(caught_exc)
-            six.raise_from(new_exc, caught_exc)
+            raise new_exc from caught_exc
 
         try:
             found_cert_key, cert, key = transport._mtls_helper.get_client_cert_and_key(
@@ -350,7 +346,7 @@ class AuthorizedHttp(urllib3.request.RequestMethods):
             OpenSSL.crypto.Error,
         ) as caught_exc:
             new_exc = exceptions.MutualTLSChannelError(caught_exc)
-            six.raise_from(new_exc, caught_exc)
+            raise new_exc from caught_exc
 
         if self._has_user_provided_http:
             self._has_user_provided_http = False
@@ -426,10 +422,6 @@ class AuthorizedHttp(urllib3.request.RequestMethods):
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Proxy to ``self.http``."""
         return self.http.__exit__(exc_type, exc_val, exc_tb)
-
-    def __del__(self):
-        if hasattr(self, "http") and self.http is not None:
-            self.http.clear()
 
     @property
     def headers(self):

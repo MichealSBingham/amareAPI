@@ -28,15 +28,14 @@ service account.
 import base64
 import copy
 from datetime import datetime
+import http.client
 import json
-
-import six
-from six.moves import http_client
 
 from google.auth import _helpers
 from google.auth import credentials
 from google.auth import exceptions
 from google.auth import jwt
+from google.auth.transport.requests import AuthorizedSession
 
 _DEFAULT_TOKEN_LIFETIME_SECS = 3600  # 1 hour in seconds
 
@@ -99,7 +98,7 @@ def _make_iam_token_request(
         else response.data
     )
 
-    if response.status != http_client.OK:
+    if response.status != http.client.OK:
         exceptions.RefreshError(_REFRESH_ERROR, response_body)
 
     try:
@@ -116,12 +115,10 @@ def _make_iam_token_request(
             ),
             response_body,
         )
-        six.raise_from(new_exc, caught_exc)
+        raise new_exc from caught_exc
 
 
-class Credentials(
-    credentials.Scoped, credentials.CredentialsWithQuotaProject, credentials.Signing
-):
+class Credentials(credentials.CredentialsWithQuotaProject, credentials.Signing):
     """This module defines impersonated credentials which are essentially
     impersonated identities.
 
@@ -275,7 +272,6 @@ class Credentials(
         )
 
     def sign_bytes(self, message):
-        from google.auth.transport.requests import AuthorizedSession
 
         iam_sign_endpoint = _IAM_SIGN_ENDPOINT.format(self._target_principal)
 
@@ -292,11 +288,6 @@ class Credentials(
             url=iam_sign_endpoint, headers=headers, json=body
         )
 
-        if response.status_code != http_client.OK:
-            raise exceptions.TransportError(
-                "Error calling sign_bytes: {}".format(response.json())
-            )
-
         return base64.b64decode(response.json()["signedBlob"])
 
     @property
@@ -311,10 +302,6 @@ class Credentials(
     def signer(self):
         return self
 
-    @property
-    def requires_scopes(self):
-        return not self._target_scopes
-
     @_helpers.copy_docstring(credentials.CredentialsWithQuotaProject)
     def with_quota_project(self, quota_project_id):
         return self.__class__(
@@ -324,18 +311,6 @@ class Credentials(
             delegates=self._delegates,
             lifetime=self._lifetime,
             quota_project_id=quota_project_id,
-            iam_endpoint_override=self._iam_endpoint_override,
-        )
-
-    @_helpers.copy_docstring(credentials.Scoped)
-    def with_scopes(self, scopes, default_scopes=None):
-        return self.__class__(
-            self._source_credentials,
-            target_principal=self._target_principal,
-            target_scopes=scopes or default_scopes,
-            delegates=self._delegates,
-            lifetime=self._lifetime,
-            quota_project_id=self._quota_project_id,
             iam_endpoint_override=self._iam_endpoint_override,
         )
 
@@ -407,7 +382,6 @@ class IDTokenCredentials(credentials.CredentialsWithQuotaProject):
 
     @_helpers.copy_docstring(credentials.Credentials)
     def refresh(self, request):
-        from google.auth.transport.requests import AuthorizedSession
 
         iam_sign_endpoint = _IAM_IDTOKEN_ENDPOINT.format(
             self._target_credentials.signer_email

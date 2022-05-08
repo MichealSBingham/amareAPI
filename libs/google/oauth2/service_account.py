@@ -444,12 +444,12 @@ class Credentials(
     def sign_bytes(self, message):
         return self._signer.sign(message)
 
-    @property  # type: ignore
+    @property
     @_helpers.copy_docstring(credentials.Signing)
     def signer(self):
         return self._signer
 
-    @property  # type: ignore
+    @property
     @_helpers.copy_docstring(credentials.Signing)
     def signer_email(self):
         return self._service_account_email
@@ -676,12 +676,12 @@ class IDTokenCredentials(credentials.Signing, credentials.CredentialsWithQuotaPr
     def sign_bytes(self, message):
         return self._signer.sign(message)
 
-    @property  # type: ignore
+    @property
     @_helpers.copy_docstring(credentials.Signing)
     def signer(self):
         return self._signer
 
-    @property  # type: ignore
+    @property
     @_helpers.copy_docstring(credentials.Signing)
     def signer_email(self):
         return self._service_account_email

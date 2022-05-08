@@ -20,9 +20,9 @@ a more common way to create a query than direct usage of the constructor.
 """
 from google.cloud import firestore_v1
 from google.cloud.firestore_v1.base_document import DocumentSnapshot
-from google.api_core import exceptions
-from google.api_core import gapic_v1
-from google.api_core import retry as retries
+from google.api_core import exceptions  # type: ignore
+from google.api_core import gapic_v1  # type: ignore
+from google.api_core import retry as retries  # type: ignore
 
 from google.cloud.firestore_v1.base_query import (
     BaseCollectionGroup,
@@ -171,6 +171,12 @@ class Query(BaseQuery):
     def _chunkify(
         self, chunk_size: int
     ) -> Generator[List[DocumentSnapshot], None, None]:
+        # Catch the edge case where a developer writes the following:
+        # `my_query.limit(500)._chunkify(1000)`, which ultimately nullifies any
+        # need to yield chunks.
+        if self._limit and chunk_size > self._limit:
+            yield self.get()
+            return
 
         max_to_return: Optional[int] = self._limit
         num_returned: int = 0
@@ -185,15 +191,11 @@ class Query(BaseQuery):
             # Apply the optionally pruned limit and the cursor, if we are past
             # the first page.
             _q = original.limit(_chunk_size)
-
             if last_document:
                 _q = _q.start_after(last_document)
 
             snapshots = _q.get()
-
-            if snapshots:
-                last_document = snapshots[-1]
-
+            last_document = snapshots[-1]
             num_returned += len(snapshots)
 
             yield snapshots
@@ -329,7 +331,9 @@ class Query(BaseQuery):
             # Terminate this watch
             query_watch.unsubscribe()
         """
-        return Watch.for_query(self, callback, document.DocumentSnapshot)
+        return Watch.for_query(
+            self, callback, document.DocumentSnapshot, document.DocumentReference
+        )
 
     @staticmethod
     def _get_collection_reference_class() -> Type[

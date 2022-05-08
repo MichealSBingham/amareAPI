@@ -475,7 +475,6 @@ class _InterceptedStreamRequestMixin:
 
     _write_to_iterator_async_gen: Optional[AsyncIterable[RequestType]]
     _write_to_iterator_queue: Optional[asyncio.Queue]
-    _status_code_task: Optional[asyncio.Task]
 
     _FINISH_ITERATOR_SENTINEL = object()
 
@@ -489,7 +488,6 @@ class _InterceptedStreamRequestMixin:
             self._write_to_iterator_queue = asyncio.Queue(maxsize=1)
             self._write_to_iterator_async_gen = self._proxy_writes_as_request_iterator(
             )
-            self._status_code_task = None
             request_iterator = self._write_to_iterator_async_gen
         else:
             self._write_to_iterator_queue = None
@@ -504,19 +502,6 @@ class _InterceptedStreamRequestMixin:
             if value is _InterceptedStreamRequestMixin._FINISH_ITERATOR_SENTINEL:
                 break
             yield value
-
-    async def _write_to_iterator_queue_interruptible(self, request: RequestType,
-                                                     call: InterceptedCall):
-        # Write the specified 'request' to the request iterator queue using the
-        # specified 'call' to allow for interruption of the write in the case
-        # of abrupt termination of the call.
-        if self._status_code_task is None:
-            self._status_code_task = self._loop.create_task(call.code())
-
-        await asyncio.wait(
-            (self._loop.create_task(self._write_to_iterator_queue.put(request)),
-             self._status_code_task),
-            return_when=asyncio.FIRST_COMPLETED)
 
     async def write(self, request: RequestType) -> None:
         # If no queue was created it means that requests
@@ -535,7 +520,11 @@ class _InterceptedStreamRequestMixin:
         elif call._done_writing_flag:
             raise asyncio.InvalidStateError(_RPC_HALF_CLOSED_DETAILS)
 
-        await self._write_to_iterator_queue_interruptible(request, call)
+        # Write might never end up since the call could abrubtly finish,
+        # we give up on the first awaitable object that finishes.
+        _, _ = await asyncio.wait(
+            (self._write_to_iterator_queue.put(request), call.code()),
+            return_when=asyncio.FIRST_COMPLETED)
 
         if call.done():
             raise asyncio.InvalidStateError(_RPC_ALREADY_FINISHED_DETAILS)
@@ -556,8 +545,12 @@ class _InterceptedStreamRequestMixin:
         except asyncio.CancelledError:
             raise asyncio.InvalidStateError(_RPC_ALREADY_FINISHED_DETAILS)
 
-        await self._write_to_iterator_queue_interruptible(
-            _InterceptedStreamRequestMixin._FINISH_ITERATOR_SENTINEL, call)
+        # Write might never end up since the call could abrubtly finish,
+        # we give up on the first awaitable object that finishes.
+        _, _ = await asyncio.wait((self._write_to_iterator_queue.put(
+            _InterceptedStreamRequestMixin._FINISH_ITERATOR_SENTINEL),
+                                   call.code()),
+                                  return_when=asyncio.FIRST_COMPLETED)
 
 
 class InterceptedUnaryUnaryCall(_InterceptedUnaryResponseMixin, InterceptedCall,

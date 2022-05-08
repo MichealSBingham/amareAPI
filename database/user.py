@@ -36,7 +36,9 @@ class User:
                            is_notable = False,
                           isReal = True,
                         do_not_fetch=False, # If true, data will not be fetched from database even if you provide ID (to prevent a read),
-                        skip_getting_natal=False
+                        skip_getting_natal=False,
+                        notes=None,
+                        bio=None
                            ):
 
         self.id = id
@@ -66,6 +68,8 @@ class User:
             self.known_time = self.__data.get('known_time', False)
             self.is_notable = self.__data.get('isNotable')
             self.isReal = self.__data.get('isReal', True)
+            self.notes = self.__data.get('notes', None)
+            self.bio = self.__data.get('bio', None)
 
             location = Location(info_dict=self.__data.get('hometown', {}))
             if location.info_dict == {} or location.info_dict is None:
@@ -98,6 +102,8 @@ class User:
             self.username = username
             self.is_notable = is_notable
             self.isReal = isReal
+            self.notes = notes
+            self.bio = bio
 
 
 
@@ -304,7 +310,9 @@ class User:
             "sex": self.sex,
             "username": self.username,
             "isReal": False,
-            "isNotable": self.is_notable
+            "isNotable": self.is_notable,
+            "notes": self.notes,
+            "bio": self.bio
 
         }
 

@@ -250,7 +250,7 @@
       }
     }
   },
-  "revision": "20220422",
+  "revision": "20210924",
   "rootUrl": "https://localservices.googleapis.com/",
   "schemas": {
     "GoogleAdsHomeservicesLocalservicesV1AccountReport": {
@@ -353,34 +353,6 @@
       },
       "type": "object"
     },
-    "GoogleAdsHomeservicesLocalservicesV1BookingLead": {
-      "description": "Container for booking lead specific information.",
-      "id": "GoogleAdsHomeservicesLocalservicesV1BookingLead",
-      "properties": {
-        "bookingAppointmentTimestamp": {
-          "description": "Timestamp of when service is provided by advertiser.",
-          "format": "google-datetime",
-          "type": "string"
-        },
-        "consumerEmail": {
-          "description": "Consumer email associated with the booking lead.",
-          "type": "string"
-        },
-        "consumerPhoneNumber": {
-          "description": "Consumer phone number associated with the booking lead.",
-          "type": "string"
-        },
-        "customerName": {
-          "description": "Name of the customer who created the lead.",
-          "type": "string"
-        },
-        "jobType": {
-          "description": "The job type of the specified lead.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "GoogleAdsHomeservicesLocalservicesV1DetailedLeadReport": {
       "description": "A Detailed Lead Report of a lead identified by their lead id and contains consumer, account, monetization, and lead data.",
       "id": "GoogleAdsHomeservicesLocalservicesV1DetailedLeadReport",
@@ -393,10 +365,6 @@
         "aggregatorInfo": {
           "$ref": "GoogleAdsHomeservicesLocalservicesV1AggregatorInfo",
           "description": "Aggregator specific information related to the lead."
-        },
-        "bookingLead": {
-          "$ref": "GoogleAdsHomeservicesLocalservicesV1BookingLead",
-          "description": "More information associated to only booking leads."
         },
         "businessName": {
           "description": "Business name associated to the account.",
@@ -452,14 +420,12 @@
           "enum": [
             "LEAD_TYPE_UNSPECIFIED",
             "MESSAGE",
-            "PHONE_CALL",
-            "BOOKING"
+            "PHONE_CALL"
           ],
           "enumDescriptions": [
             "Not specified.",
             "Message lead.",
-            "Phone call lead.",
-            "Booking lead."
+            "Phone call lead."
           ],
           "type": "string"
         },
