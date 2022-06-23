@@ -471,7 +471,7 @@ def monitor_user_data(data, context):
 
 
 
-    if 'hometown' in updated_attributes or 'birthday' in updated_attributes or 'known_time' in updated_attributes:
+    if 'hometown' in updated_attributes or 'birthday' in updated_attributes or 'known_time' in updated_attributes or 'isNotable' in updated_attributes:
 
         try:
             print(f"the FULL user data is {user_data}")
@@ -479,7 +479,9 @@ def monitor_user_data(data, context):
             lon = user_data['fields']['hometown']['mapValue']['fields']['longitude']['doubleValue']
             location = Location(latitude=lat, longitude=lon)
 
+            isReal = user_data['fields']['isReal']['booleanValue']
 
+            isNotable = user_data['fields']['isNotable']['booleanValue']
             bday = user_data['fields']['birthday']['mapValue']['fields']['timestamp']['timestampValue']
             date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
             try:
@@ -491,7 +493,9 @@ def monitor_user_data(data, context):
                         do_not_fetch=True,
                         hometown=location,
                         birthday=date,
-                        known_time=known_time
+                        known_time=known_time,
+                        is_notable=isNotable,
+                        isReal=isReal
                         )
             # Set it in database now
             user.set_natal_chart()
@@ -536,6 +540,9 @@ def listen_for_new_user(data, context):
 
             bday = dataHere['birthday']['mapValue']['fields']['timestamp']['timestampValue']
             date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
+            isNotable = dataHere['isNotable']['booleanValue']
+            isReal = dataHere['isReal']['booleanValue']
+
             try:
                 known_time = dataHere['known_time']['booleanValue']
             except:
@@ -545,7 +552,9 @@ def listen_for_new_user(data, context):
                         do_not_fetch=True,
                         hometown=location,
                         birthday=date,
-                        known_time=known_time
+                        known_time=known_time,
+                        is_notable=isNotable,
+                        isReal=isReal
                         )
             # Set it in database now
             user.set_natal_chart()
@@ -612,7 +621,7 @@ def listen_for_new_natal_chart(data, context):
     #                       /
 
 
-    user = User(id=id)
+    user = User(id=id, skip_getting_natal=True)
 
 
     planets = natal_dict['planets']
@@ -636,8 +645,56 @@ def listen_for_new_natal_chart(data, context):
             'is_retrograde': is_retrograde,
             'is_notable': is_notable,
             'house': house,
-            'profile_image_url': profile_image_url
+            'profile_image_url': profile_image_url,
+            'name': user.name,
+            'isReal': user.isReal
         })
+
+        ## Also add this placement under the research index , for example
+        ## if it's a sports player we may have ["Vocation:Sports:Boxing"] as a note
+        ## then add /research_data/vocation/sports/boxing/id   --> this adds their id to that
+
+        try:
+            for note in user.notes:
+                n = note.split(":")  #should return array [Vocation, sports, boxing]
+                print(f'note: {note} n : {n} ')
+                db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(
+                    f'{planet_name}').collection(f'{sign}').document(id).set({
+                    'is_on_cusp': is_on_cusp,
+                    'angle': angle,
+                    'is_retrograde': is_retrograde,
+                    'is_notable': is_notable,
+                    'house': house,
+                    'profile_image_url': profile_image_url,
+                    'name': user.name,
+                    'isReal': user.isReal
+                })
+
+                db.collection(f'researchData').document(f'ByPlacement').collection(
+                    f'{planet_name}').document(f'{sign}').collection(f'{n[0]}').document(
+                    f'{n[1]}').collection(f'{n[2]}').document(id).set({
+                    'is_on_cusp': is_on_cusp,
+                    'angle': angle,
+                    'is_retrograde': is_retrograde,
+                    'is_notable': is_notable,
+                    'house': house,
+                    'profile_image_url': profile_image_url,
+                    'name': user.name,
+                    'isReal': user.isReal
+                })
+
+
+        except Exception as e:
+            print(f"CAN'T DO IT  because {e}")
+            pass
+
+
+
+
+
+
+
+        ## we also need to do, let's say /mars/scorpio/vocation/sports/boxing/id
 
         if house is not None: #add to index of house placements (i.e. Mars in 5th House)
             db.collection(f'all_placements').document(f'{planet_name}').collection(f'House{house}').document(id).set({
@@ -646,8 +703,44 @@ def listen_for_new_natal_chart(data, context):
                 'is_retrograde': is_retrograde,
                 'is_notable': is_notable,
                 'house': house,
-                'profile_image_url': profile_image_url
+                'profile_image_url': profile_image_url,
+                'name': user.name,
+                'isReal': user.isReal
             })
+
+
+            try:
+                for note in user.notes:
+                    n = note.split(":")
+                    db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(f'{planet_name}').collection(f'House{house}').document(id).set({
+                'is_on_cusp': is_on_cusp,
+                'angle': angle,
+                'is_retrograde': is_retrograde,
+                'is_notable': is_notable,
+                'house': house,
+                'profile_image_url': profile_image_url,
+                'name': user.name,
+                'isReal': user.isReal
+            })
+
+                    db.collection(f'researchData').document(f'ByPlacement').collection(f'{planet_name}').document(f'House{house}').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(id).set({
+                'is_on_cusp': is_on_cusp,
+                'angle': angle,
+                'is_retrograde': is_retrograde,
+                'is_notable': is_notable,
+                'house': house,
+                'profile_image_url': profile_image_url,
+                'name': user.name,
+                'isReal': user.isReal
+            })
+
+            except Exception as e:
+                print(f"CAN'T DO IT  because {e}")
+                pass
+
+
+            #adding research data index to houses now
+
 
 
 
@@ -661,10 +754,23 @@ def listen_for_new_natal_chart(data, context):
         name = aspect['name']
         type = aspect['type']
         aspect['profile_image_url'] = user.profile_image_url
+        aspect['name_belongs_to'] = user.name
+        aspect['isReal'] = user.isReal
 
 
         #Add synastry to this database index
         db.collection(f'all_natal_aspects').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
+        try:
+            for note in user.notes:
+                n = note.split(":")
+                db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
+                #by aspect
+                db.collection(f'researchData').document(f'ByAspect').collection(f'{first}').document(f'{second}').colection('doc').document(f'{type}').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(id).set(aspect)
+
+
+        except Exception as e:
+            print(f"CAN'T DO IT  because {e}")
+            pass
 
 
 
@@ -750,6 +856,7 @@ def listen_for_accepted_requests(data, context):
     from database.notifications import PushNotifications
     from database.user import db
     from datetime import datetime
+    from database.user import User
 
     path_parts = context.resource.split('/documents/')[1].split('/')
     collection_path = path_parts[0]
@@ -758,11 +865,16 @@ def listen_for_accepted_requests(data, context):
 
     dataHere = data["value"]['fields']
     didAccept = dataHere['accepted']['booleanValue']
+    isNotable_requester = dataHere['isNotable']['booleanValue']
+    requesters_name = dataHere['name']['stringValue']
     print(f"The data is is {dataHere} and did accept: {didAccept}")
+    #
+    requesters_profile_image_url = dataHere['profile_image_url']['stringValue']
+    requested_person = User(id=person_requested)
 
     if didAccept:
-        db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now()})
-        db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now()})
+        db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})
+        db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now(), "profile_image_url": requesters_profile_image_url, "isNotable": isNotable_requester, "name": requesters_name})
         PushNotifications.acceptFriendRequestFrom(requester, person_requested)
 
 
@@ -829,7 +941,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
             'is_retrograde': is_retrograde,
             'is_notable': is_notable,
             'house': house,
-            'profile_image_url': user1.profile_image_url
+            'profile_image_url': user1.profile_image_url,
+            'name': user1.name
         })
 
         #Now add house placements to friends database index
@@ -841,7 +954,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
                 'is_retrograde': is_retrograde,
                 'is_notable': is_notable,
                 'house': house,
-                'profile_image_url': user1.profile_image_url
+                'profile_image_url': user1.profile_image_url,
+                'name': user1.name
             })
 
 
@@ -870,7 +984,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
             'is_retrograde': is_retrograde,
             'is_notable': is_notable,
             'house': house,
-            'profile_image_url': user2.profile_image_url
+            'profile_image_url': user2.profile_image_url,
+            'name': user2.name
         })
 
         #Now add house placements to their friends index
@@ -882,7 +997,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
                 'is_retrograde': is_retrograde,
                 'is_notable': is_notable,
                 'house': house,
-                'profile_image_url': user2.profile_image_url
+                'profile_image_url': user2.profile_image_url,
+                'name': user2.name
             })
 
 
@@ -897,6 +1013,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
         second_planet = aspect.second.id
         a = aspectToDict(aspect)
         a['profile_image_url'] =  user1.profile_image_url
+        a['name'] = user1.name
+        a['isReal'] = user1.isReal
 
         # Add placement to this database index
         db.collection(f'friends').document(f'{user2.id}').collection(f'{planet_name}').document('doc').collection(
@@ -911,6 +1029,8 @@ def listen_for_added_friend_and_do_synastry(data, context):
         second_planet = aspect.second.id
         a = aspectToDict(aspect)
         a['profile_image_url'] = user2.profile_image_url
+        a['name'] = user2.name
+        a['isReal'] = user2.isReal
 
         # Add placement to this database index
         db.collection(f'friends').document(f'{user1.id}').collection(f'{planet_name}').document('doc').collection(
