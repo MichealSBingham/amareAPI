@@ -124,17 +124,16 @@ def readOne(entry):
     timestamp = hometown.timezone().localize(dt, is_dst=None)
     profile_image = None
 
-""""
-    try:
-        wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
-        paths = wikilink.split('/')
-        title = paths[-1]
 
-        profile_image = return_image(title)
-    except Exception as e:
-        print(f"Cannot get because of error {e}")
+#    try:
+ #       wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
+  #      paths = wikilink.split('/')
+   #     title = paths[-1]
 
-""""
+    #    profile_image = return_image(title)
+   # except Exception as e:
+   #     print(f"Cannot get because of error {e}")
+
 
     try:
         bio = entry.text_data.shortbiography.text
