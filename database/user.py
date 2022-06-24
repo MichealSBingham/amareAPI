@@ -38,7 +38,9 @@ class User:
                         do_not_fetch=False, # If true, data will not be fetched from database even if you provide ID (to prevent a read),
                         skip_getting_natal=False,
                         notes=None,
-                        bio=None
+                        bio=None, 
+                        isMathematicianOrPhysicist=None, 
+                        isNonScientist=None
                            ):
 
         self.id = id
@@ -226,6 +228,9 @@ class User:
             self.house11 = self.natal_chart.get('House11')
             self.house12 = self.natal_chart.get('House12')
 
+        # Just for statistical analysis purposes
+        self.isMathematicianOrPhysicist = isMathematicianOrPhysicist
+        self.isNonScientist = isNonScientist
 
 
     @classmethod

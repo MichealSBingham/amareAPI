@@ -64,14 +64,16 @@ def return_image(title):
         print(f"Could not get image {e}")
         raise Exception("Could not get image ")
 
-
+#Reads a single entry and convets it to a user object
 def readOne(entry):
 
     import re
     from database.Location import Location
     from datetime import datetime
 
+  
     assert (entry.public_data.datatype['dtc'] == '1'), print('Not a public figure ')
+    
 
 
     name = entry.public_data.sflname.text
@@ -99,7 +101,9 @@ def readOne(entry):
 
     hometown = Location(latitude=pos.lat, longitude=pos.lon)
 
+    
     assert entry.public_data.bdata.sbdate['ccalendar'] == 'g', print("This is not given in the Gregorian Calendar")
+    
 
 
     year = entry.public_data.bdata.sbdate['iyear']
@@ -120,6 +124,7 @@ def readOne(entry):
     timestamp = hometown.timezone().localize(dt, is_dst=None)
     profile_image = None
 
+""""
     try:
         wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
         paths = wikilink.split('/')
@@ -129,6 +134,7 @@ def readOne(entry):
     except Exception as e:
         print(f"Cannot get because of error {e}")
 
+""""
 
     try:
         bio = entry.text_data.shortbiography.text
@@ -136,11 +142,25 @@ def readOne(entry):
         bio = None
         print(f"Cannot get bio  because of error {e}")
 
+
+    # Reading the research data 
+    isPhysicistOrMathematician = False 
+    isScientist = False # if the person is a scientist
+
     try:
         cats = entry.research_data.categories.category
         research_notes = []
         for cat in cats:
             c = cat.text #example: Family : Parenting : Kids -Traumatic event
+            id = cat['cat_id']
+
+            if id == '518' or id == '519':
+                isPhysicistOrMathematician = True
+                isScientist = True 
+
+            if int(id) >= 513 and int(id) < 519:
+                isScientist = True
+
             temp_notes = c.split(':')  # will return ['Family ', ' Parenting ', ' Kids -Traumatic event']
             notes = []
             for note in temp_notes:
@@ -149,12 +169,6 @@ def readOne(entry):
     except Exception as e:
         research_notes = None
         print(f"Cannot get notes  because of error {e}")
-
-
-
-
-
-
 
 
 
@@ -172,21 +186,28 @@ def readOne(entry):
                 profile_image_url=profile_image,
                 orientation=[],
                 bio=bio,
-                notes=research_notes)
+                notes=research_notes, 
+                isMathematicianOrPhysicist=isPhysicistOrMathematician,
+                isNonScientist=(not isScientist))
 
+
+
+
+        
 
 
 
 
 
 def main():
-    print(f"We have {len(entries)} people in our database")
-    for person in entries:
-        p = readOne(person)
-        p.new()
+   
+    non_scientists = get_non_scientists()
+    scientists = get_scientists()
+    print(f'Found {len(non_scientists)} non scientists')
+    print(f'Found {len(scientists)} scientists')
+ 
 
 
-users = []
 
 def main2():
     import time
@@ -218,3 +239,30 @@ if __name__ == '__main__':
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
 
+
+
+# Helper Functions for reading the data
+
+#Returns all of the entries in the database that are scientists 
+def get_scientists():
+    scientists = [] 
+    for person in entries:
+        try:
+            p = readOne(person)
+            if p.isMathematicianOrPhysicist:
+                scientists.append(p)
+        except Exception as error:
+            print(f"Error {error}")
+   
+    return scientists
+
+def get_non_scientists():
+    non_scientists = []
+    for person in entries:
+        try: 
+            p = readOne(person)
+            if p.isNonScientist:
+                non_scientists.append(p)
+        except Exception as e:
+            print(f"Error {e}")
+    return non_scientists
