@@ -38,9 +38,7 @@ class User:
                         do_not_fetch=False, # If true, data will not be fetched from database even if you provide ID (to prevent a read),
                         skip_getting_natal=False,
                         notes=None,
-                        bio=None, 
-                        isMathematicianOrPhysicist=None, 
-                        isNonScientist=None
+                        bio=None
                            ):
 
         self.id = id
@@ -228,9 +226,40 @@ class User:
             self.house11 = self.natal_chart.get('House11')
             self.house12 = self.natal_chart.get('House12')
 
-        # Just for statistical analysis purposes
-        self.isMathematicianOrPhysicist = isMathematicianOrPhysicist
-        self.isNonScientist = isNonScientist
+        if skip_getting_natal: 
+            self.sun = None
+            self.moon = None
+            self.mercury = None 
+            self.venus = None
+            self.mars = None
+            self.jupiter = None
+            self.saturn = None
+            self.uranus = None
+            self.neptune = None
+            self.pluto = None
+            self.chiron = None
+            self.north_node = None
+            self.south_node = None
+            self.syzygy = None
+            self.pars_fortuna = None
+            self.asc = None
+            self.mc = None
+            self.ic = None
+            self.desc = None
+            self.house1 = None
+            self.house2 = None
+            self.house3 = None
+            self.house4 = None
+            self.house5 = None
+            self.house6 = None
+            self.house7 = None
+            self.house8 = None
+            self.house9 = None
+            self.house10 = None
+            self.house11 = None
+            self.house12 = None
+
+        
 
 
     @classmethod
@@ -703,6 +732,122 @@ class User:
         return balanceOfElements[element]["isWeak"]
 
 
+    #Creates the natal chart for the user if it was skipped for some reason 
+    def createNatal(self): 
+        self.natal_chart = NatalChart.get_natal_chart(self.birthday, self.hometown)
+        if self.natal_chart is None:
+            self.natal_chart = {}  #could not create natal chart from info
+
+        self.sun = self.natal_chart.get('Sun')
+
+        self.moon = self.natal_chart.get('Moon')
+
+        self.mercury = self.natal_chart.get('Mercury')
+
+        self.venus = self.natal_chart.get('Venus')
+
+        self.mars = self.natal_chart.get('Mars')
+
+        self.jupiter = self.natal_chart.get('Jupiter')
+
+        self.saturn = self.natal_chart.get('Saturn')
+        self.uranus = self.natal_chart.get('Uranus')
+        self.neptune = self.natal_chart.get('Neptune')
+        self.pluto = self.natal_chart.get('Pluto')
+        self.chiron = self.natal_chart.get('Chiron')
+
+
+        self.north_node = self.natal_chart.get('North Node')
+
+        self.south_node = self.natal_chart.get('South Node')
+
+
+        self.syzygy = self.natal_chart.get('Syzygy')
+
+
+        self.pars_fortuna = self.natal_chart.get('Pars Fortuna')
+
+        if (self.known_time == True):
+            self.asc = self.natal_chart.get('Asc')
+            self.mc = self.natal_chart.get('MC')
+            self.ic = self.natal_chart.get('IC')
+            self.desc = self.natal_chart.get('Desc')
+
+            setattr(self.sun, 'house', int(self.natal_chart.houses.getObjectHouse(self.sun).id.replace('House',
+                                                                                                        '')))  # Sets the appropiate house number
+
+            setattr(self.moon, 'house', int(self.natal_chart.houses.getObjectHouse(self.moon).id.replace('House',
+                                                                                                            '')))  # Sets the appropiate house number
+
+            setattr(self.mercury, 'house', int(self.natal_chart.houses.getObjectHouse(self.mercury).id.replace('House',
+                                                                                                                '')))  # Sets the appropiate house number
+
+            setattr(self.venus, 'house', int(self.natal_chart.houses.getObjectHouse(self.venus).id.replace('House',
+                                                                                                            '')))  # Sets the appropiate house number
+
+            setattr(self.mars, 'house', int(self.natal_chart.houses.getObjectHouse(self.mars).id.replace('House',
+                                                                                                            '')))  # Sets the appropiate house number
+
+            setattr(self.jupiter, 'house', int(self.natal_chart.houses.getObjectHouse(self.jupiter).id.replace('House',
+                                                                                                                '')))  # Sets the appropiate house number
+
+            setattr(self.saturn, 'house', int(self.natal_chart.houses.getObjectHouse(self.saturn).id.replace('House',
+                                                                                                                '')))  # Sets the appropiate house number
+
+            setattr(self.uranus, 'house', int(self.natal_chart.houses.getObjectHouse(self.uranus).id.replace('House',
+                                                                                                                '')))  # Sets the appropiate house number
+
+            setattr(self.neptune, 'house', int(self.natal_chart.houses.getObjectHouse(self.neptune).id.replace('House',
+                                                                                                                '')))  # Sets the appropiate house number
+
+            setattr(self.pluto, 'house', int(self.natal_chart.houses.getObjectHouse(self.pluto).id.replace('House',
+                                                                                                            '')))  # Sets the appropiate house number
+
+            setattr(self.chiron, 'house', int(self.natal_chart.houses.getObjectHouse(self.chiron).id.replace('House',
+                                                                                                                '')))  # Sets the appropiate house number
+
+            setattr(self.north_node, 'house',
+                    int(self.natal_chart.houses.getObjectHouse(self.north_node).id.replace('House',
+                                                                                            '')))  # Sets the appropiate house number
+
+            setattr(self.south_node, 'house',
+                    int(self.natal_chart.houses.getObjectHouse(self.south_node).id.replace('House',
+                                                                                            '')))  # Sets the appropiate house number
+
+            setattr(self.syzygy, 'house', int(self.natal_chart.houses.getObjectHouse(self.syzygy).id.replace('House',
+                                                                                                                '')))  # Sets the appropiate house number
+
+            setattr(self.pars_fortuna, 'house', int(self.natal_chart.houses.getObjectHouse(self.pars_fortuna).id.replace('House',
+                                                                                                                '')))  # Sets the appropiate house number
+
+
+
+
+
+
+
+
+        else:
+            self.asc = None
+            self.mc = None
+            self.ic = None
+            self.desc = None
+
+        # Get the houses
+        self.house1 = self.natal_chart.get('House1')
+        self.house2 = self.natal_chart.get('House2')
+        self.house3 = self.natal_chart.get('House3')
+        self.house4 = self.natal_chart.get('House4')
+
+        self.house5 = self.natal_chart.get('House5')
+        self.house6 = self.natal_chart.get('House6')
+        self.house7 = self.natal_chart.get('House7')
+        self.house8 = self.natal_chart.get('House8')
+
+        self.house9 = self.natal_chart.get('House9')
+        self.house10 = self.natal_chart.get('House10')
+        self.house11 = self.natal_chart.get('House11')
+        self.house12 = self.natal_chart.get('House12')
 
 
 

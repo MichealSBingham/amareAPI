@@ -9,6 +9,8 @@ import xml4h
 from database.user import User
 from flatlib.geopos import GeoPos
 import bs4
+import julian
+import datetime
 
 #name of xml file
 filename = 'c_sample.xml'
@@ -18,7 +20,8 @@ _doc = xml4h.parse(filename)
 doc = _doc.child('astrodatabank_export')
 entries = doc.adb_entry # this will contain all of the entries of each person in the database
 
-
+users = []
+errors = []
 def readGender(gender):
     if gender == 'M':
         return 'male'
@@ -64,6 +67,16 @@ def return_image(title):
         print(f"Could not get image {e}")
         raise Exception("Could not get image ")
 
+
+def errorFromNumber(number):
+    if number == 0:
+        return 'Not a public figure.'
+    elif number == 2:
+        return '2nd'
+    elif number == 3:
+        return '3rd'
+    else:
+        return f'{number}th'
 #Reads a single entry and convets it to a user object
 def readOne(entry):
 
@@ -72,14 +85,30 @@ def readOne(entry):
     from datetime import datetime
 
   
-    assert (entry.public_data.datatype['dtc'] == '1'), print('Not a public figure ')
+    #assert (entry.public_data.datatype['dtc'] == '1'), print('Skipping ... Not a public figure ')
     
+    #Making sure that the entry is a public figure 
+    if not (entry.public_data.datatype['dtc'] == '1'):
+        raise ValueError(0, 'Not a public figure.')
 
+    #assert entry.public_data.bdata.sbdate['ccalendar'] == 'g', print(f"{name}: This is not given in the Gregorian Calendar")
 
+    #Getting basic information about the person
     name = entry.public_data.sflname.text
-    print(f"My name is {name}")
+    
+    #Making sure that this is given in the Gregorian Calendar
+    if not (entry.public_data.bdata.sbdate['ccalendar'] == 'g'):
+        raise ValueError(1, f"{name}: This is not given in the Gregorian Calendar")
+
+
+
+
+    
     gender = readGender(entry.public_data.gender.text)
-    knownTime = readTimeKnown(entry.public_data.roddenrating.text)
+    try: 
+        knownTime = readTimeKnown(entry.public_data.roddenrating.text)
+    except:
+        knownTime = False 
 
     try:
         timeUnknown = bool(entry.public_data.bdata.sbtime["time_unknown"])
@@ -101,8 +130,10 @@ def readOne(entry):
 
     hometown = Location(latitude=pos.lat, longitude=pos.lon)
 
+
+
+
     
-    assert entry.public_data.bdata.sbdate['ccalendar'] == 'g', print("This is not given in the Gregorian Calendar")
     
 
 
@@ -118,10 +149,25 @@ def readOne(entry):
     if 'noon' in timestring:
         timestring = "12:00 PM"
 
-    #datetime_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
-    dt = datetime.strptime(f'{year}-{month}-{day} {timestring}', '%Y-%m-%d %I:%M %p')
+    #Getting the julian time of the date
+    jd = float(entry.public_data.bdata.sbtime["jd_ut"])
+    dt = julian.from_jd(jd, fmt='jd')
 
-    timestamp = hometown.timezone().localize(dt, is_dst=None)
+    #This is broken so we will use the julian date instead
+    #datetime_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
+    #dt = datetime.strptime(f'{year}-{month}-{day} {timestring}', '%Y-%m-%d %I:%M %p')
+    #print(f"{name}'s birthday is ", dt)
+
+    #timestamp = hometown.timezone().localize(dt, is_dst=None)
+    #print(f"the timestamp from {name} is ", timestamp)
+
+
+
+
+
+
+
+
     profile_image = None
 
 
@@ -139,12 +185,10 @@ def readOne(entry):
         bio = entry.text_data.shortbiography.text
     except Exception as e:
         bio = None
-        print(f"Cannot get bio  because of error {e}")
+        
 
 
-    # Reading the research data 
-    isPhysicistOrMathematician = False 
-    isScientist = False # if the person is a scientist
+  
 
     try:
         cats = entry.research_data.categories.category
@@ -167,7 +211,7 @@ def readOne(entry):
             research_notes.append(':'.join(notes))
     except Exception as e:
         research_notes = None
-        print(f"Cannot get notes  because of error {e}")
+        print(f"Cannot get notes from {name} because of error {e}")
 
 
 
@@ -179,15 +223,13 @@ def readOne(entry):
                 known_time=knownTime,
                 skip_getting_natal=True,
                 hometown=hometown,
-                birthday=timestamp,
+                birthday=dt,
                 sex=gender,
                 username=''.join(name for name in name if name.isalnum()),
                 profile_image_url=profile_image,
                 orientation=[],
                 bio=bio,
-                notes=research_notes, 
-                isMathematicianOrPhysicist=isPhysicistOrMathematician,
-                isNonScientist=(not isScientist))
+                notes=research_notes)
 
 
 
@@ -214,18 +256,22 @@ def main2():
     err = 0
 
     print(f"We have {len(entries)} people in our database")
+    interation = 0 
 
     for person in entries:
+        interation += 1
         try:
-            print(f"We are on person {len(users)}")
+            print(f"We are on iteration {interation} of {len(entries)}")
             p = readOne(person)
-            p.new()
             users.append(p)
-        except Exception as error:
-            print(f"Error #{err} {error}")
+        except ValueError as error:
             err = err+1
+            print(f"Error #{err} {error}")
+            errors.append(err)
+            continue
 
     print("--- %s seconds ---" % (time.time() - start_time))
+    print(f"We have {len(users)} users in our database and {err} errors")
 
 
 
@@ -265,3 +311,17 @@ def get_non_scientists():
         except Exception as e:
             print(f"Error {e}")
     return non_scientists
+
+
+
+# Returns the frequency of each sun sign in the natal chart of an array of users 
+def get_sun_sign_frequency(users):
+    sun_sign_frequency = {}
+    for user in users:
+        try: 
+            user = user.readOne(user)
+        except: 
+            continue
+        user.natal()
+        sun_sign_frequency[user.sun.sign] = sun_sign_frequency.get(user.sun.sign, 0) + 1
+    return sun_sign_frequency

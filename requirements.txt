@@ -62,3 +62,4 @@ urllib3==1.26.6
 Werkzeug==2.0.1
 wikipedia==1.4.0
 xml4h==1.0
+julian==0.14
