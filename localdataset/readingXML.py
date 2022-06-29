@@ -22,6 +22,8 @@ entries = doc.adb_entry # this will contain all of the entries of each person in
 
 users = []
 errors = []
+disagreements = []
+
 def readGender(gender):
     if gender == 'M':
         return 'male'
@@ -83,7 +85,7 @@ def readOne(entry):
     import re
     from database.Location import Location
     from datetime import datetime
-
+    import pytz 
   
     #assert (entry.public_data.datatype['dtc'] == '1'), print('Skipping ... Not a public figure ')
     
@@ -150,18 +152,22 @@ def readOne(entry):
         timestring = "12:00 PM"
 
     #Getting the julian time of the date
-    jd = float(entry.public_data.bdata.sbtime["jd_ut"])
-    dt = julian.from_jd(jd, fmt='jd')
+    #jd = float(entry.public_data.bdata.sbtime["jd_ut"])
+    #dt = julian.from_jd(jd, fmt='jd')
 
     #This is broken so we will use the julian date instead
     #datetime_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
-    #dt = datetime.strptime(f'{year}-{month}-{day} {timestring}', '%Y-%m-%d %I:%M %p')
+    dt = datetime.strptime(f'{year}-{month}-{day} {timestring}', '%Y-%m-%d %I:%M %p')
     #print(f"{name}'s birthday is ", dt)
 
-    #timestamp = hometown.timezone().localize(dt, is_dst=None)
+    timestamp = hometown.timezone().localize(dt, is_dst=None).astimezone(pytz.UTC)
     #print(f"the timestamp from {name} is ", timestamp)
 
 
+    if knownTime: 
+        rising = entry.public_data.bdata.positions["asc_sign"]
+    else: 
+        rising = None 
 
 
 
@@ -170,16 +176,17 @@ def readOne(entry):
 
     profile_image = None
 
+        
+    #try:
+        #wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
+        #paths = wikilink.split('/')
+        #title = paths[-1]
 
-#    try:
- #       wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
-  #      paths = wikilink.split('/')
-   #     title = paths[-1]
+        #profile_image = return_image(title)
+    #except Exception as e:
+        #print(f"Cannot get because of error {e}")
 
-    #    profile_image = return_image(title)
-   # except Exception as e:
-   #     print(f"Cannot get because of error {e}")
-
+    
 
     try:
         bio = entry.text_data.shortbiography.text
@@ -211,7 +218,7 @@ def readOne(entry):
             research_notes.append(':'.join(notes))
     except Exception as e:
         research_notes = None
-        print(f"Cannot get notes from {name} because of error {e}")
+        #print(f"Cannot get notes from {name} because of error {e}")
 
 
 
@@ -221,15 +228,16 @@ def readOne(entry):
                 is_notable=True,
                 name=name,
                 known_time=knownTime,
-                skip_getting_natal=True,
+                skip_getting_natal=False,
                 hometown=hometown,
-                birthday=dt,
+                birthday=timestamp,
                 sex=gender,
                 username=''.join(name for name in name if name.isalnum()),
                 profile_image_url=profile_image,
                 orientation=[],
                 bio=bio,
-                notes=research_notes)
+                notes=research_notes, 
+                risingFromCelebDate=rising)
 
 
 
@@ -254,24 +262,43 @@ def main2():
     import time
     start_time = time.time()
     err = 0
+    num_disagreements = 0 
+    approvedRisings = 0 
 
-    print(f"We have {len(entries)} people in our database")
-    interation = 0 
+    total = len(entries)
+
+    print(f"We have {total} people in our database")
+    iteration = 0 
+
+    printProgressBar(0, total, prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     for person in entries:
-        interation += 1
+        iteration += 1
         try:
-            print(f"We are on iteration {interation} of {len(entries)}")
+            printProgressBar(iteration, total,  prefix = 'Progress:', suffix = 'Complete', length = 50)
             p = readOne(person)
             users.append(p)
+
+            #Checks if rising signs match 
+            if p.known_time: 
+                if p.risingFromCelebDate not in p.asc.sign.lower(): 
+                    disagreements.append(p)
+                    num_disagreements += 1
+                    #print(f"{p.name} has a disagreement. Astrobank says {p.risingFromCelebDate} but he's actually a {p.asc.sign}")
+                else:
+                    #print(f"{p.name} has no disagreement")
+                    approvedRisings += 1 
         except ValueError as error:
             err = err+1
-            print(f"Error #{err} {error}")
+            #print(f"Error #{err} {error}")
             errors.append(err)
             continue
 
-    print("--- %s seconds ---" % (time.time() - start_time))
-    print(f"We have {len(users)} users in our database and {err} errors")
+    print("It took: --- %s seconds ---" % (time.time() - start_time))
+    print(f"We have {len(users)} users in our database and {err} bad data")
+    error_percentage = round((float(num_disagreements/(approvedRisings+num_disagreements)) * 100), 2)
+    print(f"The error percentage for our rising signs are:  {error_percentage}%")
+    
 
 
 
@@ -325,3 +352,26 @@ def get_sun_sign_frequency(users):
         user.natal()
         sun_sign_frequency[user.sun.sign] = sun_sign_frequency.get(user.sun.sign, 0) + 1
     return sun_sign_frequency
+
+
+
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Print New Line on Complete
+    if iteration == total: 
+        print()

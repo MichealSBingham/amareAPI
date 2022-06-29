@@ -43,10 +43,12 @@ class User:
                         do_not_fetch=False, # If true, data will not be fetched from database even if you provide ID (to prevent a read),
                         skip_getting_natal=False,
                         notes=None,
-                        bio=None
+                        bio=None, 
+                        risingFromCelebDate=None # This is ONLY to detect disagreements in rising signs we have from the astrodatabank. this isn't for the typical user from OUR database or on Amare. 
                            ):
 
         self.id = id
+        self.risingFromCelebDate = risingFromCelebDate
 
         if self.id is None or self.id == '' or do_not_fetch == True:
             self.__data = {} #if .__data is {} or None, this object wasn't read from the database
