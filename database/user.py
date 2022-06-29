@@ -9,11 +9,16 @@ import itertools
 from astrology.NatalChart import Aspects
 
 
+
+FIRESTORE_EMULATOR_HOST = "FIRESTORE_EMULATOR_HOST"
+
 #Constants
 PATH_TO_FIR_CREDENTIALS = 'database/amare-firebase.json'
 cred = credentials.Certificate(PATH_TO_FIR_CREDENTIALS)
 default_app = firebase_admin.initialize_app(cred)
 db = firestore.client()
+
+
 
 
 class User:
