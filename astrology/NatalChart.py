@@ -229,6 +229,7 @@ def get_natal_chart(date, birth_location):
     new_path = os.path.join(path, 'resources', 'swefiles')
     swe.set_ephe_path(new_path)
 
+    #print("Getting natal chart for date: " + str(date))
     lat, lon = birth_location.coordinates()
     if ( date is None ) or (birth_location is None):
         return None
@@ -244,12 +245,16 @@ def get_natal_chart(date, birth_location):
 def __proper_date__(date):
     date_string = str(date.date()).replace('-', '/')
     time = date.time().strftime("%H:%M:%S")
+    # {date_string} and time {time}')
+    
     try:
         timezone = date.tzname().replace('UTC', '')
+        #print(f'The timezone {timezone}')
         if timezone == '':
             timezone = '+00:00'
     except:
         if date.tzname() is None:
+            #print('no timezone assuming UTC time')
             return Datetime(date_string, time)
 
     return Datetime(date_string, time, utcoffset=timezone)

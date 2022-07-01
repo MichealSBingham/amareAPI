@@ -5,19 +5,33 @@
 
 
 
+from pytz import AmbiguousTimeError
 import xml4h
 from database.user import User
 from flatlib.geopos import GeoPos
 import bs4
+import julian
+import datetime
+import json 
+import os
 
 #name of xml file
-filename = 'c_sample.xml'
+filename = 'celebData.xml'
+#filename = 'c_sample.xml'
 
 #loads documents
 _doc = xml4h.parse(filename)
 doc = _doc.child('astrodatabank_export')
 entries = doc.adb_entry # this will contain all of the entries of each person in the database
 
+users = []
+errors = []
+disagreements = []
+ambigTimeErrors = []
+
+jsonData = {}
+natalChartsData = {}
+#jsonDataArray = []
 
 def readGender(gender):
     if gender == 'M':
@@ -36,8 +50,10 @@ def readTimeKnown(rr):
         return True
     elif rr == 'X':
         return False
+    elif rr == 'XX':
+        raise Exception("XX is not a valid time")
     else:
-        raise Exception('RoddenRating is not what we want. ')
+        return False
 
 
 from bs4 import BeautifulSoup
@@ -65,19 +81,47 @@ def return_image(title):
         raise Exception("Could not get image ")
 
 
+def errorFromNumber(number):
+    if number == 0:
+        return 'Not a public figure.'
+    elif number == 2:
+        return '2nd'
+    elif number == 3:
+        return '3rd'
+    else:
+        return f'{number}th'
+#Reads a single entry and convets it to a user object
 def readOne(entry):
 
     import re
     from database.Location import Location
     from datetime import datetime
+    import pytz 
+  
+    #assert (entry.public_data.datatype['dtc'] == '1'), print('Skipping ... Not a public figure ')
+    
+    #Making sure that the entry is a public figure 
+    if not (entry.public_data.datatype['dtc'] == '1'):
+        raise ValueError(0, 'Not a public figure.')
 
-    assert (entry.public_data.datatype['dtc'] == '1'), print('Not a public figure ')
+    #assert entry.public_data.bdata.sbdate['ccalendar'] == 'g', print(f"{name}: This is not given in the Gregorian Calendar")
 
-
+    #Getting basic information about the person
     name = entry.public_data.sflname.text
-    print(f"My name is {name}")
+    
+    #Making sure that this is given in the Gregorian Calendar
+    if not (entry.public_data.bdata.sbdate['ccalendar'] == 'g'):
+        raise ValueError(1, f"{name}: This is not given in the Gregorian Calendar")
+
+
+
+
+    
     gender = readGender(entry.public_data.gender.text)
-    knownTime = readTimeKnown(entry.public_data.roddenrating.text)
+    try: 
+        knownTime = readTimeKnown(entry.public_data.roddenrating.text)
+    except:
+        knownTime = False 
 
     try:
         timeUnknown = bool(entry.public_data.bdata.sbtime["time_unknown"])
@@ -99,7 +143,11 @@ def readOne(entry):
 
     hometown = Location(latitude=pos.lat, longitude=pos.lon)
 
-    assert entry.public_data.bdata.sbdate['ccalendar'] == 'g', print("This is not given in the Gregorian Calendar")
+
+
+
+    
+    
 
 
     year = entry.public_data.bdata.sbdate['iyear']
@@ -114,33 +162,70 @@ def readOne(entry):
     if 'noon' in timestring:
         timestring = "12:00 PM"
 
+    #Getting the julian time of the date
+    #jd = float(entry.public_data.bdata.sbtime["jd_ut"])
+    #dt = julian.from_jd(jd, fmt='jd')
+
+    #This is broken so we will use the julian date instead
     #datetime_object = datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
     dt = datetime.strptime(f'{year}-{month}-{day} {timestring}', '%Y-%m-%d %I:%M %p')
-
-    timestamp = hometown.timezone().localize(dt, is_dst=None)
-    profile_image = None
+    #print(f"{name}'s birthday is ", dt)
 
     try:
-        wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
-        paths = wikilink.split('/')
-        title = paths[-1]
+        timestamp = hometown.timezone().localize(dt, is_dst=None).astimezone(pytz.UTC)
+    except Exception as error:
+        ambigTimeErrors.append(name)
+        raise ValueError(f"{name} has an ambiguous time error")
+    #print(f"the timestamp from {name} is ", timestamp)
 
-        profile_image = return_image(title)
-    except Exception as e:
-        print(f"Cannot get because of error {e}")
 
+    if knownTime: 
+        rising = entry.public_data.bdata.positions["asc_sign"]
+    else: 
+        rising = None 
+
+
+
+
+
+
+    profile_image = None
+
+        
+    #try:
+        #wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
+        #paths = wikilink.split('/')
+        #title = paths[-1]
+
+        #profile_image = return_image(title)
+    #except Exception as e:
+        #print(f"Cannot get because of error {e}")
+
+    
 
     try:
         bio = entry.text_data.shortbiography.text
     except Exception as e:
         bio = None
-        print(f"Cannot get bio  because of error {e}")
+        
+
+
+  
 
     try:
         cats = entry.research_data.categories.category
         research_notes = []
         for cat in cats:
             c = cat.text #example: Family : Parenting : Kids -Traumatic event
+            id = cat['cat_id']
+
+            if id == '518' or id == '519':
+                isPhysicistOrMathematician = True
+                isScientist = True 
+
+            if int(id) >= 513 and int(id) < 519:
+                isScientist = True
+
             temp_notes = c.split(':')  # will return ['Family ', ' Parenting ', ' Kids -Traumatic event']
             notes = []
             for note in temp_notes:
@@ -148,13 +233,7 @@ def readOne(entry):
             research_notes.append(':'.join(notes))
     except Exception as e:
         research_notes = None
-        print(f"Cannot get notes  because of error {e}")
-
-
-
-
-
-
+        #print(f"Cannot get notes from {name} because of error {e}")
 
 
 
@@ -164,7 +243,7 @@ def readOne(entry):
                 is_notable=True,
                 name=name,
                 known_time=knownTime,
-                skip_getting_natal=True,
+                skip_getting_natal=False,
                 hometown=hometown,
                 birthday=timestamp,
                 sex=gender,
@@ -172,49 +251,172 @@ def readOne(entry):
                 profile_image_url=profile_image,
                 orientation=[],
                 bio=bio,
-                notes=research_notes)
+                notes=research_notes, 
+                risingFromCelebDate=rising)
 
+
+
+
+        
 
 
 
 
 
 def main():
-    print(f"We have {len(entries)} people in our database")
-    for person in entries:
-        p = readOne(person)
-        p.new()
+   
+    non_scientists = get_non_scientists()
+    scientists = get_scientists()
+    print(f'Found {len(non_scientists)} non scientists')
+    print(f'Found {len(scientists)} scientists')
+ 
 
 
-users = []
 
 def main2():
     import time
     start_time = time.time()
+    import uuid 
     err = 0
+    num_disagreements = 0 
+    approvedRisings = 0 
 
-    print(f"We have {len(entries)} people in our database")
+    total = len(entries)
+
+    indents = 0 
+
+    print(f"We have {total} people in our database")
+    iteration = 0 
+
+    printProgressBar(0, total, prefix = 'Progress:', suffix = 'Complete', length = 50)
 
     for person in entries:
+        iteration += 1
         try:
-            print(f"We are on person {len(users)}")
+            printProgressBar(iteration, total,  prefix = 'Progress:', suffix = 'Complete', length = 50)
             p = readOne(person)
-            p.new()
             users.append(p)
-        except Exception as error:
-            print(f"Error #{err} {error}")
-            err = err+1
+            info = p.dict_for_firestore_notables()
+            uid = str(uuid.uuid1())
+            jsonData[uid] = info
+            #info["id"] = uid , not neeed since dict_for_firestore_notables already has uid 
 
-    print("--- %s seconds ---" % (time.time() - start_time))
+
+            
+            natalChartsData[uid] = p.natal()
+            #jsonDataArray.append(info)
+            indents += 1 + len(info)
+
+            #Checks if rising signs match 
+            if p.known_time: 
+                if p.risingFromCelebDate not in p.asc.sign.lower(): 
+                    disagreements.append(p)
+                    num_disagreements += 1
+                    #print(f"{p.name} has a disagreement. Astrobank says {p.risingFromCelebDate} but he's actually a {p.asc.sign}")
+                else:
+                    #print(f"{p.name} has no disagreement")
+                    approvedRisings += 1 
+        except ValueError as error:
+            err = err+1
+            #print(f"Error #{err} {error}")
+            errors.append(err)
+            continue
+
+    print("It took: --- %s seconds ---" % (time.time() - start_time))
+    print(f"We have {len(users)} users in our database and {err} bad data")
+    error_percentage = round((float(num_disagreements/(approvedRisings+num_disagreements)) * 100), 2)
+    print(f"The error percentage for our rising signs are:  {error_percentage}%")
+    print(f"We had to throw out {len(ambigTimeErrors)} people because of ambigious time errors")
+    error_ambig = round((float(len(ambigTimeErrors)/total) * 100), 2)
+    print(f"The error percentage for ambigious time errors is:  {error_ambig}%")
+
+    start_time_for_json = time.time()
+
+    out_file = open("celebrity_charts.json", "w")
+
+    natal_out_file = open("natal_charts.json", "w")
+  
+    json.dump(jsonData, out_file, indent = 4)
+    json.dump(natalChartsData, natal_out_file, indent = 4)
+
+    out_file.close()
+    natal_out_file.close()
+
+
+    print("It took: --- %s seconds --- for writing to the json file" % (time.time() - start_time_for_json))
 
 
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    main()
+    main2()
 
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
 
+
+
+# Helper Functions for reading the data
+
+#Returns all of the entries in the database that are scientists 
+def get_scientists():
+    scientists = [] 
+    for person in entries:
+        try:
+            p = readOne(person)
+            if p.isMathematicianOrPhysicist:
+                scientists.append(p)
+        except Exception as error:
+            print(f"Error {error}")
+   
+    return scientists
+
+def get_non_scientists():
+    non_scientists = []
+    for person in entries:
+        try: 
+            p = readOne(person)
+            if p.isNonScientist:
+                non_scientists.append(p)
+        except Exception as e:
+            print(f"Error {e}")
+    return non_scientists
+
+
+
+# Returns the frequency of each sun sign in the natal chart of an array of users 
+def get_sun_sign_frequency(users):
+    sun_sign_frequency = {}
+    for user in users:
+        try: 
+            user = user.readOne(user)
+        except: 
+            continue
+        user.natal()
+        sun_sign_frequency[user.sun.sign] = sun_sign_frequency.get(user.sun.sign, 0) + 1
+    return sun_sign_frequency
+
+
+
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Print New Line on Complete
+    if iteration == total: 
+        print()
