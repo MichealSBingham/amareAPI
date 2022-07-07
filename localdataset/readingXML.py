@@ -302,7 +302,7 @@ def getWikiLinks():
     printProgressBar(0, tot, prefix = 'Progress:', suffix = 'Complete', length = 50)
 
 
-    with Pool() as p: 
+    with Pool(500) as p: 
         pass 
 
     for person in entries:
@@ -562,7 +562,7 @@ def readJson(file):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    main()
+    main3()
 
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
@@ -632,3 +632,6 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     # Print New Line on Complete
     if iteration == total: 
         print()
+
+
+
