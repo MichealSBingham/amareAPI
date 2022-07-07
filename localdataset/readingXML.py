@@ -35,6 +35,10 @@ disagreements = []
 jsonData = {}
 natalData = {}
 
+data = {}
+
+errs = 0 
+
 def readGender(gender):
     if gender == 'M':
         return 'male'
@@ -340,8 +344,12 @@ def getSingleURL(wiki):
         wikilink = wiki
         paths = wikilink.split('/')
         title = paths[-1]
-        return return_image(title)
+        url = return_image(title)
+        data[wiki] = url 
+        return url 
     except Exception as e: 
+        errs += 1 
+        data[wiki] = None 
         return None 
 
 #Reads json file to get profile pic from wikipedia links
@@ -359,7 +367,7 @@ def main3(): #56% of data has a wikilink
         tot = len(wikis) 
         prog = 0 
 
-        errs = 0 
+        
 
 # puts all of the wiki links and url images in an array 
         wikiLinksArray = []
@@ -372,13 +380,16 @@ def main3(): #56% of data has a wikilink
             wikiLinksArray.append(profileData["wikiLink"])
 
         
-        pool = Pool(50)
+        pool = Pool(100)
 
         for _ in tqdm.tqdm(pool.imap(getSingleURL, wikiLinksArray), total=len(wikiLinksArray)):
             pass
 
-        data = dict(zip(wikiLinksArray, urlImagesArray))
+        #data = dict(zip(wikiLinksArray, urlImagesArray))
 
+
+
+        
         #write to json file 
 
         with open('urls.json', 'w', encoding='utf-8') as j:
