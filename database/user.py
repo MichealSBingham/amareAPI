@@ -340,7 +340,7 @@ class User:
 
         newuserdic = {
 
-            "birthday": { "day": self.birthday.day, "month": "TODO:/RandomDataMonthBorn", "year": self.birthday.year, "timestamp": self.birthday} if self.birthday is not None else None,
+            "birthday": { "day": self.birthday.day, "month": self.birthday.month, "year": self.birthday.year, "timestamp": self.birthday} if self.birthday is not None else None,
             "hometown": self.hometown.dict() if (self.hometown is not None) else self.hometown,
             "residence": self.residence.dict() if (self.residence is not None) else None,
             "images": [], #TODO: random data for images
@@ -366,7 +366,7 @@ class User:
 
         #self.set_natal_chart(real_user=False) #TODO: (I think this no longer applies 2/21) this should automatically happen whenever a new user is created but it's because the cloud function only detect when birthday data is changed, not created
 
-
+    
 
     def dict(self):
 
@@ -455,7 +455,7 @@ class User:
                     aspect = NatalChart.DetailedAspect(pair[0], pair[1], aspectsToGet=aspectsToGet)
                     aspects.append(aspect)
                 except:
-                    print("Failed to get aspect between " + pair[0].id + " and " + pair[1].id)
+                    #print("Failed to get aspect between " + pair[0].id + " and " + pair[1].id)
                     pass
         if not (user2 is None):
             for user1planet in self.__all_for_synastry():
@@ -479,7 +479,7 @@ class User:
 #################################################################################################################
                         aspects.append(aspect)
                     except:
-                        print("Failed to get aspect between " + user1planet.id + " and " + user2planet.id)
+                        #print("Failed to get aspect between " + user1planet.id + " and " + user2planet.id)
                         pass
         return aspects
 
@@ -497,7 +497,8 @@ class User:
                     asp = NatalChart.DetailedAspect(p1, p2, first_planet_owner=self, second_planet_owner=user2)
                     syn.append(asp)
                 except:
-                    print("Failed to get aspect between " + p1.id + " and" + p2.id)
+                    pass
+                    #print("Failed to get aspect between " + p1.id + " and" + p2.id)
         return Aspects(syn)
 
     # Return the natal chart as a dictionary, will create the natal chart and set it in database
@@ -523,6 +524,8 @@ class User:
 
         natal_dic = {}
 
+        natal_dic["name"] = name
+
         planets = self.planets()
         planetsDic = {}
         for planet in planets:
@@ -535,6 +538,8 @@ class User:
             for angle in angles:
                 anglesDic[angle.id] = angleToDic(angle, set_orb=set_orb)
 
+        natal_dic["planets"] = planetsDic
+        natal_dic["angles"] = anglesDic
 
         if self.known_time:
             houses = self.houses()
@@ -561,11 +566,10 @@ class User:
                     
         natal_dic["aspects"] = aspectDic
         
-        natal_dic["name"] = name
+        
         natal_dic["birthday"] = bday_string
         natal_dic["birth_place"] = birth_place
-        natal_dic["planets"] = planetsDic
-        natal_dic["angles"] = anglesDic
+        
         natal_dic["part_of_fortune"] = angleToDic(self.pars_fortuna)
 
 
@@ -741,7 +745,11 @@ class User:
 
     #Creates the natal chart for the user if it was skipped for some reason 
     def createNatal(self): 
-        self.natal_chart = NatalChart.get_natal_chart(self.birthday, self.hometown)
+        try: 
+            self.natal_chart = NatalChart.get_natal_chart(self.birthday, self.hometown)
+        except Exception as e: 
+            raise ValueError(f'Some error creating natal {e}')
+            
         if self.natal_chart is None:
             self.natal_chart = {}  #could not create natal chart from info
 
@@ -857,6 +865,27 @@ class User:
         self.house12 = self.natal_chart.get('House12')
 
 
+    def celebDict(self): 
+        newuserdic = {
+
+            "name": self.name,
+            "birthday": { "day": self.birthday.day, "month": self.birthday.month, "year": self.birthday.year, "timestamp": self.birthday.timestamp()} if self.birthday is not None else None,
+            "hometown": self.hometown.dict() if (self.hometown is not None) else self.hometown,
+            "residence": self.residence.dict() if (self.residence is not None) else None,
+            "images": [], #TODO: random data for images
+            "known_time": self.known_time,
+            "orientation": self.orientation,
+            "profile_image_url": self.profile_image_url,
+            "sex": self.sex,
+            "username": self.username,
+            "isReal": False,
+            "isNotable": self.is_notable,
+            "notes": self.notes,
+            "bio": self.bio
+
+        }
+
+        return newuserdic
 
 
 

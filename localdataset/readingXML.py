@@ -11,9 +11,17 @@ from flatlib.geopos import GeoPos
 import bs4
 import julian
 import datetime
+from database.user import *
+from multiprocessing import Pool
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
+warnings.filterwarnings('ignore', category=Warning, module='bs4')
+
+
 
 #name of xml file
-filename = 'c_sample.xml'
+filename = 'celebData.xml'
+celebNatalData = '_celebBirthData.json'
 
 #loads documents
 _doc = xml4h.parse(filename)
@@ -23,6 +31,9 @@ entries = doc.adb_entry # this will contain all of the entries of each person in
 users = []
 errors = []
 disagreements = []
+
+jsonData = {}
+natalData = {}
 
 def readGender(gender):
     if gender == 'M':
@@ -41,8 +52,10 @@ def readTimeKnown(rr):
         return True
     elif rr == 'X':
         return False
+    elif rr == 'XX': 
+        return False
     else:
-        raise Exception('RoddenRating is not what we want. ')
+        return False #raise Exception('RoddenRating is not what we want. ')
 
 
 from bs4 import BeautifulSoup
@@ -66,7 +79,7 @@ def return_image(title):
 
         return img_link
     except Exception as e:
-        print(f"Could not get image {e}")
+        #print(f"Could not get image {e}")
         raise Exception("Could not get image ")
 
 
@@ -160,7 +173,12 @@ def readOne(entry):
     dt = datetime.strptime(f'{year}-{month}-{day} {timestring}', '%Y-%m-%d %I:%M %p')
     #print(f"{name}'s birthday is ", dt)
 
-    timestamp = hometown.timezone().localize(dt, is_dst=None).astimezone(pytz.UTC)
+    try: 
+        timestamp = hometown.timezone().localize(dt, is_dst=None).astimezone(pytz.UTC)
+    except Exception as error: 
+        print(f"Error in timestamp {error}")
+        return None
+        #raise Exception('Time not valid')
     #print(f"the timestamp from {name} is ", timestamp)
 
 
@@ -177,13 +195,14 @@ def readOne(entry):
     profile_image = None
 
         
-    #try:
-        #wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
-        #paths = wikilink.split('/')
-        #title = paths[-1]
+    try:
+        wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
+        paths = wikilink.split('/')
+        title = paths[-1]
 
-        #profile_image = return_image(title)
-    #except Exception as e:
+        profile_image = return_image(title)
+    except Exception as e:
+        profile_image = None 
         #print(f"Cannot get because of error {e}")
 
     
@@ -228,7 +247,7 @@ def readOne(entry):
                 is_notable=True,
                 name=name,
                 known_time=knownTime,
-                skip_getting_natal=False,
+                skip_getting_natal=True,
                 hometown=hometown,
                 birthday=timestamp,
                 sex=gender,
@@ -240,9 +259,162 @@ def readOne(entry):
                 risingFromCelebDate=rising)
 
 
+def readJustUrl(entry):
+    if not (entry.public_data.datatype['dtc'] == '1'):
+        raise ValueError(0, 'Not a public figure.')
 
+
+    name = entry.public_data.sflname.text
+
+    username = ''.join(name for name in name if name.isalnum())
+
+
+    try:
+        wikilink = entry.text_data.wikipedia_link.text.split('#')[0]
+        paths = wikilink.split('/')
+        title = paths[-1]
+
+        #profile_image = return_image(title)
+    except Exception as e:
+        raise ValueError(1, "No link")
+        profile_image = None
 
         
+    return {"username": username, "wiki": wikilink}
+    
+    
+
+
+ 
+        
+
+
+
+def getWikiLinks(): 
+    import json 
+    allLinks = {}
+    noLinks = 0 
+    links = 0 
+
+    tot = len(entries)
+    prog = 0 
+
+    printProgressBar(0, tot, prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+
+    with Pool() as p: 
+        pass 
+
+    for person in entries:
+        
+        prog+=1 
+        printProgressBar(prog, tot, prefix = 'Progress:', suffix = 'Complete', length = 50) 
+        
+        try: 
+            data = readJustUrl(person)
+            id = data["username"]
+            wiki = data["wiki"]
+            links +=1 
+            allLinks[id] = {"wikiLink": wiki }
+
+        except Exception as e: 
+            noLinks +=1
+            continue 
+
+    error = round(noLinks/links, 2) 
+    correct = (1-error)*100
+
+
+    print(f"Percentage of Links we have: {correct}%")
+
+    with open('wikis.json', 'w', encoding='utf-8') as f:
+        json.dump(allLinks, f, ensure_ascii=False, indent=4)
+
+    f.close()
+
+   
+def getSingleURL(wiki): 
+
+    try:
+
+        wikilink = wiki
+        paths = wikilink.split('/')
+        title = paths[-1]
+        return return_image(title)
+    except Exception as e: 
+        return None 
+
+#Reads json file to get profile pic from wikipedia links
+
+def main3(): #56% of data has a wikilink 
+    import json 
+    import tqdm
+
+    warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
+    warnings.filterwarnings('ignore', category=Warning, module='bs4')
+
+    try:  
+        wikis = readJson('wikis.json')
+
+        tot = len(wikis) 
+        prog = 0 
+
+        errs = 0 
+
+# puts all of the wiki links and url images in an array 
+        wikiLinksArray = []
+        urlImagesArray = []
+
+        #printProgressBar(0, tot, prefix = 'Progress:', suffix = 'Complete', length = 50)
+        for username, profileData in wikis.items():
+
+            # Adds all of the wiki links to a single array 
+            wikiLinksArray.append(profileData["wikiLink"])
+
+        
+        pool = Pool(10)
+
+        for _ in tqdm.tqdm(pool.imap(getSingleURL, wikiLinksArray), total=len(wikiLinksArray)):
+            pass
+
+        data = dict(zip(wikiLinksArray, urlImagesArray))
+
+        #write to json file 
+
+        with open('urls.json', 'w', encoding='utf-8') as j:
+            json.dump(data, j, ensure_ascii=False, indent=4)
+
+        j.close()
+
+
+
+        # process is infinished 
+            
+
+
+
+        # Multiprocessing 
+
+
+
+        errPercentage = errs/tot 
+
+        correct = (1-errPercentage)*100
+
+        correct = round(correct, 2)
+
+        totProf = round(0.56*correct, 2)
+
+        print(f"The percentage of profiles we have with a profile link is {correct}% so in total we have  {totProf}% profile pictures. ")
+        
+        with open('profile_url_links.json', 'w', encoding='utf-8') as f:
+            json.dump(wikis, f, ensure_ascii=False, indent=4)
+
+        f.close()
+    
+    except Exception as error: 
+        print(f"Some error {error} ")
+        print("the error was " + str(error) )
 
 
 
@@ -260,12 +432,17 @@ def main():
 
 def main2():
     import time
+    import json
+    import uuid
     start_time = time.time()
     err = 0
     num_disagreements = 0 
     approvedRisings = 0 
 
     total = len(entries)
+
+    
+    
 
     print(f"We have {total} people in our database")
     iteration = 0 
@@ -277,17 +454,30 @@ def main2():
         try:
             printProgressBar(iteration, total,  prefix = 'Progress:', suffix = 'Complete', length = 50)
             p = readOne(person)
-            users.append(p)
 
-            #Checks if rising signs match 
-            if p.known_time: 
-                if p.risingFromCelebDate not in p.asc.sign.lower(): 
-                    disagreements.append(p)
-                    num_disagreements += 1
-                    #print(f"{p.name} has a disagreement. Astrobank says {p.risingFromCelebDate} but he's actually a {p.asc.sign}")
-                else:
-                    #print(f"{p.name} has no disagreement")
-                    approvedRisings += 1 
+            try:
+                p.createNatal()
+            except Exception as e: 
+                continue
+
+            if p is not None: 
+            
+                uid = str(uuid.uuid1())
+
+                jsonData[uid] = p.celebDict()
+                natalData[uid] = p.natal()
+
+                users.append(p)
+
+                #Checks if rising signs match 
+                if p.known_time: 
+                    if p.risingFromCelebDate not in p.asc.sign.lower(): 
+                        disagreements.append(p)
+                        num_disagreements += 1
+                        #print(f"{p.name} has a disagreement. Astrobank says {p.risingFromCelebDate} but he's actually a {p.asc.sign}")
+                    else:
+                        #print(f"{p.name} has no disagreement")
+                        approvedRisings += 1 
         except ValueError as error:
             err = err+1
             #print(f"Error #{err} {error}")
@@ -298,8 +488,75 @@ def main2():
     print(f"We have {len(users)} users in our database and {err} bad data")
     error_percentage = round((float(num_disagreements/(approvedRisings+num_disagreements)) * 100), 2)
     print(f"The error percentage for our rising signs are:  {error_percentage}%")
+
+    start = time.time() 
+
+    print("Beginning to write to json")
+
+    with open('celebBirthData.json', 'w', encoding='utf-8') as f:
+        json.dump(jsonData, f, ensure_ascii=False, indent=4)
+
+    with open('celebNatalData.json', 'w', encoding='utf-8') as j:
+        json.dump(natalData, j, ensure_ascii=False, indent=4)
+
+    f.close()
+    j.close()
+
+    print("It took: --- %s seconds ---" % (time.time() - start))
     
 
+def importCelebritiesToFirestore():
+    from datetime import datetime 
+    import time 
+    
+
+    data = readJson(celebNatalData)
+    iteration = 0 
+
+    tot = len(data)
+
+    start_time = time.time()
+
+
+    printProgressBar(0, tot, prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+    for id, person in data.items():
+
+        printProgressBar(iteration, tot,  prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+
+        username = person['username'].lower()
+        userData = person
+
+        stamp = userData['birthday']['timestamp'] 
+
+        #changes the seconds since 1970 to datetime object
+        userData['birthday']['timestamp'] = datetime.utcfromtimestamp(stamp)
+
+        #Sets the id in the database 
+        db.collection(f'notable_usernames_not_on_here').document(username).set({'userId': id, 'username': username, 'isNotable': True})
+
+        
+        #Sets the user data in the database
+        db.collection(f'notables_not_on_here').document(id).set(userData)
+        
+        iteration += 1
+
+    print("It took: --- %s seconds ---" % (time.time() - start_time))
+
+
+    
+
+
+
+
+
+#Returns a dictionary from a json file
+def readJson(file):
+    import json  
+    with open(file, 'r') as f:
+        return json.load(f)
+    f.close()
 
 
 
