@@ -302,7 +302,7 @@ def getWikiLinks():
     printProgressBar(0, tot, prefix = 'Progress:', suffix = 'Complete', length = 50)
 
 
-    with Pool(500) as p: 
+    with Pool() as p: 
         pass 
 
     for person in entries:
@@ -372,7 +372,7 @@ def main3(): #56% of data has a wikilink
             wikiLinksArray.append(profileData["wikiLink"])
 
         
-        pool = Pool(10)
+        pool = Pool(500)
 
         for _ in tqdm.tqdm(pool.imap(getSingleURL, wikiLinksArray), total=len(wikiLinksArray)):
             pass
