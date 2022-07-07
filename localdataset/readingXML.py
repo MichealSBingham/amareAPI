@@ -372,7 +372,7 @@ def main3(): #56% of data has a wikilink
             wikiLinksArray.append(profileData["wikiLink"])
 
         
-        pool = Pool(500)
+        pool = Pool(50)
 
         for _ in tqdm.tqdm(pool.imap(getSingleURL, wikiLinksArray), total=len(wikiLinksArray)):
             pass
