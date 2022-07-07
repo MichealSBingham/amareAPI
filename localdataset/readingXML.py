@@ -24,9 +24,9 @@ filename = 'celebData.xml'
 celebNatalData = '_celebBirthData.json'
 
 #loads documents
-_doc = xml4h.parse(filename)
-doc = _doc.child('astrodatabank_export')
-entries = doc.adb_entry # this will contain all of the entries of each person in the database
+#_doc = xml4h.parse(filename)
+#doc = _doc.child('astrodatabank_export')
+#entries = doc.adb_entry # this will contain all of the entries of each person in the database
 
 users = []
 errors = []
