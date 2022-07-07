@@ -345,10 +345,13 @@ def getSingleURL(wiki):
         paths = wikilink.split('/')
         title = paths[-1]
         url = return_image(title)
+        global data 
         data[wiki] = url 
         return url 
     except Exception as e: 
-        errs += 1 
+        global errs 
+        errs = errs + 1
+        
         data[wiki] = None 
         return None 
 
@@ -357,6 +360,8 @@ def getSingleURL(wiki):
 def main3(): #56% of data has a wikilink 
     import json 
     import tqdm
+
+    global data 
 
     warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
     warnings.filterwarnings('ignore', category=Warning, module='bs4')
@@ -380,7 +385,7 @@ def main3(): #56% of data has a wikilink
             wikiLinksArray.append(profileData["wikiLink"])
 
         
-        pool = Pool(100)
+        pool = Pool(75)
 
         for _ in tqdm.tqdm(pool.imap(getSingleURL, wikiLinksArray), total=len(wikiLinksArray)):
             pass
@@ -407,6 +412,7 @@ def main3(): #56% of data has a wikilink
         # Multiprocessing 
 
 
+        global errs 
 
         errPercentage = errs/tot 
 
