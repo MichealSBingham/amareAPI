@@ -591,6 +591,7 @@ def linkFromWiki(wiki):
     
 def setUrlToUsername(username, wikilink):
 
+    print(f"Setting  {username} to {wikilink}")
 
     id = getIdByUsername(username)
 
@@ -603,8 +604,8 @@ def setUrlToUsername(username, wikilink):
         link = linkFromWiki(wiki) 
 
         if link is not None: 
-            pass 
-            #print(f"Setting... {username.lower()} to {link}")
+             
+            print(f"Setting... {username.lower()} to {link}")
             db.collection(f'notable_usernames_not_on_here').document(username.lower()).update({'profile_image_url': link})
             db.collection(f'notables_not_on_here').document(id).update({'profile_image_url': link})
             return (username, link)
