@@ -621,12 +621,12 @@ def setUrlToUsername(username, wikilink):
 # Loops through eacn username we have and finds the profile url of the celeb and writes to username database and info
 def main5():
     import tqdm 
-
+    import time
    
 
     stuff = readJson('wikis.json')
 
-    
+    start_time = time.time()
     
     usernamesAndWikis = []
 
@@ -648,6 +648,7 @@ def main5():
         pass 
 
     
+    print("It took: --- %s seconds ---" % (time.time() - start_time))
     print("I have finished.")
 
 
