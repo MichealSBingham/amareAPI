@@ -16,8 +16,8 @@ from multiprocessing import Pool
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
 warnings.filterwarnings('ignore', category=Warning, module='bs4')
-
-
+from database.user import db 
+import json 
 
 #name of xml file
 filename = 'celebData.xml'
@@ -35,7 +35,9 @@ disagreements = []
 jsonData = {}
 natalData = {}
 
-data = {}
+data  = {} 
+
+
 
 errs = 0 
 
@@ -83,7 +85,7 @@ def return_image(title):
 
         return img_link
     except Exception as e:
-        #print(f"Could not get image {e}")
+        #print("Could not get image because of error " + str(e))
         raise Exception("Could not get image ")
 
 
@@ -562,6 +564,99 @@ def importCelebritiesToFirestore():
     print("It took: --- %s seconds ---" % (time.time() - start_time))
 
 
+
+def getIdByUsername(username):
+
+    try: 
+        id = db.collection(f'notable_usernames_not_on_here').document(username.lower()).get().to_dict()["userId"]
+        return id 
+    except Exception as e: 
+        #print(f"Failed to get id {username} because {e}")
+        return None 
+        
+
+
+
+def linkFromWiki(wiki): 
+    try:
+        wikilink = wiki
+        paths = wikilink.split('/')
+        title = paths[-1]
+
+        profile_image = return_image(title)
+        return profile_image
+    except Exception as e:
+        profile_image = None
+        return None 
+    
+def setUrlToUsername(username, wikilink):
+
+
+    id = getIdByUsername(username)
+
+    
+
+    if id is not None:
+
+        wiki = wikilink
+
+        link = linkFromWiki(wiki) 
+
+        if link is not None: 
+            pass 
+            #print(f"Setting... {username.lower()} to {link}")
+            db.collection(f'notable_usernames_not_on_here').document(username.lower()).update({'profile_image_url': link})
+            db.collection(f'notables_not_on_here').document(id).update({'profile_image_url': link})
+            return (username, link)
+        
+    else: 
+        return None
+        pass 
+    
+
+    
+
+
+# Loops through eacn username we have and finds the profile url of the celeb and writes to username database and info
+def main5():
+    import tqdm 
+
+   
+
+    stuff = readJson('wikis.json')
+
+    
+    
+    usernamesAndWikis = []
+
+    for key, value in stuff.items(): 
+
+        data = (key, value["wikiLink"])
+
+        usernamesAndWikis.append(data)
+
+    print(f"Total is .. {len(usernamesAndWikis)}")
+
+    
+
+
+    pool = Pool(75)
+
+    
+    for result in tqdm.tqdm(pool.starmap(setUrlToUsername, usernamesAndWikis), total=len(usernamesAndWikis)):
+        pass 
+
+    
+    print("I have finished.")
+
+
+
+
+    
+
+
+    
+
     
 
 
@@ -570,7 +665,7 @@ def importCelebritiesToFirestore():
 
 #Returns a dictionary from a json file
 def readJson(file):
-    import json  
+     
     with open(file, 'r') as f:
         return json.load(f)
     f.close()
