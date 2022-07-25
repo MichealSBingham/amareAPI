@@ -129,6 +129,68 @@ def user(request):
                        secret_entered=secret
                        )
 
+
+
+"""
+
+Returns the Celebrity Soulmate of the user  
+
+- Request Parameters: 
+     - name (String) : The name of the user 
+     - gender:   (String)   male, female, or other 
+     - orientation: (String) male, female, or other
+     - latitude: (Number) latitude of birth location
+     - longitude: (Number) longitude of birth location 
+     - birthday: (Timestamp) Birthday of the user in UTC. This should be the timestamp: secondsSince(1970)
+
+ Deployment:
+     gcloud functions deploy celebritySoulmate \
+--runtime python37 --trigger-http  --security-level=secure-always --allow-unauthenticated
+
+"""
+def celebritySoulmate(request): 
+
+    from database.user import User
+    from database.Location import Location
+    from datetime import datetime
+
+    request_json = request.get_json(silent=True)
+    request_args = request.args
+
+    gender , name, orientation, latitude, longitude, birthday = None 
+
+
+    if request_json and 'gender' in request_json:
+            gender = request_json['gender']
+
+    if request_json and 'name' in request_json:
+            name = request_json['name']
+
+    if request_json and 'orientation' in request_json:
+            orientation = request_json['orientation']
+
+    if request_json and 'latitude' in request_json:
+            latitude = request_json['latitude']
+
+    if request_json and 'longitude' in request_json:
+            longitude = request_json['longitude']
+
+    if request_json and 'birthday' in request_json:
+            birthday = request_json['birthday']
+
+    
+
+    
+    date = datetime.fromtimestamp(birthday)
+    loc = Location(latitude=latitude, longitude=longitude)
+
+    user = User(do_not_fetch=True, name=name, birthday=birthday, known_time=True, hometown=loc)
+
+            
+    
+
+    pass 
+
 """
 Returns the natal chart of the user
 
