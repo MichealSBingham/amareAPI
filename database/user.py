@@ -888,6 +888,11 @@ class User:
         return newuserdic
 
 
+    # Returns a user that is a celebrity soulmate 
+    def celebritySoulmate(self): 
+        """ Returns the celebrity soulmate for the user. 
+         For now, returns a random user until we've completed the algorithm """
+        return None 
 
 
 
