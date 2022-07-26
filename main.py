@@ -157,6 +157,7 @@ def celebritySoulmate(request):
     from database.user import User
     from database.Location import Location
     from datetime import datetime
+    import random 
 
     request_json = request.get_json(silent=True)
     request_args = request.args
@@ -279,8 +280,22 @@ def celebritySoulmate(request):
                            'description': f"Something went wrong. {e.message}"}
                        ) 
 
-                       
-    return jsonify(**natal_response)
+
+    # Getting the celebrity soulmate 
+
+    celeb = user.celebritySoulmate()
+    celeb.residence = None 
+    response = celeb.dict()
+
+    response["sex"] = random.randint(0,100) 
+    response["chemistry"] = random.randint(0,100) 
+    response["love"] = random.randint(0,100) 
+    response["id"] = celeb.id 
+
+    response = {k: v for k, v in response.items() if
+                             v is not None and v != '' and (v != {}) and (v != [])}
+
+    return jsonify(**response)
      
 
 """

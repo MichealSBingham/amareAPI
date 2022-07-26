@@ -333,6 +333,18 @@ class User:
                    is_notable=is_notable,
                    skip_getting_natal=skip_getting_natal)
 
+    @classmethod
+    def random_celebrity(cls):
+        import random 
+        import string 
+
+        docs = db.collection(f'notables_not_on_here').where(u'bio', u'>=', random.choice(string.ascii_letters)).limit(1).stream()
+
+        for doc in docs:
+            id = doc.id
+            data = doc.to_dict()
+            User.users_ref = db.collection(f'notables_not_on_here')
+            return User(id=id)
 
     def new(self ):
         """Sets the newly created user object in the database """
@@ -891,8 +903,10 @@ class User:
     # Returns a user that is a celebrity soulmate 
     def celebritySoulmate(self): 
         """ Returns the celebrity soulmate for the user. 
-         For now, returns a random user until we've completed the algorithm """
-        return None 
+         For now, returns a random user until we've completed the algorithm"""
+
+        return User.random_celebrity()
+        
 
 
 
