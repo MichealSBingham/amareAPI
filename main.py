@@ -332,6 +332,8 @@ def celebritySoulmate(request):
     response["love"] = random.randint(0,100) 
     response["id"] = celeb.id 
 
+    response["oneLiner"] = "You two have something very beautiful."
+
     response = {k: v for k, v in response.items() if
                              v is not None and v != '' and (v != {}) and (v != [])}
 

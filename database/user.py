@@ -419,7 +419,8 @@ class User:
            "orientation": self.orientation,
            "profile_image_url": self.profile_image_url,
            "hometown": htown,
-           "residence": rtown
+           "residence": rtown, 
+           "bio": self.bio,
         }
         cleaned_user_data_dic = {k: v for k, v in user_data_dict.items() if v is not None and v != '' and (v != {}) and  (v != [])}
 
