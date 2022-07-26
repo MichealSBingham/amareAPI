@@ -158,6 +158,7 @@ def celebritySoulmate(request):
     from database.Location import Location
     from datetime import datetime
     import random 
+    import flask 
 
     request_json = request.get_json(silent=True)
     request_args = request.args
@@ -169,61 +170,69 @@ def celebritySoulmate(request):
     if request_json and 'name' in request_json:
             name = request_json['name']
     else: 
-        return jsonify(success=False,
-                       error={
-                           'code': 400,
-                           'description': "Invalid Parameters. Please provide a name."}
-                       ) 
-    
+        resp = {"success": False, "error": {"code": 400, "description": "Invalid Parameters. Please provide a name."}}
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
 
     if request_json and 'gender' in request_json:
             gender = request_json['gender']
 
     else: 
-        return jsonify(success=False,
-                       error={
-                           'code': 400,
-                           'description': "Invalid Parameters. Please provide a gender as 'male', 'female', or 'other'."}
-                       ) 
+        resp = {"success": False, "error": {"code": 400, "description": "Invalid Parameters. Please provide a gender."}}
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
 
 
     if request_json and 'orientation' in request_json:
             orientation = request_json['orientation']
 
     else: 
-        return jsonify(success=False,
-                       error={
-                           'code': 400,
-                           'description': "Invalid Parameters. Please provide a sexual orientation."}
-                       ) 
+        resp = {"success": False, "error": {"code": 400, "description": "Invalid Parameters. Please provide an orientation."}}
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
 
     if request_json and 'latitude' in request_json:
             latitude = request_json['latitude']
     
     else: 
-        return jsonify(success=False,
-                       error={
-                           'code': 400,
-                           'description': "Invalid Parameters. Please provide a latitude."}
-                       ) 
+        resp = {"success": False, "error": {"code": 400, "description": "Invalid Parameters. Please provide a latitude."}}
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
 
     if request_json and 'longitude' in request_json:
             longitude = request_json['longitude']
     else: 
-        return jsonify(success=False,
-                       error={
-                           'code': 400,
-                           'description': "Invalid Parameters. Please provide a longitude."}
-                       ) 
+        
+
+        resp = {"success": False, "error": {"code": 400, "description": "Invalid Parameters. Please provide a longitude."}}
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
 
     if request_json and 'birthday' in request_json:
             birthday = request_json['birthday']
     else: 
-        return jsonify(success=False,
-                       error={
-                           'code': 400,
-                           'description': "Invalid Parameters. Please provide a birthday as a timestamp."}
-                       ) 
+        resp = {"success": False, "error": {"code": 400, "description": "Invalid Parameters. Please provide a birthday."}}
+
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
 
     if request_json and 'knownTime' in request_json: 
         knownTime =  request_json['knownTime']
@@ -234,51 +243,82 @@ def celebritySoulmate(request):
         latitude = float(latitude)
         longitude = float(longitude) 
     except Exception as e: 
-        return jsonify(success=False,
+        resp =  jsonify(success=False,
                        error={
                            'code': 405,
                            'description': f"Please enter numbers as strings {e.message}"}
                        )
-
+        #resp = flask.Response(response)
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
     
     
     try: 
         date = datetime.fromtimestamp(float(birthday))
     except Exception as e: 
-        return jsonify(success=False,
+        resp =  jsonify(success=False,
                        error={
                            'code': 400,
                            'description': f"An invalid birthday was given. {e.message}"}
-                       ) 
+        )
+        #resp = flask.Response(response)
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
         
     try: 
         loc = Location(latitude=float(latitude), longitude=float(longitude))
     except Exception as e: 
-        return jsonify(success=False,
+        resp =  jsonify(success=False,
                        error={
                            'code': 401,
                            'description': f"An invalid location was given. {e.message}"}
                        ) 
+        #resp = flask.Response(response)
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
 
     
     try: 
         user = User(do_not_fetch=True, name=name, birthday=date, known_time=True, hometown=loc)
     except Exception as e: 
-        return jsonify(success=False,
+        resp =  jsonify(success=False,
                        error={
                            'code': 500,
                            'description': f"Something went wrong trying to draw the user's natal chart. {e.message}"}
                        ) 
+        #resp = flask.Response(response)
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
             
     try: 
         natal_response = user.natal()
         natal_response["success"] = True
     except Exception as e: 
-        return jsonify(success=False,
+        resp = jsonify(success=False,
                        error={
                            'code': 409,
                            'description': f"Something went wrong. {e.message}"}
                        ) 
+
+        #resp = flask.Response(response)
+        resp = jsonify(**resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+
+        return resp
 
 
     # Getting the celebrity soulmate 
@@ -295,7 +335,14 @@ def celebritySoulmate(request):
     response = {k: v for k, v in response.items() if
                              v is not None and v != '' and (v != {}) and (v != [])}
 
-    return jsonify(**response)
+
+    resp = jsonify(**response)
+    resp.headers.set('Access-Control-Allow-Origin','*')
+    resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+    resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+
+
+    return resp #jsonify(**response)
      
 
 """
