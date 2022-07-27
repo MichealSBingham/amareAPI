@@ -7,6 +7,7 @@ from secret import api_keys
 
 from json import dumps
 from flask import make_response
+from Messaging.streamBackend import *
 
 def jsonify(status=200, indent=4, sort_keys=True, **kwargs):
     response = make_response(dumps(dict(**kwargs), indent=indent, sort_keys=sort_keys))
@@ -1348,6 +1349,49 @@ def listen_for_deleted_user(data, context):
 
 
 
+def messaging_token(request):
+    
+    """
+
+This returns a token that the frontend can use to authenticate with the backend to send messages. 
+    This token is generated from the user_id and has no expiration date.
+
+- Request Parameters: 
+     - userId : The id of the user who is sending the message.
+
+
+ Deployment:
+     gcloud functions deploy messaging_token \
+--runtime python37 --trigger-http  --security-level=secure-always --allow-unauthenticated
+
+Get Url to endpoing: 
+gcloud functions describe messaging_token 
+
+
+    """
+
+    from Messaging.streamBackend import get_token_from_user_id
+
+    request_json = request.get_json(silent=True)
+    request_args = request.args
+
+    if request_json and 'userId' in request_json:
+            userId = request_json['userId']
+            response = {"success": True, "data": {"token": get_token_from_user_id(userId)}}
+            resp = jsonify(status=200, **response)
+            resp.headers.set('Access-Control-Allow-Origin','*')
+            resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+            resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+            return resp
+    else: 
+        resp = {"success": False, "error": {"code": 401, "description": "Please provide a user id in the request body."}}
+        resp = jsonify(status=401, **resp)
+        resp.headers.set('Access-Control-Allow-Origin','*')
+        resp.headers.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+        return resp
+
+    
 
 
 
