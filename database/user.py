@@ -369,12 +369,12 @@ class User:
 
         }
 
-        self.id = str(uuid.uuid1())
+       
         #Add the username to the database
         db.collection(f'usernames').document(self.username).set({'userId': self.id, 'username': self.username, 'isNotable': self.is_notable})
 
         #add the user data to the database
-        self.users_ref.document(self.id).set(newuserdic)
+        db.collection(f'users').document(self.id).set(newuserdic)
 
         #self.set_natal_chart(real_user=False) #TODO: (I think this no longer applies 2/21) this should automatically happen whenever a new user is created but it's because the cloud function only detect when birthday data is changed, not created
 
