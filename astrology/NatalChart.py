@@ -401,6 +401,19 @@ def angleBetween(planet1, planet2):
 
 
 
+#*** Given planet, returns the aspects each sign in each degree makes with it 
+# Returns [ [sign, degree, aspect], [sign, degree, aspect] ]   
+# 
+def allPossibleAspectsEachSignMakesWith(planet1): 
+
+    allDegreesForPlanet = [] # const.LIST_PLANETS
+
+
+    # Will return something like 
+    #( Cancer, 2 , 'SQUARE' ) or 
+    # [ ( Planet, DetailedAspect) ] 
+    pass 
+
 
 class DetailedAspect:
 
@@ -543,28 +556,33 @@ class DetailedAspect:
 # Example: trine --> (True, 3) (3 is the intensity)
     def harmony(self):
 
-        if self.name == ('Sun', 'Venus'):
+
+
+        if True: #self.name == ('Sun', 'Venus'):
 
             if self.type == const.CONJUNCTION:
-                return (True, 2)
+                return 2
             if self.type == const.SEXTILE:
-                return (True, 1)
+                return 1
             if self.type == const.TRINE:
-                return (True, 3)
+                return 3
 
 
             if self.type == const.SQUARE:
-                return (False, -3)
+                return -3
             if self.type == const.QUINCUNX:
-                return (False, -2)
+                return -2
             if self.type == const.CONJUNCTION:
-                return (False, -1)
+                return -1
 
             if self.type == const.NO_ASPECT:
-                return (None, 0)
+                return 0
 
             else:
-                pass
+                if self.isHarmonious(): 
+                    return 1
+                else: 
+                    return -1
 
 
     # Returns if the aspect is `traditionally` harmonious.
@@ -605,7 +623,12 @@ class DetailedAspect:
             return not (self.isHarmonious())
 
 
+    #Returns a number of 
+    def loveHarmony(self): 
+        pass 
 
+
+    
 
 # Provides an interpretation of this particular aspect, None if there is none.
     def interpret(self):
@@ -1000,12 +1023,82 @@ class Aspects:
 
 
 
+# Utility Functions for algoritm and calculations
+
+# Returns the sun sign of a given date where time is a datetime float 
+def getASun(time):
+    from database.user import User
+    from database.Location import Location
+    from datetime import datetime
+    loc = Location(latitude=40.7, longitude=-74.0) 
+    user = User(do_not_fetch=True, name="micheal", birthday = datetime.fromtimestamp(float(time)), known_time=True, hometown=loc)
+    return user.sun 
+    
+
+# Returns a list of planets for each degree of the sign (0-29)
+def getAllDegreesForSign(sign, startAt):
+    planets = []
+    degrees = [i for i in range(0,29+1)]
+    degreesWeHave = []
+
+    time = startAt
+    sun = getASun(time)
+    while sun.sign == sign:
+        if int(sun.signlon) not in degreesWeHave:
+            degreesWeHave.append(round(sun.signlon, 0))
+            planets.append(sun)
+            #print("ADDING DEGREE " + str(sun.signlon))
+        time = time+900
+        sun = getASun(time)
+    #print(("\n\nStopped at : " + str(time)))
+    return planets 
+       
 
 
 
+# Gets the possible aspects a particular sign can make with another planet 
+#placements : an array of planets . where each planet is  a particular sign in each degree
+def getAllPossibleAspectsWithSigninEachDegree(placements, planet):
+    aspects = []
+    for p in placements:
+        aspect = DetailedAspect(p, planet, aspectsToGet=const.ALL_ASPECTS)
+        aspects.append(aspect)
+    return aspects #an array of aspects that the planet can make with each degree of the sign
+    
 
+def aspectsToHarmonies(aspects): 
+    """Accepts an array of aspects and returns an array of harmony scores"""
+    scores = []
+    for asp in aspects: 
+        if asp.isHarmonious() == True: 
+            scores.append(1)
+        if asp.isHarmonious() == False: 
+            scores.append(-1)
+        else: 
+            scores.append(0)
+    return scores
+     
 
+def bestFitSunSignForPlanets(planets): 
+    from astrology.Constants import everySun
+    import numpy as np 
+    """Given planets, say, the user's natal chart (ex: Sun in Cancer, Moon in Scorpio, ... , etc) 
+    This function will return the best fit sun sign for the user's natal chart.
+    It will compute the harmony scores for each sun sign and return the rank for each aspect """
 
+    totals = []
+    for planet in planets: 
+        howEachSignInteractsWithMyPlanet =  getAllPossibleAspectsWithSigninEachDegree(everySun, planet)
+        harmonyScores = aspectsToHarmonies(howEachSignInteractsWithMyPlanet)
+        print("lenght of harmony scores: " + str(len(harmonyScores)))
+        totals.append(harmonyScores)
+        print("lenght of totals: " + str(len(totals)))
+
+    totals = np.array(totals, dtype=object)
+    #allScores = np.add(0, totals.sum(axis=0))
+    sums = np.sum(totals, axis=0)
+    return sums
+    
 
 
 

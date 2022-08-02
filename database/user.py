@@ -907,8 +907,7 @@ class User:
          For now, returns a random user until we've completed the algorithm"""
 
         return User.random_celebrity()
-        
-
+    
 
 
 
