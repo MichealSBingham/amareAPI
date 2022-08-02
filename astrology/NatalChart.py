@@ -447,7 +447,8 @@ class DetailedAspect:
                  passive_planet_owner=None,
                  first_planet_owner=None,
                  second_planet_owner=None,
-                 name=None
+                 name=None, 
+                 harmonyScoreAssigned=None #this is only adjusted if this aspect is from an algorithm that assigns harmony scores
                  ):
 
         aspect = aspects.getAspect(first, second, aspectsToGet)
@@ -468,6 +469,7 @@ class DetailedAspect:
         self.first_planet_owner = first_planet_owner
         self.second_planet_owner = second_planet_owner
         self.name = (first.id, second.id)
+        self.harmonyScoreAssigned = harmonyScoreAssigned
         #isspecial
 
         # Returns the aspect type with the owner's of the planets ex: 'Micheal-Sun TRINE Moon-Kate'
@@ -1087,17 +1089,24 @@ def bestFitSunSignForPlanets(planets):
     It will compute the harmony scores for each sun sign and return the rank for each aspect """
 
     totals = []
+    
     for planet in planets: 
         howEachSignInteractsWithMyPlanet =  getAllPossibleAspectsWithSigninEachDegree(everySun, planet)
         harmonyScores = aspectsToHarmonies(howEachSignInteractsWithMyPlanet)
-        print("lenght of harmony scores: " + str(len(harmonyScores)))
         totals.append(harmonyScores)
-        print("lenght of totals: " + str(len(totals)))
+       
 
     totals = np.array(totals, dtype=object)
     #allScores = np.add(0, totals.sum(axis=0))
     sums = np.sum(totals, axis=0)
-    return sums
+
+    results = {} 
+    for sun, score in zip(everySun, sums):
+        info = f"Sun in {sun.sign}, {int(sun.signlon)} deg"
+        results[info] = score 
+        
+
+    return results 
     
 
 
