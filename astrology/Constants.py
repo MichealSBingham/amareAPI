@@ -8,6 +8,12 @@ loc=Location(latitude=float(32.2988), longitude=float(-90.1848))
 micheal = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(932604720), known_time=True, hometown=loc)
 micheal.natal()
 
+loc2=Location(latitude=float(34.0007), longitude=float(-81.0348))
+gracen = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(881837400), known_time=True, hometown=loc)
+gracen.natal()
+
+
+
 # Returns a list of the Capricon Suns in ALL degrees
 def listOfCapricornSuns_all_degrees():
     startAt=-843375

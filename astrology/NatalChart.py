@@ -427,6 +427,9 @@ class DetailedAspect:
 
                             ]
 
+                            
+    disharmonious_aspects = [ aspectFromDeg(const.SQUARE), aspectFromDeg(const.SEMISQUARE), aspectFromDeg(const.SESQUISQUARE), aspectFromDeg(const.OPPOSITION), aspectFromDeg(const.QUINCUNX) ]
+
 
 ## Consider out of sign conjunctions etc
     def __init__(self,
@@ -587,17 +590,285 @@ class DetailedAspect:
                     return -1
 
 
+    def harmonyValue_broken(self):
+        # Should return a value between -1 and 1 
+
+        value = 0 
+
+        if self.elementalHarmony():
+            value = 0.25 
+            if self.type == aspectFromDeg(const.CONJUNCTION):
+                value = 0.75 
+            elif self.type == aspectFromDeg(const.SEXTILE):
+                value = 0.5
+            elif self.type == aspectFromDeg(const.TRINE):
+                value = 1
+            elif self.type == aspectFromDeg(const.SQUARE):
+                value = 0
+            elif self.type in self.disharmonious_aspects: 
+                value = value*0.5
+            else: 
+                value = 0.25 
+            return value 
+            
+
+        if self.elementalChallenge(): 
+            value = -0.25
+
+            if self.type == aspectFromDeg(const.SQUARE):
+                value = -1 
+            if self.type == aspectFromDeg(const.QUINCUNX):
+                value =  -0.75
+            if self.type == aspectFromDeg(const.OPPOSITION):
+                value =  -0.5
+            if self.type in self.harmonious_aspects: 
+                value = value*0.5
+            else:
+                value = -0.25 
+            return value 
+
+
+    def harmonyValue(self): 
+
+        if self.name == ('Sun', 'Sun'):
+            if self.elementalHarmony(): 
+
+                if self.type == aspectFromDeg(const.TRINE) and self.orb < 8.0:
+                    return 1 
+                if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 8.0:
+                    return 1
+                if self.type == aspectFromDeg(const.SEXTILE) and self.orb < 4.0:
+                    return 0.75
+
+
+                if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 8.0:
+                    return 0
+                if self.type == aspectFromDeg(const.SEMISEXTILE) and self.orb < 2.0:
+                    return 0
+                if self.type == aspectFromDeg(const.QUINCUNX) and self.orb < 3.0:
+                    return 0
+                if self.type == aspectFromDeg(const.SQUARE) and self.orb < 3.0:
+                    return 0
+
+
+
+                if self.type in self.harmonious_aspects and self.orb < 3.0:
+                    return 0.5 
+                if self.type in self.disharmonious_aspects and self.orb < 3.0:
+                    return 0
+                else: 
+
+                    if self.first.sign == self.second.sign: #same sign 
+                        return 0.5
+                    elif getElement(self.first, set_orb=0) ==  getElement(self.second, set_orb=0): #same element 
+                        return 0.25
+                    else: 
+                        return 0.10 
+                
+
+
+            
+            if self.elementalChallenge():
+
+
+                if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 3.0:
+                    return -0.50
+                if self.type == aspectFromDeg(const.SEMISEXTILE) and self.orb < 2.0:
+                    return -0.25
+                if self.type == aspectFromDeg(const.QUINCUNX) and self.orb < 3.0:
+                    return -0.75
+                if self.type == aspectFromDeg(const.SQUARE) and self.orb < 3.0:
+                    return -1
+
+
+                if self.type == aspectFromDeg(const.TRINE) and self.orb < 3.0:
+                    return 0
+                if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 3.0:
+                    return 0
+                if self.type == aspectFromDeg(const.SEXTILE) and self.orb < 3.0:
+                    return 0
+
+
+        
+
+
+                if self.type in self.harmonious_aspects and self.orb < 2.0:
+                    return -0.25 
+                if self.type in self.disharmonious_aspects and self.orb < 3.0:
+                    return -0.5
+                else: 
+
+                    return -0.25  
+                
+        if self.name == ('Sun', 'Venus') or self.name == ('Venus', 'Sun'):
+            if self.elementalHarmony(): 
+
+                if self.type == aspectFromDeg(const.TRINE) and self.orb < 8.0:
+                    return 1 
+                if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 8.0:
+                    return 1
+                if self.type == aspectFromDeg(const.SEXTILE) and self.orb < 4.0:
+                    return 0.75
+
+
+                if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 8.0:
+                    return 0
+                if self.type == aspectFromDeg(const.SEMISEXTILE) and self.orb < 2.0:
+                    return 0
+                if self.type == aspectFromDeg(const.QUINCUNX) and self.orb < 3.0:
+                    return 0
+                if self.type == aspectFromDeg(const.SQUARE) and self.orb < 3.0:
+                    return 0
+
+
+
+                if self.type in self.harmonious_aspects and self.orb < 3.0:
+                    return 0.5 
+                if self.type in self.disharmonious_aspects and self.orb < 3.0:
+                    return 0
+                else: 
+
+                    if self.first.sign == self.second.sign: #same sign 
+                        return 0.5
+                    elif getElement(self.first, set_orb=0) ==  getElement(self.second, set_orb=0): #same element 
+                        return 0.25
+                    else: 
+                        return 0.10 
+                
+
+
+            
+            if self.elementalChallenge():
+
+
+                if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 3.0:
+                    return -0.50
+                if self.type == aspectFromDeg(const.SEMISEXTILE) and self.orb < 2.0:
+                    return -0.25
+                if self.type == aspectFromDeg(const.QUINCUNX) and self.orb < 3.0:
+                    return -0.75
+                if self.type == aspectFromDeg(const.SQUARE) and self.orb < 3.0:
+                    return -1
+
+
+                if self.type == aspectFromDeg(const.TRINE) and self.orb < 3.0:
+                    return 0
+                if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 3.0:
+                    return 0
+                if self.type == aspectFromDeg(const.SEXTILE) and self.orb < 3.0:
+                    return 0
+
+
+        
+
+
+                if self.type in self.harmonious_aspects and self.orb < 2.0:
+                    return -0.25 
+                if self.type in self.disharmonious_aspects and self.orb < 3.0:
+                    return -0.5
+                else: 
+
+                    return -0.25  
+          
+        if self.name == ('Sun', 'Moon') or self.name == ('Moon', 'Sun'):
+            if self.elementalHarmony(): 
+
+                if self.type == aspectFromDeg(const.TRINE) and self.orb < 8.0:
+                    return 1 
+                if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 8.0:
+                    return 1
+                if self.type == aspectFromDeg(const.SEXTILE) and self.orb < 4.0:
+                    return 0.75
+
+
+                if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 8.0:
+                    return 0
+                if self.type == aspectFromDeg(const.SEMISEXTILE) and self.orb < 2.0:
+                    return 0
+                if self.type == aspectFromDeg(const.QUINCUNX) and self.orb < 3.0:
+                    return 0
+                if self.type == aspectFromDeg(const.SQUARE) and self.orb < 3.0:
+                    return 0
+
+
+
+                if self.type in self.harmonious_aspects and self.orb < 3.0:
+                    return 0.5 
+                if self.type in self.disharmonious_aspects and self.orb < 3.0:
+                    return 0
+                else: 
+
+                    if self.first.sign == self.second.sign: #same sign 
+                        return 0.5
+                    elif getElement(self.first, set_orb=0) ==  getElement(self.second, set_orb=0): #same element 
+                        return 0.25
+                    else: 
+                        return 0.10 
+                
+            
+            if self.elementalChallenge():
+
+
+                if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 3.0:
+                    return -0.50
+                if self.type == aspectFromDeg(const.SEMISEXTILE) and self.orb < 2.0:
+                    return -0.25
+                if self.type == aspectFromDeg(const.QUINCUNX) and self.orb < 3.0:
+                    return -0.75
+                if self.type == aspectFromDeg(const.SQUARE) and self.orb < 3.0:
+                    return -1
+
+
+                if self.type == aspectFromDeg(const.TRINE) and self.orb < 3.0:
+                    return 0
+                if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 3.0:
+                    return 0
+                if self.type == aspectFromDeg(const.SEXTILE) and self.orb < 3.0:
+                    return 0
+
+
+        
+
+
+                if self.type in self.harmonious_aspects and self.orb < 2.0:
+                    return -0.25 
+                if self.type in self.disharmonious_aspects and self.orb < 3.0:
+                    return -0.5
+                else: 
+
+                    return -0.25  
+          
+
+    
+        return 0 
+        if self.name == ('Sun', 'Venus') or ('Sun', 'Venus'): 
+            pass 
+
+        if self.name == ('Sun', 'Moon') or ('Moon', 'Sun'): 
+            pass
+
+        if self.name == ('Sun', 'Mars') or ('Sun', 'Mars'):
+            pass  #more so chemistry / physical attraction 
+            
+
+
+
+        
     # Returns if the aspect is `traditionally` harmonious.
     def isHarmonious(self):
-        if self.type in DetailedAspect.harmonious_aspects:
+        if self.type in DetailedAspect.harmonious_aspects and self.elementalHarmony():
             return True
         elif self.type == aspectFromDeg(const.NO_ASPECT):
-            return None
+            return self.elementalHarmony()
+        elif (self.type not in DetailedAspect.harmonious_aspects and self.type != aspectFromDeg(const.NO_ASPECT)) and not self.elementalHarmony():
+            return False
+        elif (self.type not in DetailedAspect.harmonious_aspects and self.type != aspectFromDeg(const.NO_ASPECT)) and self.elementalHarmony(): 
+            return True 
         else:
             return False
 
 
-    # Example: Water/Water , Fire/Air, Earth/Air, Fire/Fire all return true
+    # Example: Water/Water , Fire/Air, Fire/Fire all return true
     def elementalHarmony(self):
         (element1, element2) = (getElement(self.first, set_orb=0), getElement(self.second, set_orb=0))
 
@@ -608,6 +879,12 @@ class DetailedAspect:
             return False
 
         if (element1, element2) == ('Water', 'Air') or (element1, element2) == ('Air', 'Water'):
+            return False
+
+        if (element1, element2) == ('Earth', 'Air') or (element1, element2) == ('Air', 'Earth'):
+            return False
+        
+        if (element1, element2) == ('Earth', 'Fire') or (element1, element2) == ('Fire', 'Earth'):
             return False
 
         return True
@@ -1071,13 +1348,8 @@ def getAllPossibleAspectsWithSigninEachDegree(placements, planet):
 def aspectsToHarmonies(aspects): 
     """Accepts an array of aspects and returns an array of harmony scores"""
     scores = []
-    for asp in aspects: 
-        if asp.isHarmonious() == True: 
-            scores.append(1)
-        if asp.isHarmonious() == False: 
-            scores.append(-1)
-        else: 
-            scores.append(0)
+    for asp in aspects:
+        scores.append(asp.harmonyValue()) 
     return scores
      
 
@@ -1089,6 +1361,10 @@ def bestFitSunSignForPlanets(planets):
     It will compute the harmony scores for each sun sign and return the rank for each aspect """
 
     totals = []
+
+    harmonyScoresWithMySunSign = []
+    harmonyScoresWithMyMarsSign = []
+    harmonyScoresWithMyVenusSign = []
     
     for planet in planets: 
         howEachSignInteractsWithMyPlanet =  getAllPossibleAspectsWithSigninEachDegree(everySun, planet)
@@ -1105,8 +1381,9 @@ def bestFitSunSignForPlanets(planets):
         info = f"Sun in {sun.sign}, {int(sun.signlon)} deg"
         results[info] = score 
         
+    orderdResults = {k: v for k, v in sorted(results.items(), key=lambda item: item[1])}
 
-    return results 
+    return orderdResults 
     
 
 
