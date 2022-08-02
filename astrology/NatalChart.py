@@ -1360,16 +1360,48 @@ def bestFitSunSignForPlanets(planets):
     This function will return the best fit sun sign for the user's natal chart.
     It will compute the harmony scores for each sun sign and return the rank for each aspect """
 
+
+    mySunTheirSunWeight = 0.5
+    myMoonTheirSunWeight = 0.25
+    myVenusTheirSunWeight = 0.25
+
     totals = []
 
     harmonyScoresWithMySunSign = []
     harmonyScoresWithMyMarsSign = []
     harmonyScoresWithMyVenusSign = []
+
+    mySun = None
+    myMoon = None
+    myVenus = None 
     
     for planet in planets: 
-        howEachSignInteractsWithMyPlanet =  getAllPossibleAspectsWithSigninEachDegree(everySun, planet)
-        harmonyScores = aspectsToHarmonies(howEachSignInteractsWithMyPlanet)
-        totals.append(harmonyScores)
+        if planet.id == "Sun":
+            mySun = planet
+        if planet.id == "Moon":
+            myMoon = planet
+        if planet.id == "Venus":
+            myVenus = planet
+        #howEachSignInteractsWithMyPlanet =  getAllPossibleAspectsWithSigninEachDegree(everySun, planet)
+        #harmonyScores = aspectsToHarmonies(howEachSignInteractsWithMyPlanet)
+        #totals.append(harmonyScores)
+
+    
+    howEachSignInteractsWithMySun = getAllPossibleAspectsWithSigninEachDegree(everySun, mySun)
+    harmonyScoresWithMySunSign = aspectsToHarmonies(howEachSignInteractsWithMySun)
+    harmonyScoresWithMySunSign = [element * mySunTheirSunWeight for element in harmonyScoresWithMySunSign]
+    totals.append(harmonyScoresWithMySunSign)
+
+    howEachSignInteractsWithMyMoon = getAllPossibleAspectsWithSigninEachDegree(everySun, myMoon)
+    harmonyScoresWithMyMoonSign = aspectsToHarmonies(howEachSignInteractsWithMyMoon)
+    harmonyScoresWithMyMoonSign = [element * myMoonTheirSunWeight for element in harmonyScoresWithMyMoonSign]
+    totals.append(harmonyScoresWithMyMoonSign)
+
+    howEachSignInteractsWithMyVenus = getAllPossibleAspectsWithSigninEachDegree(everySun, myVenus)
+    harmonyScoresWithMyVenusSign = aspectsToHarmonies(howEachSignInteractsWithMyVenus)
+    harmonyScoresWithMyVenusSign = [element * myVenusTheirSunWeight for element in harmonyScoresWithMyVenusSign]
+    totals.append(harmonyScoresWithMyVenusSign)
+
        
 
     totals = np.array(totals, dtype=object)
