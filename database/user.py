@@ -909,6 +909,74 @@ class User:
         return User.random_celebrity()
     
 
+    def totalSynastry(self, other_user):
+        """ Returns the total synastry score between two users. 
+        Return {number_love_creator, number_love_destroyers, net_love, 
+                number_sex_creators, number_sex_detroyers, net_sex} """
+
+        love_creators = []
+        love_destroyers = []
+        love_creator_aspects = []
+        love_destroyer_aspects = []
+
+
+        sex_creators = []
+        sex_destroyers = []
+        sex_creator_aspects = []
+        sex_destroyer_aspects = []
+
+        asps = self.synastry(other_user)
+
+        for asp in asps.all:
+            if asp.isLoving() == -1: 
+                love_destroyer_aspects.append(asp) 
+            if asp.isLoving() == 1: 
+                love_creator_aspects.append(asp)
+            if asp.isSexual() == 1:
+                sex_creator_aspects.append(asp)
+            if asp.isSexual() == -1: 
+                sex_destroyer_aspects.append(asp)
+
+        print('\n\n\n\nLOVE CREATORS ==========================> ')
+        for asp in love_creator_aspects: 
+            print(asp)
+
+        print('\n\n\n\nLOVE DESTROYERS======================> ')
+        for asp in love_destroyer_aspects: 
+            print(asp) 
+
+        print('\n\n\n\nSEX CREATORS ==========================> ')
+        for asp in sex_creator_aspects: 
+            print(asp)
+
+        print('\n\n\n\nSEX DESTROYERS======================> ')
+        for asp in sex_destroyer_aspects: 
+            print(asp) 
+
+        
+        
+
+
+        
+        return { "NET_LOVE": len(love_creator_aspects) - len(love_destroyer_aspects), 
+                "NET_SEX": len(sex_creator_aspects) - len(sex_destroyer_aspects), 
+                "number_love_creators": len(love_creator_aspects), 
+                "number_love_destroyers": len(love_destroyer_aspects), 
+                "number_sex_creators": len(sex_creator_aspects), 
+                "number_sex_destroyers": len(sex_destroyer_aspects), 
+                "love_creator_aspects": love_creators, 
+                "love_destroyer_aspects": love_destroyer_aspects, 
+                "sex_creator_aspects": sex_creator_aspects, 
+                "sex_destroyer_aspects": sex_destroyer_aspects}
+
+
+    def singlePlacementTotalSynastry(self, planet):
+        """ Returns the total synastry score for a single planet placement.
+        This is the sum of the synastry scores for all the aspects between one planet and an entire natal chart 
+        returns a list of lists [[Love Synastryinfo ], [chemistry synastry info ]]. """
+
+        return [self.singlePlacementLoveSynastry(planet), self.singlePlacementChemistrySynastry(planet)]
+        
     def singlePlacementLoveSynastry(self, planet):
         """ Aspects a particular placements, say, Sun in Scorpio 2 deg with 
         every planet of the user's natal chart. Will return the number of love creators and 
