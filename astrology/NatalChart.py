@@ -1545,11 +1545,35 @@ def bestFitSunSignForPlanets(planets, mode='default'):
     
 
 
+def bestSunsForLove(person):
+    from astrology.Constants import everySun
+
+    loveScoresForEachSun = []
+
+    for sun in everySun: 
+        scores = person.singlePlacementLoveSynastry(sun)
+        scores.append(sun)
+        loveScoresForEachSun.append(scores)
+
+    return sortList(loveScoresForEachSun)
 
 
+def printBestSunsList(bestSunsList):
+    for info in bestSunsList:
+        posAsp = info[3]
+        negAsp = info[4]
+        print(f"{info[-1].sign} {info[-1].signlon} : Total: {info[2]} ----> Negative Placements: {info[1]} ----> Positive Placements: {info[0]}\n")
+        for asp in posAsp: 
+            print(asp) 
+        for asp in negAsp: 
+            print(asp) 
+        print("\n\n\n\n\n\n\n\n")
 
 
-
+#sorts a list of lists by the 3rd element in each list
+def sortList(list):
+    list.sort(key=lambda x: x[2])
+    return list
 
 
 

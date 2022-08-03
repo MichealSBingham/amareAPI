@@ -914,24 +914,26 @@ class User:
         every planet of the user's natal chart. Will return the number of love creators and 
         the number of love destroyers. 
         Example: planet = Scorpio 2 deg 
-        ---> [ 3, 2 ]   3 positive aspects, 2 negative aspects.
+        ---> [ 3, 2 , 1]   3 positive aspects, 2 negative aspects, 1 net
         """ 
 
         loveCreators = []
         loveDestroyers = []
 
-        for myPlanet in self.planets:
+        for myPlanet in self.planets():
             asp = DetailedAspect(planet, myPlanet, aspectsToGet=const.ALL_ASPECTS)
             if asp.isLoving() == 1: 
                 loveCreators.append(asp)
             elif asp.isLoving() == -1:
                 loveDestroyers.append(asp)
 
-        return [len(loveCreators), len(loveDestroyers), loveCreators, loveDestroyers]
+        return [len(loveCreators), len(loveDestroyers), len(loveCreators) - len(loveDestroyers), loveCreators, loveDestroyers]
+
+    
+
+
+
         
-
-
-
 
 """
 
