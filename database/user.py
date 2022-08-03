@@ -929,6 +929,27 @@ class User:
 
         return [len(loveCreators), len(loveDestroyers), len(loveCreators) - len(loveDestroyers), loveCreators, loveDestroyers]
 
+
+    def singlePlacementSexSynastry(self, planet):
+        """ Aspects a particular placements, say, Sun in Scorpio 2 deg with 
+        every planet of the user's natal chart. Will return the number of sex creators and 
+        the number of sex destroyers. 
+        Example: planet = Scorpio 2 deg 
+        ---> [ 3, 2 , 1]   3 positive aspects, 2 negative aspects, 1 net
+        """ 
+
+        loveCreators = []
+        loveDestroyers = []
+
+        for myPlanet in self.planets():
+            asp = DetailedAspect(planet, myPlanet, aspectsToGet=const.ALL_ASPECTS)
+            if asp.isAttracted() == 1: 
+                loveCreators.append(asp)
+            elif asp.isAttracted() == -1:
+                loveDestroyers.append(asp)
+
+        return [len(loveCreators), len(loveDestroyers), len(loveCreators) - len(loveDestroyers), loveCreators, loveDestroyers]
+
     
 
 

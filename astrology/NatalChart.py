@@ -892,8 +892,12 @@ class DetailedAspect:
             return False
 
 
-    # Example: Water/Water , Fire/Air, Fire/Fire all return true
+    # Example: Water/Water , Fire/Air, Fire/Fire all return true 
+    # except if signs are opposite each other it'll return false 
     def elementalHarmony(self):
+
+        if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 8.0:
+            return False
         (element1, element2) = (getElement(self.first, set_orb=0), getElement(self.second, set_orb=0))
 
         if element1 == element2:
@@ -1213,7 +1217,23 @@ class DetailedAspect:
                 return -1
 
 
+        if self.name == ('Mars', 'Mars'):
+            if self.elementalHarmony():
+                return 1
+            else:
+                return -1
 
+        if self.name == ('Mars', 'Saturn') or self.name == ('Saturn', 'Mars'):
+            if self.isAspect():
+                if self.elementalHarmony(): 
+                    if self.type == aspectFromDeg(const.OPPOSITION):
+                        return -1
+                    else: 
+                        return 0
+                else :
+                    return -1
+            else:
+                return 0
 
         # Sun aspects
 
@@ -1228,6 +1248,39 @@ class DetailedAspect:
 
         if self.name == ('Sun', 'Venus') or self.name == ('Venus', 'Sun'):
             if self.isAspect():
+                if self.elementalHarmony(): 
+                    return 1
+                else :
+                    return -1
+            else:
+                return 0
+        
+        if self.name == ('Sun', 'Mars') or self.name == ('Mars', 'Sun'):
+            if self.isAspect():
+                if self.elementalHarmony(): 
+                    return 1
+                else :
+                    return -1
+            else:
+                return 0
+
+        if self.name == ('Venus', 'Mars') or self.name == ('Mars', 'Venus'):
+            if self.isAspect():
+                if self.type == aspectFromDeg(const.OPPOSITION):
+                    return 1
+                if self.elementalHarmony(): 
+                    return 1
+                else :
+                    return -1
+            else:
+                return 0
+
+        if self.name == ('Moon', 'Mars') or self.name == ('Mars', 'Moon'):
+            if self.isAspect():
+                if self.type == aspectFromDeg(const.OPPOSITION):
+                    return -1
+                if self.type == aspectFromDeg(const.SQUARE):
+                    return -1
                 if self.elementalHarmony(): 
                     return 1
                 else :
@@ -1274,6 +1327,49 @@ class DetailedAspect:
 
         return 0 
            
+    def isAttracted(self):
+
+
+        if self.name == ('Mars', 'Mars'):
+            if self.isAspect():
+                if self.type == aspectFromDeg(const.QUINCUNX) or self.type == aspectFromDeg(const.SEMISEXTILE):
+                    return -1
+                else: 
+                    return 1
+            else: 
+                return 0 
+
+        if self.name == ('Venus', 'Mars') or self.name == ('Mars', 'Venus'):
+            if self.isAspect():
+                return 1
+            else:
+                return 0
+
+        if self.name == ('Moon', 'Uranus') or self.name == ('Uranus', 'Moon'):
+            if self.isAspect():
+                return 1
+            else:
+                return 0
+
+        if self.name == ('Sun', 'Asc') or self.name == ('Asc', 'Sun'):
+            if self.type == aspectFromDeg(const.OPPOSITION): 
+                return 1
+            else: 
+                return 0
+
+        if self.name == ('Sun', 'Mars') or self.name == ('Mars', 'Sun'):
+            if self.isAspect():
+                return 1
+
+        if self.name == ('Sun', 'Pluto') or self.name == ('Pluto', 'Sun'):
+            if self.isAspect():
+                return 1
+
+        if self.name == ('Moon', 'Mars') or self.name == ('Moon', 'Mars'):
+            if self.isAspect():
+                return 1
+            
+        return 0
 
 #// Collection of detailed aspects, between 2 persons or 2 natal charts
 class Aspects:
@@ -1552,6 +1648,18 @@ def bestSunsForLove(person):
 
     for sun in everySun: 
         scores = person.singlePlacementLoveSynastry(sun)
+        scores.append(sun)
+        loveScoresForEachSun.append(scores)
+
+    return sortList(loveScoresForEachSun)
+
+def bestSunsForSex(person):
+    from astrology.Constants import everySun
+
+    loveScoresForEachSun = []
+
+    for sun in everySun: 
+        scores = person.singlePlacementSexSynastry(sun)
         scores.append(sun)
         loveScoresForEachSun.append(scores)
 
