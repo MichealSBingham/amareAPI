@@ -6,7 +6,7 @@ from database.Location import Location
 from astrology import NatalChart
 from flatlib import const
 import itertools
-from astrology.NatalChart import Aspects
+from astrology.NatalChart import Aspects, DetailedAspect
 
 
 
@@ -909,6 +909,26 @@ class User:
         return User.random_celebrity()
     
 
+    def singlePlacementLoveSynastry(self, planet):
+        """ Aspects a particular placements, say, Sun in Scorpio 2 deg with 
+        every planet of the user's natal chart. Will return the number of love creators and 
+        the number of love destroyers. 
+        Example: planet = Scorpio 2 deg 
+        ---> [ 3, 2 ]   3 positive aspects, 2 negative aspects.
+        """ 
+
+        loveCreators = []
+        loveDestroyers = []
+
+        for myPlanet in self.planets:
+            asp = DetailedAspect(planet, myPlanet, aspectsToGet=const.ALL_ASPECTS)
+            if asp.isLoving() == 1: 
+                loveCreators.append(asp)
+            elif asp.isLoving() == -1:
+                loveDestroyers.append(asp)
+
+        return [len(loveCreators), len(loveDestroyers), loveCreators, loveDestroyers]
+        
 
 
 

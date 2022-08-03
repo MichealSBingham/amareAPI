@@ -852,6 +852,30 @@ class DetailedAspect:
             
 
 
+    def isAspect(self): 
+        """ Returns true if the aspect is within orb. """
+        if self.type == aspectFromDeg(const.NO_ASPECT): 
+            return False
+
+        if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 8.0: 
+            return True
+        if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 8.0: 
+            return True
+        if self.type == aspectFromDeg(const.TRINE) and self.orb < 8.0: 
+            return True 
+        if self.type == aspectFromDeg(const.SEXTILE) and self.orb < 4.0: 
+            return True 
+        if self.type == aspectFromDeg(const.SQUARE) and self.orb < 7.0: 
+            return True 
+        if self.type == aspectFromDeg(const.QUINCUNX) and self.orb < 4.0:
+            return True 
+        if self.type == aspectFromDeg(const.SEMISEXTILE) and self.orb < 2.0:
+            return True
+        if self.type != aspectFromDeg(const.NO_ASPECT) and self.orb < 1.5: 
+            return True 
+
+        return False 
+        
 
         
     # Returns if the aspect is `traditionally` harmonious.
@@ -892,6 +916,7 @@ class DetailedAspect:
     # returns opposite of elementary harmony
     def elementalChallenge(self):
         return not self.elementalHarmony()
+
 
     # Returns if the aspect is `traditonally` challenging.
     # NOTE - we use the term `traditionally `
@@ -1157,6 +1182,99 @@ class DetailedAspect:
 
 
 
+
+
+# For ALGORITHM ===============================================================
+
+    def isLoving(self): 
+        """Returns whether the aspect contributes to mutual harmonious love or not. 
+        -1 = not loving (a killer) , 0 = neutral, 1 = loving (a creator) . 
+        Greater leeway  for orbs is given for the same planets (e.g. Sun-Sun) than for different planets (e.g. Sun-Moon)."""
+
+        if self.name == ('Sun', 'Sun'):
+            if self.elementalHarmony():
+                return 1
+            else:
+                return -1
+            
+
+
+        if self.name == ('Moon', 'Moon'):
+            if self.elementalHarmony():
+                return 1
+            else:
+                return -1
+
+
+        if self.name == ('Venus', 'Venus'):
+            if self.elementalHarmony():
+                return 1
+            else:
+                return -1
+
+
+
+
+        # Sun aspects
+
+        if self.name == ('Sun', 'Moon') or self.name == ('Moon', 'Sun'):
+            if self.isAspect():
+                if self.elementalHarmony(): 
+                    return 1
+                else :
+                    return -1
+            else:
+                return 0
+
+        if self.name == ('Sun', 'Venus') or self.name == ('Venus', 'Sun'):
+            if self.isAspect():
+                if self.elementalHarmony(): 
+                    return 1
+                else :
+                    return -1
+            else:
+                return 0
+
+        if self.name == ('Sun', 'Jupiter') or self.name == ('Jupiter', 'Sun'):
+            if self.isAspect():
+                return 1
+            else:
+                return 0
+
+        if self.name == ('Venus', 'Jupiter') or self.name == ('Jupiter', 'Venus'):
+            if self.isAspect():
+                return 1
+            else:
+                return 0
+
+        if self.name == ('Sun', 'Saturn') or self.name == ('Saturn', 'Sun'):
+            if self.isAspect():
+                if self.elementalHarmony(): 
+                    return 1
+                else:
+                    return -1
+            else:
+                return 0
+
+
+        # Moon aspects
+
+        if self.name == ('Moon', 'Venus') or self.name == ('Venus', 'Moon'):
+            if self.isAspect():
+                if self.elementalHarmony(): 
+                    return 1
+                else:
+                    return -1
+            else:
+                return 0
+
+        if self.name == ('Asc', 'North Node') or self.name == ('North Node', 'Asc'):
+            if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 8:
+                return 1 
+
+        return 0 
+           
+
 #// Collection of detailed aspects, between 2 persons or 2 natal charts
 class Aspects:
 
@@ -1353,7 +1471,7 @@ def aspectsToHarmonies(aspects):
     return scores
      
 
-def bestFitSunSignForPlanets(planets): 
+def bestFitSunSignForPlanets(planets, mode='default'): 
     from astrology.Constants import everySun
     import numpy as np 
     """Given planets, say, the user's natal chart (ex: Sun in Cancer, Moon in Scorpio, ... , etc) 
@@ -1364,6 +1482,14 @@ def bestFitSunSignForPlanets(planets):
     mySunTheirSunWeight = 0.5
     myMoonTheirSunWeight = 0.25
     myVenusTheirSunWeight = 0.25
+
+    if mode=='equal': 
+        mySunTheirSunWeight = myMoonTheirSunWeight = myVenusTheirSunWeight = 1.0
+
+    if mode == 'venus': 
+        mySunTheirSunWeight = 0.25
+        myMoonTheirSunWeight = 0.25
+        myVenusTheirSunWeight = 0.5
 
     totals = []
 
