@@ -932,9 +932,9 @@ class User:
                 love_destroyer_aspects.append(asp) 
             if asp.isLoving() == 1: 
                 love_creator_aspects.append(asp)
-            if asp.isSexual() == 1:
+            if asp.isAttracted() == 1:
                 sex_creator_aspects.append(asp)
-            if asp.isSexual() == -1: 
+            if asp.isAttracted() == -1: 
                 sex_destroyer_aspects.append(asp)
 
         print('\n\n\n\nLOVE CREATORS ==========================> ')

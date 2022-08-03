@@ -1322,7 +1322,7 @@ class DetailedAspect:
                 return 0
 
         if self.name == ('Asc', 'North Node') or self.name == ('North Node', 'Asc'):
-            if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 8:
+            if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 11:
                 return 1 
 
         return 0 
@@ -1368,6 +1368,31 @@ class DetailedAspect:
         if self.name == ('Moon', 'Mars') or self.name == ('Moon', 'Mars'):
             if self.isAspect():
                 return 1
+
+        if self.name == ('Venus', 'North Node') or self.name == ('North Node', 'Venus'):
+            if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 11:
+                return 1
+            if self.type == aspectFromDeg(const.SEXTILE):
+                return 1
+            if self.type == aspectFromDeg(const.TRINE) and self.orb < 9:
+                return 1
+            if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 11:
+                return 1
+            if self.type == aspectFromDeg(const.SQUARE) and self.orb < 6:
+                return 1
+
+        if self.name == ('Moon', 'North Node') or self.name == ('Moon', 'Venus'):
+            if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 11:
+                return 1
+
+        if self.name == ('Moon', 'South Node') or self.name == ('South Node', 'Moon'):
+            if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb < 11:
+                return 1
+
+        if self.name == ('Venus', 'Asc') or self.name == ('Asc', 'Venus'): 
+            if self.isAspect(): 
+                if self.type != aspectFromDeg(const.SQUARE) and self.type != aspectFromDeg(const.QUINCUNX) and self.isHarmonious():
+                    return 1
             
         return 0
 
