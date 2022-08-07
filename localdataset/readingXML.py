@@ -288,7 +288,31 @@ def readJustUrl(entry):
         
     return {"username": username, "wiki": wikilink}
     
+def readJustBirthname(entry):
+    if not (entry.public_data.datatype['dtc'] == '1'):
+        raise ValueError(0, 'Not a public figure.')
+
+
+    name = entry.public_data.birthname.text
+
+    username = ''.join(name for name in name if name.isalnum())
+
+
+    try:
+        birthName = entry.text_data.wikipedia_link.text.split('#')[0]
+        
+
+        #profile_image = return_image(title)
+    except Exception as e:
+        raise ValueError(1, "No link")
+        
+
+        
+    return {"username": username, "wiki": birthName}
     
+    
+
+   
 
 
  
@@ -339,6 +363,48 @@ def getWikiLinks():
     f.close()
 
    
+def getBirthNames(): 
+    import json 
+    allLinks = {}
+    noLinks = 0 
+    links = 0 
+
+    tot = len(entries)
+    prog = 0 
+
+    printProgressBar(0, tot, prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+
+    with Pool() as p: 
+        pass 
+
+    for person in entries:
+        
+        prog+=1 
+        printProgressBar(prog, tot, prefix = 'Progress:', suffix = 'Complete', length = 50) 
+        
+        try: 
+            data = readJustBirthname(person)
+            id = data["username"]
+            birth_name = data["wiki"]
+            links +=1 
+            allLinks[id] = {"birth_name": birth_name }
+
+        except Exception as e: 
+            noLinks +=1
+            continue 
+
+    error = round(noLinks/links, 2) 
+    correct = (1-error)*100
+
+
+    print(f"Percentage of Links we have: {correct}%")
+
+    with open('birthNames.json', 'w', encoding='utf-8') as f:
+        json.dump(allLinks, f, ensure_ascii=False, indent=4)
+
+    f.close()
+
 def getSingleURL(wiki): 
 
     try:
