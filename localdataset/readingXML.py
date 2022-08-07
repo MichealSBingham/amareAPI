@@ -589,6 +589,19 @@ def linkFromWiki(wiki):
         profile_image = None
         return None 
     
+#inserts 'wiki' between a link to correct the url link 
+def correctWikiLink(wiki): 
+    try:
+        wikilink = wiki
+        paths = wikilink.split('/')
+        title = paths[-1]
+
+        url = ['https:', '', 'en.wikipedia.org', 'wiki', title]
+        return '/'.join(url)
+    except Exception as e:
+        profile_image = None
+        return None 
+
 def setUrlToUsername(username, wikilink):
 
     print(f"Setting  {username} to {wikilink}")
@@ -608,6 +621,32 @@ def setUrlToUsername(username, wikilink):
             print(f"Setting... {username.lower()} to {link}")
             db.collection(f'notable_usernames_not_on_here').document(username.lower()).update({'profile_image_url': link})
             db.collection(f'notables_not_on_here').document(id).update({'profile_image_url': link})
+            return (username, link)
+        
+    else: 
+        return None
+        pass 
+    
+
+def setWikiUrlToUsername(username, wikilink):
+
+    print(f"Setting  {username} to {wikilink}")
+
+    id = getIdByUsername(username)
+
+    
+
+    if id is not None:
+
+        wiki = wikilink
+
+        link = correctWikiLink(wiki) 
+
+        if link is not None: 
+             
+            print(f"Setting... {username.lower()} to {link}")
+            db.collection(f'notable_usernames_not_on_here').document(username.lower()).update({'wikipedia_link': link})
+            db.collection(f'notables_not_on_here').document(id).update({'wikipedia_link': link})
             return (username, link)
         
     else: 
@@ -652,6 +691,38 @@ def main5():
     print("I have finished.")
 
 
+# loops through each username and gets the wiki link and writes to the database
+def main6():
+    import tqdm 
+    import time
+   
+
+    stuff = readJson('wikis.json')
+
+    start_time = time.time()
+    
+    usernamesAndWikis = []
+
+    for key, value in stuff.items(): 
+
+        data = (key, value["wikiLink"])
+
+        usernamesAndWikis.append(data)
+
+    print(f"Total is .. {len(usernamesAndWikis)}")
+
+    
+
+
+    pool = Pool(75)
+
+    
+    for result in tqdm.tqdm(pool.starmap(setWikiUrlToUsername, usernamesAndWikis), total=len(usernamesAndWikis)):
+        pass 
+
+    
+    print("It took: --- %s seconds ---" % (time.time() - start_time))
+    print("I have finished.")
 
 
     

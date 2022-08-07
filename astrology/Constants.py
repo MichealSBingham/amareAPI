@@ -54,6 +54,17 @@ ouida = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(ouidsabday
 ouida.natal()
 
 
+
+davidbday = 920196000
+maryanbday = 815580000
+sanDiego=Location(latitude=float(32.7157), longitude=float(-117.1611))
+greensBoro=Location(latitude=float(36.0726), longitude=float(-79.7920))
+
+david = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(davidbday), known_time=True, hometown=greensBoro)
+maryan = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(maryanbday), known_time=False, hometown=sanDiego)
+
+
+
 # Returns a list of the Capricon Suns in ALL degrees
 def listOfCapricornSuns_all_degrees():
     startAt=-843375
