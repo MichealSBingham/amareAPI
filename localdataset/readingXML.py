@@ -842,6 +842,7 @@ def findRelationships(data):
                 rel["length"] = None
 
 
+            print(f"Setting {rel}")
             db.collection(f'notable_relationships').document(str(uuid.uuid1())).set(rel)
             #print(f"Added {username} to {rel}")
         else:
@@ -869,7 +870,7 @@ def findRelationships(data):
             if rel["length"] == '-': 
                 rel["length"] = None
 
-
+            print(f"SETTING INCOMPLETE DATA: {rel}")
             db.collection(f'incomplete_data_notable_relationships').document(str(uuid.uuid1())).set(rel)
 
 
@@ -1004,7 +1005,7 @@ def main7():
    
 
 
-    birthNames = {k: stuff[k] for k in list(stuff)[:1000]}
+    stuff = {k: birthNames[k] for k in list(birthNames)[:1000]}
 
     start_time = time.time()
     
