@@ -5,6 +5,7 @@
 
 
 
+from localdataset.scraping import getRelationships
 import xml4h
 from database.user import User
 from flatlib.geopos import GeoPos
@@ -38,8 +39,9 @@ natalData = {}
 data  = {} 
 
 
-
+CELEBRELATIONSHIPS = []
 errs = 0 
+
 
 def readGender(gender):
     if gender == 'M':
@@ -288,7 +290,33 @@ def readJustUrl(entry):
         
     return {"username": username, "wiki": wikilink}
     
+def readJustBirthname(entry):
+    if not (entry.public_data.datatype['dtc'] == '1'):
+        raise ValueError(0, 'Not a public figure.')
+
+
+
+    name = entry.public_data.sflname.text 
+
+    username = ''.join(name for name in name if name.isalnum())
+
+
+    try:
+        birthName = entry.public_data.birthname.text
+        
+
+        #profile_image = return_image(title)
+    except Exception as e:
+        return  {"username": username, "birthName": None, "name": name}
+      
+        
+
+        
+    return {"username": username, "birthName": birthName, "name": name}
     
+    
+
+   
 
 
  
@@ -339,6 +367,53 @@ def getWikiLinks():
     f.close()
 
    
+def getBirthNames(): 
+    import json 
+    allLinks = {}
+    noLinks = 0 
+    links = 0 
+
+    tot = len(entries)
+    prog = 0 
+
+    printProgressBar(0, tot, prefix = 'Progress:', suffix = 'Complete', length = 50)
+
+
+    with Pool() as p: 
+        pass 
+
+    for person in entries:
+        
+        prog+=1 
+        printProgressBar(prog, tot, prefix = 'Progress:', suffix = 'Complete', length = 50) 
+        
+        try: 
+            data = readJustBirthname(person)
+            id = data["username"]
+            try: 
+                birth_name = data["birthName"]
+            except Exception as e: 
+                birth_name = data["name"]
+            name = data["name"]
+            links +=1 
+            allLinks[id] = {"birthName": birth_name, "name"  : name}
+
+        except Exception as e:
+            print(f"Error in {id} is {e}")
+            noLinks +=1
+            continue 
+
+    error = round(noLinks/links, 2) 
+    correct = (1-error)*100
+
+
+    print(f"Percentage of Links we have: {correct}%")
+
+    with open('birthNames.json', 'w', encoding='utf-8') as f:
+        json.dump(allLinks, f, ensure_ascii=False, indent=4)
+
+    f.close()
+
 def getSingleURL(wiki): 
 
     try:
@@ -589,6 +664,19 @@ def linkFromWiki(wiki):
         profile_image = None
         return None 
     
+#inserts 'wiki' between a link to correct the url link 
+def correctWikiLink(wiki): 
+    try:
+        wikilink = wiki
+        paths = wikilink.split('/')
+        title = paths[-1]
+
+        url = ['https:', '', 'en.wikipedia.org', 'wiki', title]
+        return '/'.join(url)
+    except Exception as e:
+        profile_image = None
+        return None 
+
 def setUrlToUsername(username, wikilink):
 
     print(f"Setting  {username} to {wikilink}")
@@ -613,6 +701,206 @@ def setUrlToUsername(username, wikilink):
     else: 
         return None
         pass 
+    
+
+def setWikiUrlToUsername(username, wikilink):
+
+    print(f"Setting  {username} to {wikilink}")
+
+    id = getIdByUsername(username)
+
+    
+
+    if id is not None:
+
+        wiki = wikilink
+
+        link = correctWikiLink(wiki) 
+
+        if link is not None: 
+             
+            print(f"Setting... {username.lower()} to {link}")
+            db.collection(f'notable_usernames_not_on_here').document(username.lower()).update({'wikipedia_link': link})
+            db.collection(f'notables_not_on_here').document(id).update({'wikipedia_link': link})
+            return (username, link)
+        
+    else: 
+        return None
+        pass 
+    
+ #tries to find the relationships the user had given their name and birthname
+def setRelationships(username, name, birthname):
+    from localdataset.scraping import getRelationships
+    url = 'https://www.whosdatedwho.com/dating/'
+
+    
+    #returns an array of string elements split by a space
+    names = name.split(' ') # Barack Obama --> [Barack, Obama]
+
+    if birthname == None: 
+        birthname = name 
+
+    birthnames = birthname.split(' ')   # Michael B. Jordan --> [Michael, B., Jordan]
+
+    
+
+    #if any of the names in the array have a period, we need to remove it 
+    for i in range(len(names)):
+        if '.' in names[i]:
+            names[i] = names[i].replace('.', '')
+
+    # we do the name for the birthnames 
+    for i in range(len(birthnames)):
+        if '.' in birthnames[i]:
+            birthnames[i] = birthnames[i].replace('.', '')
+    
+    name1 = '-'.join(names)
+    try: 
+        name2 = '-'.join([names[0], names[-1]])
+    except: 
+        name2 = name1
+    birthname1 = '-'.join(birthnames)
+    try: 
+        birthname2 = '-'.join([birthnames[0], birthnames[-1]])
+    except: 
+        birthname2 = birthname1
+
+    url1 = url + name1
+    url2 = url + name2
+    url3 = url + birthname1
+    url4 = url + birthname2
+
+    # try to get the relationships from url1 
+    rel = getRelationships(url1)
+    if rel is not None:
+        data = {'username': username, 'relationships': rel, 'partnerAURL': url1}
+        findRelationships(data)
+        return {'username': username, 'relationships': rel}
+    # try to get the relationships from url2
+    rel = getRelationships(url2)
+    if rel is not None:
+        data = {'username': username, 'relationships': rel, 'partnerAURL': url2}
+        findRelationships(data)
+        return  {'username': username, 'relationships': rel}
+    
+    # try to get the relationships from url3
+    rel = getRelationships(url3)
+    if rel is not None:
+        data = {'username': username, 'relationships': rel, 'partnerAURL': url3}
+        findRelationships(data)
+        return  {'username': username, 'relationships': rel}
+
+    # try to get the relationships from url4
+    rel = getRelationships(url4)
+    if rel is not None:
+        data = {'username': username, 'relationships': rel, 'partnerAURL': url4}
+        findRelationships(data)
+        return  {'username': username, 'relationships': rel}
+
+    data = {'username': username, 'relationships': None, 'partnerAURL': None}
+    findRelationships(data)
+    return {'username': username, 'relationships': None}
+
+
+
+
+ # given the relationships a username has, we try to find other users in our database that match the relationships of that user
+def findRelationships(data): 
+    import uuid
+   
+    username = data['username']
+
+    if data['relationships'] == None: 
+        return None 
+
+    # Create tree in database 
+    # notable_relationships (collection)
+    #  - drake (coll)
+    #       - relationships
+    #             - username 
+    #                       - relationship data 
+    for rel in data['relationships']:
+        name = rel['name'] 
+        otherPerson = getUsernameByName(name)
+        if otherPerson is not None: 
+            rel["partnerAUsername"] = username
+            rel["partnerBUsername"] = otherPerson
+            rel["partnerAURL"] = data['partnerAURL']
+
+            try: 
+                rel["partnerBURL"] = data['url']
+            except: 
+                rel["partnerBURL"] = None
+            #cleaning some of the omitted data
+            if rel["began"] == '': 
+                rel["began"] = None
+
+            if rel["ended"] == '': 
+                rel["ended"] = None
+
+            if rel["length"] == '-': 
+                rel["length"] = None
+
+
+            print(f"Setting {rel}")
+            db.collection(f'notable_relationships').document(str(uuid.uuid1())).set(rel)
+            #print(f"Added {username} to {rel}")
+        else:
+            #TODO add to database of people who are not on here
+            #if they are not in OUR database... add scrap for their data and add anyway 
+            #incomplete data 
+            # - incomplete notable relationships 
+            #       - document 
+            #             - link for partnerA
+            #             - link for partnerB
+            rel["partnerAUsername"] = username
+            rel["partnerBUsername"] = None
+            rel["partnerAURL"] = data['partnerAURL']
+            try: 
+                rel["partnerBURL"] = data['url']
+            except: 
+                rel["partnerBURL"] = None
+            #cleaning some of the omitted data
+            if rel["began"] == '': 
+                rel["began"] = None
+
+            if rel["ended"] == '': 
+                rel["ended"] = None
+
+            if rel["length"] == '-': 
+                rel["length"] = None
+
+            print(f"SETTING INCOMPLETE DATA: {rel}")
+            db.collection(f'incomplete_data_notable_relationships').document(str(uuid.uuid1())).set(rel)
+
+
+
+
+    pass 
+    
+def getUsernameByName(name): 
+    #loops through all birthnames to find a username that matches the name 
+    from difflib import SequenceMatcher
+    for key, value in birthNames.items():
+        nameToCheck = value["name"] 
+        birthName = value["birthName"]
+
+        if birthName == None: 
+            birthName = nameToCheck
+
+        #check for exact match first 
+        if nameToCheck.lower() == name.lower() or birthName.lower() == name.lower(): 
+            return key
+
+        #check for partial match
+        if SequenceMatcher(None, nameToCheck.lower(), name).ratio() > 0.75:
+            return key
+        
+        if SequenceMatcher(None, birthName.lower(), name).ratio() > 0.75:
+            return key
+        
+
+    return None
     
 
     
@@ -652,6 +940,41 @@ def main5():
     print("I have finished.")
 
 
+# loops through each username and gets the wiki link and writes to the database
+def main6():
+    import tqdm 
+    import time
+   
+
+    stuff = readJson('wikis.json')
+
+    start_time = time.time()
+    
+    usernamesAndWikis = []
+
+    for key, value in stuff.items():
+
+       
+
+        
+        data = (key, value["wikiLink"])
+
+        usernamesAndWikis.append(data)
+
+    print(f"Total is .. {len(usernamesAndWikis)}")
+
+    
+
+
+    pool = Pool(75)
+
+    
+    for result in tqdm.tqdm(pool.starmap(setWikiUrlToUsername, usernamesAndWikis), total=len(usernamesAndWikis)):
+        pass 
+
+    
+    print("It took: --- %s seconds ---" % (time.time() - start_time))
+    print("I have finished.")
 
 
     
@@ -673,6 +996,43 @@ def readJson(file):
     f.close()
 
 
+birthNames = readJson('birthNames.json')
+
+
+def main7(): 
+    import tqdm 
+    import time
+   
+
+
+    stuff = {k: birthNames[k] for k in list(birthNames)[:1000]}
+
+    start_time = time.time()
+    
+    usernamesAndBirthNames = []
+
+    for key, value in stuff.items(): 
+
+
+        data = (key, value["name"], value["birthName"])
+        
+
+        usernamesAndBirthNames.append(data)
+
+    print(f"Total number of items to collect is .. {len(usernamesAndBirthNames)}")
+
+    
+
+
+    pool = Pool(75)
+
+    
+    for result in tqdm.tqdm(pool.starmap(setRelationships, usernamesAndBirthNames), total=len(usernamesAndBirthNames)):
+        pass 
+
+    
+    print("It took: --- %s seconds ---" % (time.time() - start_time))
+    print("I have finished.")
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

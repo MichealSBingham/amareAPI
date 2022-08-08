@@ -256,9 +256,10 @@ def celebritySoulmate(request):
         resp.headers.set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
         return resp
     
-    
-    try: 
-        date = datetime.fromtimestamp(float(birthday))
+    #TODO: FIX THIS!
+    try: #IMPORTANT! 
+        date = datetime.fromtimestamp(float(birthday)) # For some reason, this is not when you run on system. 
+                                # on sysstem, you MUST specifiy utcfromtimestamp but on server this seems to work. 
     except Exception as e: 
         resp =  jsonify(success=False,
                        error={
@@ -305,7 +306,7 @@ def celebritySoulmate(request):
             
     try: 
         natal_response = user.natal()
-        natal_response["success"] = True
+        #natal_response["success"] = True
     except Exception as e: 
         resp = jsonify(success=False,
                        error={
@@ -328,11 +329,14 @@ def celebritySoulmate(request):
     celeb.residence = None 
     response = celeb.dict()
 
+    response["natal_chart"] = natal_response
+
     response["sex"] = random.randint(0,100) 
     response["chemistry"] = random.randint(0,100) 
     response["love"] = random.randint(0,100) 
     response["id"] = celeb.id 
-
+    response["location"] = {"latitude": latitude, "longitude": longitude}
+    response["timestamp"] = birthday
     response["oneLiner"] = "You two have something very beautiful."
 
     response = {k: v for k, v in response.items() if
