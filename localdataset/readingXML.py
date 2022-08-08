@@ -24,9 +24,9 @@ filename = 'celebData.xml'
 celebNatalData = '_celebBirthData.json'
 
 #loads documents
-#_doc = xml4h.parse(filename)
-#doc = _doc.child('astrodatabank_export')
-#entries = doc.adb_entry # this will contain all of the entries of each person in the database
+_doc = xml4h.parse(filename)
+doc = _doc.child('astrodatabank_export')
+entries = doc.adb_entry # this will contain all of the entries of each person in the database
 
 users = []
 errors = []
@@ -293,13 +293,14 @@ def readJustBirthname(entry):
         raise ValueError(0, 'Not a public figure.')
 
 
-    name = entry.public_data.birthname.text
+
+    name = entry.public_data.sflname.text 
 
     username = ''.join(name for name in name if name.isalnum())
 
 
     try:
-        birthName = entry.text_data.wikipedia_link.text.split('#')[0]
+        birthName = entry.public_data.birthname.text
         
 
         #profile_image = return_image(title)
@@ -308,7 +309,7 @@ def readJustBirthname(entry):
         
 
         
-    return {"username": username, "wiki": birthName}
+    return {"username": username, "birthName": birthName, "name": name}
     
     
 
@@ -386,9 +387,10 @@ def getBirthNames():
         try: 
             data = readJustBirthname(person)
             id = data["username"]
-            birth_name = data["wiki"]
+            birth_name = data["birthName"]
+            name = data["name"]
             links +=1 
-            allLinks[id] = {"birth_name": birth_name }
+            allLinks[id] = {"birthName": birth_name, "name"  : name}
 
         except Exception as e: 
             noLinks +=1
