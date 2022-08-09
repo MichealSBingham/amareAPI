@@ -9,7 +9,11 @@ def new_user():
 def less_user():
     db.collection('amare').document('app').set({"users": {"total": Increment(-1)}}, merge=True)
 
+def new_relationship(count = 1): 
+    db.collection('amare').document('app').set({"celeb_relationships": {"complete": Increment(count)}}, merge=True)
 
+def new_incomplete_relationship(count = 1): 
+    db.collection('amare').document('app').set({"celeb_relationships": {"incomplete": Increment(count)}}, merge=True)
 
 def new_male():
     db.collection('amare').document('app').set({"users": {"males": Increment(1)}}, merge=True)

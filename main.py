@@ -1,4 +1,5 @@
 from flask import jsonify
+from analytics.app_data import new_incomplete_relationship
 from database.user import User
 import traceback
 from secret import api_keys
@@ -1403,3 +1404,27 @@ gcloud functions describe messaging_token
 
 
 
+
+def listen_for_new_relationship(data, context):
+    """"
+  # Run this to deploy. Reads
+      gcloud functions deploy listen_for_new_relationship \
+    --runtime python37 \
+    --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+    --trigger-resource "projects/findamare/databases/(default)/documents/notable_relationships/{relID}"
+      """
+
+    from analytics.app_data import new_relationship
+    new_relationship()
+
+def listen_for_new_incomplete_relationship(data, context):
+    """"
+  # Run this to deploy. Reads
+      gcloud functions deploy listen_for_new_incomplete_relationship \
+    --runtime python37 \
+    --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+    --trigger-resource "projects/findamare/databases/(default)/documents/incomplete_data_notable_relationships/{relID}"
+      """
+
+    from analytics.app_data import new_incomplete_relationship
+    new_incomplete_relationship()
