@@ -1149,6 +1149,8 @@ def firebaseToDatabase():
 
 
                 length = lengthStringToNumber(data['length'])
+
+                
                
                 
                 partnerAURL = data['partnerAURL']
@@ -1258,7 +1260,8 @@ def firebaseToDatabase():
 
                 row.update(feat)
 
-                dataForCSV.append(row)
+                if length != None: 
+                    dataForCSV.append(row)
 
             except Exception as e: 
                 print(f"The error is {e}")

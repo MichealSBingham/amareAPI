@@ -1231,12 +1231,12 @@ class DetailedAspect:
 
         n = self.name 
         aspectName  = n[0]+'_'+n[1]  #ex: Asc-Asc, or Venus-Mars 
-
+        aspectName = aspectName.replace(' ', '')
 
         return {
 
             f'{aspectName}_aspect': self.type,                           # SUN-VENUS_aspect: 'CONJUNCTION'
-            f'{aspectName}_aspectBySign': self.aspectBySign(),           # SUN-VENUS_aspectBySign: 'NO ASPECT' 
+            #f'{aspectName}_aspectBySign': self.aspectBySign(),           # SUN-VENUS_aspectBySign: 'NO ASPECT' 
             f'{aspectName}_orb': self.getOrb(),                          # SUN-VENUS_orb: 5
         }
 

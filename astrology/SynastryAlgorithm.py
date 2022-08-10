@@ -43,3 +43,5 @@ def oppositions(sign):
     if 'Virgo': 
         return 'Pisces'
     
+
+    
