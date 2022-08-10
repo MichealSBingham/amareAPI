@@ -1110,6 +1110,8 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
 
 
 
+def reindexDataByUsernames():
+    users = readJson('celebBirthData.json')
 
 def firebaseToDatabase():
 
@@ -1134,21 +1136,40 @@ def firebaseToDatabase():
                 clientLatitude = usersbyusername[client]["hometown"]["latitude"]
                 clientLongitude = usersbyusername[client]["hometown"]["longitude"]
                 clientTimestamp =  usersbyusername[client]["birthday"]["timestamp"]
+                clientSex =  usersbyusername[client]["sex"]
 
-                clientObject = User(do_not_fetch=True, hometown=Location(latitude=clientLatitude, longitude=clientLongitude), birthday=datetime.utcfromtimestamp(clientTimestamp), known_time=True)
+                clientObject = User(do_not_fetch=True, hometown=Location(latitude=clientLatitude, longitude=clientLongitude), birthday=datetime.utcfromtimestamp(clientTimestamp), known_time=True, sex=clientSex)
                 partner = data['partnerBUsername']
 
                 partnerLatitude = usersbyusername[partner]["hometown"]["latitude"]
                 partnerLongitude = usersbyusername[partner]["hometown"]["longitude"]
                 partnerTimestamp = usersbyusername[partner]["birthday"]["timestamp"]
+                partnerSex = usersbyusername[partner]["sex"]
 
 
-                partnerObject = User(do_not_fetch=True, hometown=Location(latitude=partnerLatitude, longitude=partnerLongitude), birthday=datetime.utcfromtimestamp(partnerTimestamp), known_time=True)
+                partnerObject = User(do_not_fetch=True, hometown=Location(latitude=partnerLatitude, longitude=partnerLongitude), birthday=datetime.utcfromtimestamp(partnerTimestamp), known_time=True, sex=partnerSex)
 
                 rel_type = data['relationship_type']
 
 
                 length = lengthStringToNumber(data['length'])
+
+                if rel_type == 'Marriage': 
+                    if length == None: 
+                        somewhat_successful_marriage = None
+
+                    if ended == 'present': 
+                        somewhat_successful_marriage = None
+                    
+                    else: 
+                        if length >= 240: 
+                            somewhat_successful_marriage = True  #greater than 20 years 
+                        if length <= 120:
+                            somewhat_successful_marriage = False   # less than 10 years 
+                        else: 
+                            somewhat_successful_marriage = None 
+                else: 
+                    somewhat_successful_marriage = None 
 
                 
                
@@ -1159,7 +1180,24 @@ def firebaseToDatabase():
                 began = data['began']
                 ended = data['ended']
 
-                syn = clientObject.synastry(partnerObject)
+                sexuality = 'other'
+
+                if clientObject.sex == 'male' and partnerObject.sex == 'female': 
+                    syn = clientObject.synastry(partnerObject)
+                    sexuality = 'mf'
+                elif clientObject.sex == 'female' and partnerObject.sex == 'male': 
+                    syn = partnerObject.synastry(clientObject)
+                    sexuality = 'mf'
+                elif partnerObject.sex == 'male' and clientObject.sex == 'male':
+                    syn = clientObject.synastry(partnerObject)
+                    sexuality = 'mm'
+                elif partnerObject.sex == 'female' and clientObject.sex == 'female':
+                    syn = clientObject.synastry(partnerObject)
+                    sexuality = 'ff'
+                else: 
+                    syn = clientObject.synastry(partnerObject)
+
+               
 
                 feat = syn.getFeaturesForSynastry()
 
@@ -1254,20 +1292,26 @@ def firebaseToDatabase():
                     'length': length, 
                     'began': began, 
                     'ended': ended, 
-                    'isRumor': isRumor
+                    'isRumor': isRumor,
+
+                    'relationship_sexuality': sexuality,  # mf, ff, o , mm 
+                    'somewhat_successful_marriage': somewhat_successful_marriage
 
                 }
 
                 row.update(feat)
 
-                if length != None: 
-                    dataForCSV.append(row)
+                dataForCSV.append(row)
+
+                #if length != None: 
+                    #dataForCSV.append(row)
 
             except Exception as e: 
                 print(f"The error is {e}")
         
     y = dataForCSV[0]
-    with open('relationship_sample_database.csv', 'w') as csvfile:
+   
+    with open('relationship_sample_database_1.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames = list(y.keys()))
         writer.writeheader()
         writer.writerows(dataForCSV)

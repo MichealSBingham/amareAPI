@@ -1,3 +1,31 @@
+
+def semisextiles(sign):
+    if 'Cancer': 
+        return ['Gemini', 'Leo']
+    if 'Leo': 
+        return ['Cancer', 'Virgo']
+    if 'Virgo':
+        return ['Leo', 'Libra']
+    if 'Libra':
+        return ['Virgo', 'Scorpio']
+    if 'Scorpio':
+        return ['Libra', 'Sagittarius']
+    if 'Sagittarius':
+        return ['Scorpio', 'Capricorn']
+    if 'Capricorn':
+        return ['Sagittarius', 'Aquarius']
+    if 'Aquarius':
+        return ['Capricorn', 'Pisces']
+    if 'Pisces':
+        return ['Aquarius', 'Aries']
+    if 'Aries':
+        return ['Pisces', 'Taurus']
+    if 'Taurus':
+        return ['Aries', 'Gemini']
+    if 'Gemini':
+        return ['Taurus', 'Cancer']
+    
+
 def squares(sign): 
     if 'Aries' or 'Libra': 
         return ['Cancer', 'Capricorn']

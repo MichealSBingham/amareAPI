@@ -1,4 +1,4 @@
-from astrology.SynastryAlgorithm import oppositions
+from astrology.SynastryAlgorithm import oppositions, semisextiles
 import flatlib
 from flatlib import const
 from flatlib.aspects import Aspect
@@ -1192,6 +1192,8 @@ class DetailedAspect:
 
         from astrology.SynastryAlgorithm import squares, oppositions
 
+
+
         if self.first.sign == self.second.sign: 
             return 'CONJUNCTION'
 
@@ -1200,6 +1202,9 @@ class DetailedAspect:
 
         if self.first.sign in squares(self.second.sign): 
             return 'SQUARE'
+
+        if self.first.sign in semisextiles(self.second.sign): 
+            return 'SEMISEXTILE'
 
         (element1, element2) = (getElement(self.first, set_orb=0), getElement(self.second, set_orb=0))
 
@@ -1236,7 +1241,7 @@ class DetailedAspect:
         return {
 
             f'{aspectName}_aspect': self.type,                           # SUN-VENUS_aspect: 'CONJUNCTION'
-            #f'{aspectName}_aspectBySign': self.aspectBySign(),           # SUN-VENUS_aspectBySign: 'NO ASPECT' 
+            f'{aspectName}_aspectBySign': self.aspectBySign(),           # SUN-VENUS_aspectBySign: 'NO ASPECT' 
             f'{aspectName}_orb': self.getOrb(),                          # SUN-VENUS_orb: 5
         }
 
