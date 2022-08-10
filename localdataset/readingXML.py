@@ -1142,7 +1142,7 @@ def firebaseToDatabase():
                 partnerTimestamp = usersbyusername[partner]["birthday"]["timestamp"]
 
 
-                clientObject = User(do_not_fetch=True, hometown=Location(latitude=partnerLatitude, longitude=partnerLongitude), birthday=datetime.utcfromtimestamp(partnerTimestamp), known_time=True)
+                partnerObject = User(do_not_fetch=True, hometown=Location(latitude=partnerLatitude, longitude=partnerLongitude), birthday=datetime.utcfromtimestamp(partnerTimestamp), known_time=True)
 
                 rel_type = data['relationship_type']
                 length = data['length']
@@ -1152,7 +1152,12 @@ def firebaseToDatabase():
                 began = data['began']
                 ended = data['ended']
 
-                dataForCSV.append({
+                syn = clientObject.synastry(partnerObject)
+
+                feat = syn.getFeaturesForSynastry()
+
+
+                row = {
 
                     'PersonA': client, 
                     'PersonALatitude': clientLatitude, 
@@ -1172,7 +1177,12 @@ def firebaseToDatabase():
                     'ended': ended, 
                     'isRumor': isRumor
 
-                })
+                }
+
+                row.update(feat)
+
+                dataForCSV.append(row)
+                
             except Exception as e: 
                 print(f"The error is {e}")
         
