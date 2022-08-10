@@ -1,3 +1,4 @@
+from astrology.SynastryAlgorithm import oppositions
 import flatlib
 from flatlib import const
 from flatlib.aspects import Aspect
@@ -896,8 +897,8 @@ class DetailedAspect:
     # except if signs are opposite each other it'll return false 
     def elementalHarmony(self):
 
-        if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 8.0:
-            return False
+        #if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 8.0:
+            #return False
         (element1, element2) = (getElement(self.first, set_orb=0), getElement(self.second, set_orb=0))
 
         if element1 == element2:
@@ -1185,6 +1186,63 @@ class DetailedAspect:
             return ''
 
 
+    def aspectBySign(self):
+        # Returns the aspect the planets have by sign 
+        # returns CONJUNCTION, TRINE, SEXTILE, OPPOSITION, SQUARE, INCONJUNCT
+
+        from astrology.SynastryAlgorithm import squares, oppositions
+
+        if self.first.sign == self.second.sign: 
+            return 'CONJUNCTION'
+
+        if self.first.sign in oppositions(self.second.sign): 
+            return 'OPPOSISTION'
+
+        if self.first.sign in squares(self.second.sign): 
+            return 'SQUARE'
+
+        (element1, element2) = (getElement(self.first, set_orb=0), getElement(self.second, set_orb=0))
+
+
+
+        if element1 == element2 and self.first.sign != self.second.sign: 
+            return 'TRINE'
+
+        if element1 != element2 and self.elementalHarmony(): 
+            return 'SEXTILE'
+
+        if element1 != element2 and not self.elementalHarmony(): 
+            return 'INCONJUNCT'
+
+
+
+        
+
+        
+        pass 
+
+    def getOrb(self): 
+        if self.type == 'NO ASPECT': 
+            return None 
+        else: 
+            return self.orb
+
+    def features(self): 
+
+        n = self.name 
+        aspectName  = n[0]+'_'+n[1]  #ex: Asc-Asc, or Venus-Mars 
+        aspectName = aspectName.replace(' ', '')
+
+        return {
+
+            f'{aspectName}_aspect': self.type,                           # SUN-VENUS_aspect: 'CONJUNCTION'
+            #f'{aspectName}_aspectBySign': self.aspectBySign(),           # SUN-VENUS_aspectBySign: 'NO ASPECT' 
+            f'{aspectName}_orb': self.getOrb(),                          # SUN-VENUS_orb: 5
+        }
+
+
+   
+         
 
 
 
@@ -1535,6 +1593,17 @@ class Aspects:
             this_object['name'] = obj_name
             array.append(this_object)
         return array
+
+    def getFeaturesForSynastry(self): 
+        asp = self.all
+        
+        
+        features = {}
+        for a in asp: 
+            features.update(a.features())
+
+        return features 
+         
 
 
 
