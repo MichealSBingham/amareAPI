@@ -1230,7 +1230,7 @@ class DetailedAspect:
     def features(self): 
 
         n = self.name 
-        aspectName  = n[0]+'-'+n[1]  #ex: Asc-Asc, or Venus-Mars 
+        aspectName  = n[0]+'_'+n[1]  #ex: Asc-Asc, or Venus-Mars 
 
 
         return {
@@ -1596,10 +1596,7 @@ class Aspects:
 
     def getFeaturesForSynastry(self): 
         asp = self.all
-        for a in asp:
-            if 'Asc' in a.name or 'MC' in a.name or 'IC' in a.name or 'Desc' in a.name: 
-                if 'Asc' in a.name or 'MC' in a.name or 'IC' in a.name or 'Desc' in a.name: 
-                    asp.remove(a)
+        
         
         features = {}
         for a in asp: 
