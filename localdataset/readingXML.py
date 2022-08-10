@@ -1114,6 +1114,7 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
 def firebaseToDatabase():
 
     from datetime import datetime 
+    import csv
 
 
     dataForCSV = []
@@ -1156,6 +1157,36 @@ def firebaseToDatabase():
 
                 feat = syn.getFeaturesForSynastry()
 
+                try: 
+                    del(feat['MC-Asc_aspectBySign'])
+                except:
+                    pass 
+
+                try: 
+                    del(feat['MC-Desc_aspectBySign'])
+                except:
+                    pass
+
+                try: 
+                    del(feat['MC-Desc_orb'])
+                except:
+                    pass
+
+                try: 
+                    del(feat['MC-Asc_aspect'])
+                except:
+                    pass
+
+                try: 
+                    del(feat['MC-Asc_orb'])
+                except:
+                    pass
+
+                try: 
+                    del(feat['MC-Desc_aspect'])
+                except: 
+                    pass 
+
 
                 row = {
 
@@ -1182,12 +1213,20 @@ def firebaseToDatabase():
                 row.update(feat)
 
                 dataForCSV.append(row)
-                
+
             except Exception as e: 
                 print(f"The error is {e}")
         
+    y = dataForCSV[0]
+    with open('relationship_sample_database.csv', 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames = list(y.keys()))
+        writer.writeheader()
+        writer.writerows(dataForCSV)
+
+    csvfile.close()
 
             
+    
     return dataForCSV
 
 
