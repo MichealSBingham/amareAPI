@@ -1109,3 +1109,76 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
 
 
 
+
+
+def firebaseToDatabase():
+
+    from datetime import datetime 
+
+
+    dataForCSV = []
+
+    usersbyusername = readJson('data_by_usernames.json')
+
+    celeb_relationships = readJson('celeb_relationships.json') # an array of celeb relationships from database
+
+    for dic in celeb_relationships: 
+        for username, data in dic.items(): 
+
+            try: 
+
+                client = data['partnerAUsername']
+
+
+                clientLatitude = usersbyusername[client]["hometown"]["latitude"]
+                clientLongitude = usersbyusername[client]["hometown"]["longitude"]
+                clientTimestamp =  usersbyusername[client]["birthday"]["timestamp"]
+
+                clientObject = User(do_not_fetch=True, hometown=Location(latitude=clientLatitude, longitude=clientLongitude), birthday=datetime.utcfromtimestamp(clientTimestamp), known_time=True)
+                partner = data['partnerBUsername']
+
+                partnerLatitude = usersbyusername[partner]["hometown"]["latitude"]
+                partnerLongitude = usersbyusername[partner]["hometown"]["longitude"]
+                partnerTimestamp = usersbyusername[partner]["birthday"]["timestamp"]
+
+
+                clientObject = User(do_not_fetch=True, hometown=Location(latitude=partnerLatitude, longitude=partnerLongitude), birthday=datetime.utcfromtimestamp(partnerTimestamp), known_time=True)
+
+                rel_type = data['relationship_type']
+                length = data['length']
+                partnerAURL = data['partnerAURL']
+                partnerBURL = data['partnerBURL']
+                isRumor = data['is_rumor']
+                began = data['began']
+                ended = data['ended']
+
+                dataForCSV.append({
+
+                    'PersonA': client, 
+                    'PersonALatitude': clientLatitude, 
+                    'PersonALongitude' : clientLongitude, 
+                    'PersonABirthday': clientTimestamp, 
+                    'PersonAURL': partnerAURL, 
+
+                    'PersonB': partner, 
+                    'PersonBLatitude': partnerLatitude, 
+                    'PersonBLongitude' : partnerLongitude, 
+                    'PersonBBirthday': partnerTimestamp, 
+                    'PersonBURL': partnerBURL, 
+
+                    'relationshipType': rel_type, 
+                    'length': length, 
+                    'began': began, 
+                    'ended': ended, 
+                    'isRumor': isRumor
+
+                })
+            except Exception as e: 
+                print(f"The error is {e}")
+        
+
+            
+    return dataForCSV
+
+
+     
