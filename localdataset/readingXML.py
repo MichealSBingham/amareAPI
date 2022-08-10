@@ -1109,3 +1109,186 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
 
 
 
+
+
+def firebaseToDatabase():
+
+    from datetime import datetime 
+    import csv
+
+
+    dataForCSV = []
+
+    usersbyusername = readJson('data_by_usernames.json')
+
+    celeb_relationships = readJson('celeb_relationships.json') # an array of celeb relationships from database
+
+    for dic in celeb_relationships: 
+        for username, data in dic.items(): 
+
+            try: 
+
+                client = data['partnerAUsername']
+
+
+                clientLatitude = usersbyusername[client]["hometown"]["latitude"]
+                clientLongitude = usersbyusername[client]["hometown"]["longitude"]
+                clientTimestamp =  usersbyusername[client]["birthday"]["timestamp"]
+
+                clientObject = User(do_not_fetch=True, hometown=Location(latitude=clientLatitude, longitude=clientLongitude), birthday=datetime.utcfromtimestamp(clientTimestamp), known_time=True)
+                partner = data['partnerBUsername']
+
+                partnerLatitude = usersbyusername[partner]["hometown"]["latitude"]
+                partnerLongitude = usersbyusername[partner]["hometown"]["longitude"]
+                partnerTimestamp = usersbyusername[partner]["birthday"]["timestamp"]
+
+
+                partnerObject = User(do_not_fetch=True, hometown=Location(latitude=partnerLatitude, longitude=partnerLongitude), birthday=datetime.utcfromtimestamp(partnerTimestamp), known_time=True)
+
+                rel_type = data['relationship_type']
+
+
+                length = lengthStringToNumber(data['length'])
+
+                
+               
+                
+                partnerAURL = data['partnerAURL']
+                partnerBURL = data['partnerBURL']
+                isRumor = data['is_rumor']
+                began = data['began']
+                ended = data['ended']
+
+                syn = clientObject.synastry(partnerObject)
+
+                feat = syn.getFeaturesForSynastry()
+
+                try:
+                    for key in list(feat.keys()): 
+                        if 'Asc' in key or 'MC' in key or 'IC' in key or 'Desc' in key: 
+                            del(feat[key])
+                except: 
+                    print("problem in keys")
+                    pass 
+
+                try: 
+                    del(feat['MC-Asc_aspectBySign'])
+                except:
+                    pass 
+
+                try: 
+                    del(feat['MC-Desc_aspectBySign'])
+                except:
+                    pass
+
+                try: 
+                    del(feat['MC-Desc_orb'])
+                except:
+                    pass
+
+                try: 
+                    del(feat['MC-Asc_aspect'])
+                except:
+                    pass
+
+                try: 
+                    del(feat['MC-Asc_orb'])
+                except:
+                    pass
+
+                try: 
+                    del(feat['MC-Desc_aspect'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-MC_aspect'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-IC_aspect'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-IC_aspectBySign'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-MC_aspectBySign'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-IC_orb'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-MC_orb'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-MC_aspect'])
+                except: 
+                    pass 
+
+                row = {
+
+                    'PersonA': client, 
+                    'PersonALatitude': clientLatitude, 
+                    'PersonALongitude' : clientLongitude, 
+                    'PersonABirthday': clientTimestamp, 
+                    'PersonAURL': partnerAURL, 
+
+                    'PersonB': partner, 
+                    'PersonBLatitude': partnerLatitude, 
+                    'PersonBLongitude' : partnerLongitude, 
+                    'PersonBBirthday': partnerTimestamp, 
+                    'PersonBURL': partnerBURL, 
+
+                    'relationshipType': rel_type, 
+                    'length': length, 
+                    'began': began, 
+                    'ended': ended, 
+                    'isRumor': isRumor
+
+                }
+
+                row.update(feat)
+
+                if length != None: 
+                    dataForCSV.append(row)
+
+            except Exception as e: 
+                print(f"The error is {e}")
+        
+    y = dataForCSV[0]
+    with open('relationship_sample_database.csv', 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames = list(y.keys()))
+        writer.writeheader()
+        writer.writerows(dataForCSV)
+
+    csvfile.close()
+
+            
+    
+    return dataForCSV
+
+
+     
+def lengthStringToNumber(length): 
+    if length == None: 
+        return None 
+    if '<' in length: 
+        return 0.5 
+    if 'month' in length or 'months' in length: 
+        return float(''.join(filter(str.isdigit, length)))
+    elif 'year' in length or 'years' in length: 
+         years =  float(''.join(filter(str.isdigit, length)))
+         return years*12 
+    else: 
+        return None
