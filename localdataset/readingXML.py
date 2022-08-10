@@ -1146,7 +1146,16 @@ def firebaseToDatabase():
                 partnerObject = User(do_not_fetch=True, hometown=Location(latitude=partnerLatitude, longitude=partnerLongitude), birthday=datetime.utcfromtimestamp(partnerTimestamp), known_time=True)
 
                 rel_type = data['relationship_type']
+
+
                 length = data['length']
+                if length is not None and  '<1' in length:
+                    length = 0.5
+                elif length is not None and  'month' or 'months' in length:
+                    length = float(''.join(filter(str.isdigit, length)))
+                elif length is not None and  'year' or 'years' in length:
+                    length = float(''.join(filter(str.isdigit, length)))*12
+                
                 partnerAURL = data['partnerAURL']
                 partnerBURL = data['partnerBURL']
                 isRumor = data['is_rumor']
@@ -1187,6 +1196,40 @@ def firebaseToDatabase():
                 except: 
                     pass 
 
+                try: 
+                    del(feat['MC-MC_aspect'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-IC_aspect'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-IC_aspectBySign'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-MC_aspectBySign'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-IC_orb'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-MC_orb'])
+                except: 
+                    pass 
+
+                try: 
+                    del(feat['MC-MC_aspect'])
+                except: 
+                    pass 
 
                 row = {
 
