@@ -1148,13 +1148,8 @@ def firebaseToDatabase():
                 rel_type = data['relationship_type']
 
 
-                length = data['length']
-                if length is not None and  '<1' in length:
-                    length = 0.5
-                elif length is not None and  'month' or 'months' in length:
-                    length = float(''.join(filter(str.isdigit, length)))
-                elif length is not None and  'year' or 'years' in length:
-                    length = float(''.join(filter(str.isdigit, length)))*12
+                length = lengthStringToNumber(data['length'])
+               
                 
                 partnerAURL = data['partnerAURL']
                 partnerBURL = data['partnerBURL']
@@ -1165,6 +1160,14 @@ def firebaseToDatabase():
                 syn = clientObject.synastry(partnerObject)
 
                 feat = syn.getFeaturesForSynastry()
+
+                try:
+                    for key in list(feat.keys()): 
+                        if 'Asc' in key or 'MC' in key or 'IC' in key or 'Desc' in key: 
+                            del(feat[key])
+                except: 
+                    print("problem in keys")
+                    pass 
 
                 try: 
                     del(feat['MC-Asc_aspectBySign'])
@@ -1274,3 +1277,15 @@ def firebaseToDatabase():
 
 
      
+def lengthStringToNumber(length): 
+    if length == None: 
+        return None 
+    if '<' in length: 
+        return 0.5 
+    if 'month' in length or 'months' in length: 
+        return float(''.join(filter(str.isdigit, length)))
+    elif 'year' in length or 'years' in length: 
+         years =  float(''.join(filter(str.isdigit, length)))
+         return years*12 
+    else: 
+        return None
