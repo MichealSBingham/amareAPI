@@ -1190,8 +1190,9 @@ class DetailedAspect:
         # Returns the aspect the planets have by sign 
         # returns CONJUNCTION, TRINE, SEXTILE, OPPOSITION, SQUARE, INCONJUNCT
 
-        from astrology.SynastryAlgorithm import squares, oppositions
+        from astrology.SynastryAlgorithm import squares, oppositions, aspectBySign
 
+        
 
 
         if self.first.sign == self.second.sign: 
@@ -1213,11 +1214,11 @@ class DetailedAspect:
         if element1 == element2 and self.first.sign != self.second.sign: 
             return 'TRINE'
 
-        if element1 != element2 and self.elementalHarmony(): 
+        if element1 != element2 and self.elementalHarmony() and self.first.sign not in oppositions(self.second.sign): 
             return 'SEXTILE'
 
         if element1 != element2 and not self.elementalHarmony(): 
-            return 'INCONJUNCT'
+            return 'QUINCUNX'
 
 
 

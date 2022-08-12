@@ -1113,6 +1113,33 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
 def reindexDataByUsernames():
     users = readJson('celebBirthData.json')
 
+def downloadRelationshipDataFromFirestore(): 
+    # Downloads data from firebase and writes the json to a file
+    import json
+    from database.user import db
+
+    query = db.collection('notable_relationships').get()
+
+    docs = []
+
+    for doc in query: 
+            doc_data = doc._data
+            username = doc_data["partnerAUsername"]
+            x = {username: doc_data}
+            docs.append(x)
+
+    with open('celeb_relationships_new.json', 'w', encoding='utf-8') as j:
+        json.dump(docs, j, ensure_ascii=False, indent=4)
+
+    j.close()
+
+    
+
+    # write json to file
+    
+
+    pass 
+
 def firebaseToDatabase():
 
     from datetime import datetime 
@@ -1123,7 +1150,7 @@ def firebaseToDatabase():
 
     usersbyusername = readJson('data_by_usernames.json')
 
-    celeb_relationships = readJson('celeb_relationships.json') # an array of celeb relationships from database
+    celeb_relationships = readJson('celeb_relationships_new.json') # an array of celeb relationships from database
 
     for dic in celeb_relationships: 
         for username, data in dic.items(): 
@@ -1311,7 +1338,7 @@ def firebaseToDatabase():
         
     y = dataForCSV[0]
    
-    with open('relationship_sample_database_1.csv', 'w') as csvfile:
+    with open('relationship_database.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames = list(y.keys()))
         writer.writeheader()
         writer.writerows(dataForCSV)
