@@ -1018,8 +1018,181 @@ class User:
 
         return [len(loveCreators), len(loveDestroyers), len(loveCreators) - len(loveDestroyers), loveCreators, loveDestroyers]
 
-    
 
+    def index(self): 
+        index = f"{signElement(self.sun.sign)}-{signElement(self.moon.sign)}-{signElement(self.mercury.sign)}-{signElement(self.venus.sign)}-{signElement(self.mars.sign)}"
+
+        return index 
+    
+    # adds user to an index based on what the elements of their chart are 
+    # ex: 
+    def addToElementalPlacementIndex(self, isFake=False): 
+
+        from astrology.SynastryAlgorithm import signElement
+
+
+        index = f"{signElement(self.sun.sign)}-{signElement(self.moon.sign)}-{signElement(self.mercury.sign)}-{signElement(self.venus.sign)}-{signElement(self.mars.sign)}"
+
+        if isFake: 
+            db.collection('elements_indexes').document('notables_not_on_here').collection(index).document(self.id).set(self.dict())
+        elif self.is_notable: 
+            db.collection('elements_indexes').document('notables').collection(index).document(self.id).set(self.dict())
+        else: 
+            db.collection('elements_indexes').document('people').collection(index).document(self.id).set(self.dict())
+
+          
+       
+    def addToNatalIndexes(self): 
+
+        user = self
+        natal_dict = self.natal()
+        planets = natal_dict['planets']
+        for planet in planets:
+            is_on_cusp = planets[planet]['is_on_cusp']
+            angle = planets[planet]['angle']
+            is_retrograde = planets[planet]['is_retrograde']
+            sign = planets[planet]['sign']
+            planet_name = planet
+            is_notable = user.is_notable
+            profile_image_url = user.profile_image_url
+            try:
+                house = planets[planet]['house']
+            except:
+                house = None
+
+            #Add placement to this database index
+            db.collection(f'all_placements').document(f'{planet_name}').collection(f'{sign}').document(id).set({
+                'is_on_cusp': is_on_cusp,
+                'angle': angle,
+                'is_retrograde': is_retrograde,
+                'is_notable': is_notable,
+                'house': house,
+                'profile_image_url': profile_image_url,
+                'name': user.name,
+                'isReal': user.isReal
+            })
+
+            ## Also add this placement under the research index , for example
+            ## if it's a sports player we may have ["Vocation:Sports:Boxing"] as a note
+            ## then add /research_data/vocation/sports/boxing/id   --> this adds their id to that
+
+            try:
+                for note in user.notes:
+                    n = note.split(":")  #should return array [Vocation, sports, boxing]
+                    print(f'note: {note} n : {n} ')
+                    db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(
+                        f'{planet_name}').collection(f'{sign}').document(id).set({
+                        'is_on_cusp': is_on_cusp,
+                        'angle': angle,
+                        'is_retrograde': is_retrograde,
+                        'is_notable': is_notable,
+                        'house': house,
+                        'profile_image_url': profile_image_url,
+                        'name': user.name,
+                        'isReal': user.isReal
+                    })
+
+                    db.collection(f'researchData').document(f'ByPlacement').collection(
+                        f'{planet_name}').document(f'{sign}').collection(f'{n[0]}').document(
+                        f'{n[1]}').collection(f'{n[2]}').document(id).set({
+                        'is_on_cusp': is_on_cusp,
+                        'angle': angle,
+                        'is_retrograde': is_retrograde,
+                        'is_notable': is_notable,
+                        'house': house,
+                        'profile_image_url': profile_image_url,
+                        'name': user.name,
+                        'isReal': user.isReal
+                    })
+
+
+            except Exception as e:
+                print(f"CAN'T DO IT  because {e}")
+                pass
+
+
+
+
+
+
+
+            ## we also need to do, let's say /mars/scorpio/vocation/sports/boxing/id
+
+            if house is not None: #add to index of house placements (i.e. Mars in 5th House)
+                db.collection(f'all_placements').document(f'{planet_name}').collection(f'House{house}').document(id).set({
+                    'is_on_cusp': is_on_cusp,
+                    'angle': angle,
+                    'is_retrograde': is_retrograde,
+                    'is_notable': is_notable,
+                    'house': house,
+                    'profile_image_url': profile_image_url,
+                    'name': user.name,
+                    'isReal': user.isReal
+                })
+
+
+                try:
+                    for note in user.notes:
+                        n = note.split(":")
+                        db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(f'{planet_name}').collection(f'House{house}').document(id).set({
+                    'is_on_cusp': is_on_cusp,
+                    'angle': angle,
+                    'is_retrograde': is_retrograde,
+                    'is_notable': is_notable,
+                    'house': house,
+                    'profile_image_url': profile_image_url,
+                    'name': user.name,
+                    'isReal': user.isReal
+                })
+
+                        db.collection(f'researchData').document(f'ByPlacement').collection(f'{planet_name}').document(f'House{house}').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(id).set({
+                    'is_on_cusp': is_on_cusp,
+                    'angle': angle,
+                    'is_retrograde': is_retrograde,
+                    'is_notable': is_notable,
+                    'house': house,
+                    'profile_image_url': profile_image_url,
+                    'name': user.name,
+                    'isReal': user.isReal
+                })
+
+                except Exception as e:
+                    print(f"CAN'T DO IT  because {e}")
+                    pass
+
+
+                #adding research data index to houses now
+
+
+
+
+        #Saving all synastry aspects globally like above
+        #       WARNING-- first/second == second/first but will not always filter. - Micheal
+        aspects = natal_dict['aspects']
+
+        for aspect in aspects:
+            first = aspects[aspect]['first']
+            second = aspects[aspect]['second']
+            name = aspect
+            type = aspects[aspect]['type']
+            aspects[aspect]['profile_image_url'] = user.profile_image_url
+            aspects[aspect]['name_belongs_to'] = user.name
+            aspects[aspect]['isReal'] = user.isReal
+
+
+            #Add synastry to this database index
+            db.collection(f'all_natal_aspects').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
+            try:
+                for note in user.notes:
+                    n = note.split(":")
+                    db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
+                    #by aspect
+                    db.collection(f'researchData').document(f'ByAspect').collection(f'{first}').document(f'{second}').colection('doc').document(f'{type}').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(id).set(aspect)
+
+
+            except Exception as e:
+                print(f"CAN'T DO IT  because {e}")
+                pass
 
 
         
