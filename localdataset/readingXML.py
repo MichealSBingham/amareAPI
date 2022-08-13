@@ -996,7 +996,7 @@ def readJson(file):
     f.close()
 
 
-birthNames = readJson('birthNames.json')
+#birthNames = readJson('birthNames.json')
 
 
 def main7(): 
@@ -1352,6 +1352,7 @@ def firebaseToDatabase():
 
      
 def lengthStringToNumber(length): 
+    
     if length == None: 
         return None 
     if '<' in length: 
@@ -1363,3 +1364,24 @@ def lengthStringToNumber(length):
          return years*12 
     else: 
         return None
+
+
+def addAllCelebsToIndex():
+    from database.user import User 
+    from database.user import db 
+
+    q = db.collection(f'notables_not_on_here').get()
+
+    
+
+
+    with Pool(75) as p: 
+        for doc in q: 
+            id = doc._reference._path[1]
+            user = User(id=id, fetchFromNotablesNotHere=True)
+            user.addToElementalPlacementIndex(isFake = True)
+            user.set_natal_chart()
+            print(f"Just set {user.name}")
+
+    print("\n\n\n\n\nit is finished.")
+    pass 

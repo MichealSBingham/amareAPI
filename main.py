@@ -822,12 +822,23 @@ def listen_for_new_natal_chart(data, context):
        --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/public/natal_chart"
          """
 
+    """"
+
+
+     # Run this to deploy. Reads
+         gcloud functions deploy listen_for_new_natal_chart \
+       --runtime python38 \
+       --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+       --trigger-resource "projects/findamare/databases/(default)/documents/notables_not_on_here/{userId}/public/natal_chart"
+         """
+
 
 
     path_parts = context.resource.split('/documents/')[1].split('/')
     collection_path = path_parts[0]
     document_path = '/'.join(path_parts[1:])
     id = path_parts[1] #ID of the user the natal chart belongs too
+    _path = path_parts[0] #notables_not_on_here or users
 
     natal_chart_doc = db.collection(collection_path).document(document_path).get()#Document reference object
     natal_dict = natal_chart_doc.to_dict()
@@ -844,7 +855,10 @@ def listen_for_new_natal_chart(data, context):
     #                       /
 
 
-    user = User(id=id, skip_getting_natal=True)
+    if 'notable' in _path: 
+        user = User(id=id, skip_getting_natal=True, fetchFromNotablesNotHere=True)
+    else: 
+        user = User(id=id, skip_getting_natal=True)
 
 
     planets = natal_dict['planets']

@@ -24,6 +24,7 @@ db = firestore.client()
 class User:
 
     users_ref = db.collection(f'users')
+    fake_notables_ref = db.collection(f'notables_not_on_here')
     generated_users_ref = db.collection(f'generated_users')
 
     def __init__(self, id=None, data=None,
@@ -44,11 +45,15 @@ class User:
                         skip_getting_natal=False,
                         notes=None,
                         bio=None, 
-                        risingFromCelebDate=None # This is ONLY to detect disagreements in rising signs we have from the astrodatabank. this isn't for the typical user from OUR database or on Amare. 
-                           ):
+                        risingFromCelebDate=None,  # This is ONLY to detect disagreements in rising signs we have from the astrodatabank. this isn't for the typical user from OUR database or on Amare. 
+                        fetchFromNotablesNotHere=False):
 
         self.id = id
         self.risingFromCelebDate = risingFromCelebDate
+
+
+        if fetchFromNotablesNotHere: 
+            self.users_ref = self.fake_notables_ref
 
         if self.id is None or self.id == '' or do_not_fetch == True:
             self.__data = {} #if .__data is {} or None, this object wasn't read from the database
@@ -393,7 +398,7 @@ class User:
         if self.residence is None:
             rtown = {}
         else:
-            rtown = self.residence.dict()
+            rtown = {}
 
 # Converts the datetime object to a string, also changes the timezone
         if self.birthday is None:
