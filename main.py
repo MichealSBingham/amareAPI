@@ -1142,11 +1142,15 @@ def listen_for_added_friend_and_do_synastry(data, context):
     a1 = syn1.toArray() #aspects with user1 as the inner
     a2 = syn2.toArray() #aspects with user2 as the inner
 
+    house_overlay1 = user1.house_overlay(user2)
+    house_overlay2 = user2.house_overlay(user1)
 
     db.collection('synastry').document(user1.id).collection("outerChart").document(user2.id).set({'aspects': a1})
     db.collection('synastry').document(user2.id).collection("outerChart").document(user1.id).set({'aspects': a2})
 
-
+    db.collection('synastry').document(user1.id).collection("outerChart").document(user2.id).set({'house_overlay': house_overlay1})
+    db.collection('synastry').document(user2.id).collection("outerChart").document(user1.id).set({'house_overlay': house_overlay2})
+    
     # TODO: Save all  synastry asepcts like you do placements
     #TODO: Add (placement only by sign attribute) for the 'NO ASPECTS' that still are aspect by sign
 

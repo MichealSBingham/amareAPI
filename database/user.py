@@ -519,6 +519,16 @@ class User:
                     #print("Failed to get aspect between " + p1.id + " and" + p2.id)
         return Aspects(syn)
 
+    # Returns a dictionary of the house overlays between the users. User 2's planets are overlayed on User 1. So we see how user 2's planets affect user 1
+    def house_overlays(self, user2):
+        if not (self.known_time and user2.known_time):
+            return {}
+    
+        overlays = {}
+        for p in user2.__all_for_synastry():
+            overlays[p.id] = int(self.natal_chart.houses.getObjectHouse(p).id.replace("House", ""))
+        return overlays
+
     # Return the natal chart as a dictionary, will create the natal chart and set it in database
     def natal(self, set_orb=3):
         from astrology.NatalChart import planetToDict, angleToDic, aspectToDict, houseToDict
