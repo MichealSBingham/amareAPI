@@ -564,7 +564,7 @@ class User:
             info["type"] = receptiveOrOutgoing
             overlays[p.id] = info 
 
-        tot = len(user2.__all_for_synastry())
+        tot = len(user2.personal_planets())
         
         summary = {
             "Water_Houses_Activated": { "count": countOfWater, "percentage": countOfWater/tot},
