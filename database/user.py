@@ -536,7 +536,7 @@ class User:
         overlays = {}
         for p in user2.__all_for_synastry():
 
-            if not (p.id == 'IC' or p.id == 'MC' or p.id == 'ASC' or p.id == 'DESC'):
+            if not (p.id.lower() == 'ic' or p.id.lower() == 'mc' or p.id.lower() == 'asc' or p.id.lower() == 'desc'):
                 info = {} # info about the overlay
                 houseNumber = int(self.natal_chart.houses.getObjectHouse(p).id.replace("House", ""))
                 element = SynastryAlgorithm.houseElement(houseNumber)
