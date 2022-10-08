@@ -1,4 +1,4 @@
-
+# This is a helper class to determine element, modality, and sign of a planet and or house 
 
 def aspectBySign(sign1, sign2): 
 
@@ -76,6 +76,25 @@ def modality(sign):
     else: 
         'Cardinal'
     
+
+def houseElement(houseNumber):
+    if houseNumber == 1 or houseNumber == 5 or houseNumber == 9: 
+        return 'Fire'
+    elif houseNumber == 2 or houseNumber == 6 or houseNumber == 10: 
+        return 'Earth'
+    elif houseNumber == 3 or houseNumber == 7 or houseNumber == 11: 
+        return 'Air'
+    elif houseNumber == 4 or houseNumber == 8 or houseNumber == 12: 
+        return 'Water'
+    else: 
+        return 'Error'
+
+
+def receptiveOrOutgoing(houseNumber):
+    if (houseNumber % 2 == 0 ): 
+        return 'Receptive'
+    else:
+        return 'Outgoing'
 
 
 

@@ -3,7 +3,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 #from google.cloud import firestore
 from database.Location import Location
-from astrology import NatalChart
+from astrology import NatalChart, SynastryAlgorithm
 from flatlib import const
 import itertools
 from astrology.NatalChart import Aspects, DetailedAspect
@@ -524,9 +524,61 @@ class User:
         if not (self.known_time and user2.known_time):
             return {}
     
+        countOfWater = 0
+        countOfEarth = 0
+        countOfAir = 0
+        countOfFire = 0
+
+        countOfReceptive = 0
+        countOfOutgoing = 0
+
+
         overlays = {}
         for p in user2.__all_for_synastry():
-            overlays[p.id] = int(self.natal_chart.houses.getObjectHouse(p).id.replace("House", ""))
+
+            if not (p.id == 'IC' or p.id == 'MC' or p.id == 'ASC' or p.id == 'DESC'):
+                info = {} # info about the overlay
+                houseNumber = int(self.natal_chart.houses.getObjectHouse(p).id.replace("House", ""))
+                element = SynastryAlgorithm.houseElement(houseNumber)
+                receptiveOrOutgoing = SynastryAlgorithm.receptiveOrOutgoing(houseNumber)
+
+                if element == "Water":
+                    countOfWater += 1
+                elif element == "Earth":
+                    countOfEarth += 1
+                elif element == "Air":
+                    countOfAir += 1
+                elif element == "Fire":
+                    countOfFire += 1
+
+                if receptiveOrOutgoing == "Receptive":
+                    countOfReceptive += 1
+                elif receptiveOrOutgoing == "Outgoing":
+                    countOfOutgoing += 1
+                
+                info["House"] =  houseNumber
+                info["Element"] = element
+                info["type"] = receptiveOrOutgoing
+                overlays[p.id] = info 
+        
+        summary = {
+            "Water_Houses_Activated": { "count": countOfWater, "percentage": countOfWater/12},
+            "Earth_Houses_Activated": { "count": countOfEarth, "percentage": countOfEarth/12},
+            "Air_Houses_Activated": { "count": countOfAir, "percentage": countOfAir/12},
+            "Fire_Houses_Activated": { "count": countOfFire, "percentage": countOfFire/12},
+            "Receptive_Houses_Activated": { "count": countOfReceptive, "percentage": countOfReceptive/12},
+            "Outgoing_Houses_Activated": { "count": countOfOutgoing, "percentage": countOfOutgoing/12}
+        } # summary of the overlays
+
+
+        print(f"{user2.name} activates {100*(countOfWater/12):.2f}% of {self.name}'s Water Houses")
+        print(f"{user2.name} activates {100*(countOfEarth/12):.2f}% of {self.name}'s Earth Houses")
+        print(f"{user2.name} activates {100*(countOfAir/12):.2f}% of {self.name}'s Air Houses")
+        print(f"{user2.name} activates {100*(countOfFire/12):.2f}% of {self.name}'s Fire Houses")
+        print(f"{user2.name} activates {100*(countOfReceptive/12):.2f}% of {self.name}'s Receptive Houses")
+        print(f"{user2.name} activates {100*(countOfOutgoing/12):.2f}% of {self.name}'s Outgoing Houses")
+
+        overlays["summary"] = summary
         return overlays
 
     # Return the natal chart as a dictionary, will create the natal chart and set it in database
