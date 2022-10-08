@@ -9,6 +9,7 @@ jacksonMS = loc
 micheal = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(932604720), known_time=True, hometown=loc)
 micheal.natal()
 
+
 loc2=Location(latitude=float(34.0007), longitude=float(-81.0348))
 gracen = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(881837400), known_time=True, hometown=loc2)
 gracen.natal()
@@ -63,6 +64,20 @@ greensBoro=Location(latitude=float(36.0726), longitude=float(-79.7920))
 david = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(davidbday), known_time=True, hometown=greensBoro)
 maryan = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(maryanbday), known_time=False, hometown=sanDiego)
 
+micheal.name = "Micheal"
+gracen.name = "Gracen"
+hirsch.name = "Hirsch"
+sahil.name = "Sahil"
+fahid.name = "Fahid"
+zyla.name = "Zyla"
+zylasPerson.name = "Zyla's Person"
+kelle.name = "Kelle"
+maurice.name = "Maurice"
+boo.name = "Boo"
+oscar.name = "Oscar"
+ouida.name = "Ouida"
+david.name = "David"
+maryan.name = "Maryan"
 
 
 # Returns a list of the Capricon Suns in ALL degrees

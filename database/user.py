@@ -536,47 +536,48 @@ class User:
         overlays = {}
         for p in user2.__all_for_synastry():
 
-            if not (p.id.lower() == 'ic' or p.id.lower() == 'mc' or p.id.lower() == 'asc' or p.id.lower() == 'desc'):
-                info = {} # info about the overlay
-                houseNumber = int(self.natal_chart.houses.getObjectHouse(p).id.replace("House", ""))
-                element = SynastryAlgorithm.houseElement(houseNumber)
-                receptiveOrOutgoing = SynastryAlgorithm.receptiveOrOutgoing(houseNumber)
+            info = {} # info about the overlay
+            houseNumber = int(self.natal_chart.houses.getObjectHouse(p).id.replace("House", ""))
+            element = SynastryAlgorithm.houseElement(houseNumber)
+            receptiveOrOutgoing = SynastryAlgorithm.receptiveOrOutgoing(houseNumber)
 
-                if element == "Water":
-                    countOfWater += 1
-                elif element == "Earth":
-                    countOfEarth += 1
-                elif element == "Air":
-                    countOfAir += 1
-                elif element == "Fire":
-                    countOfFire += 1
+            if element == "Water":
+                countOfWater += 1
+            elif element == "Earth":
+                countOfEarth += 1
+            elif element == "Air":
+                countOfAir += 1
+            elif element == "Fire":
+                countOfFire += 1
 
-                if receptiveOrOutgoing == "Receptive":
-                    countOfReceptive += 1
-                elif receptiveOrOutgoing == "Outgoing":
-                    countOfOutgoing += 1
-                
-                info["House"] =  houseNumber
-                info["Element"] = element
-                info["type"] = receptiveOrOutgoing
-                overlays[p.id] = info 
+            if receptiveOrOutgoing == "Receptive":
+                countOfReceptive += 1
+            elif receptiveOrOutgoing == "Outgoing":
+                countOfOutgoing += 1
+            
+            info["House"] =  houseNumber
+            info["Element"] = element
+            info["type"] = receptiveOrOutgoing
+            overlays[p.id] = info 
+
+        tot = len(user2.__all_for_synastry())
         
         summary = {
-            "Water_Houses_Activated": { "count": countOfWater, "percentage": countOfWater/12},
-            "Earth_Houses_Activated": { "count": countOfEarth, "percentage": countOfEarth/12},
-            "Air_Houses_Activated": { "count": countOfAir, "percentage": countOfAir/12},
-            "Fire_Houses_Activated": { "count": countOfFire, "percentage": countOfFire/12},
-            "Receptive_Houses_Activated": { "count": countOfReceptive, "percentage": countOfReceptive/12},
-            "Outgoing_Houses_Activated": { "count": countOfOutgoing, "percentage": countOfOutgoing/12}
+            "Water_Houses_Activated": { "count": countOfWater, "percentage": countOfWater/tot},
+            "Earth_Houses_Activated": { "count": countOfEarth, "percentage": countOfEarth/tot},
+            "Air_Houses_Activated": { "count": countOfAir, "percentage": countOfAir/tot},
+            "Fire_Houses_Activated": { "count": countOfFire, "percentage": countOfFire/tot},
+            "Receptive_Houses_Activated": { "count": countOfReceptive, "percentage": countOfReceptive/tot},
+            "Outgoing_Houses_Activated": { "count": countOfOutgoing, "percentage": countOfOutgoing/tot}
         } # summary of the overlays
 
 
-        print(f"{user2.name} activates {100*(countOfWater/12):.2f}% of {self.name}'s Water Houses")
-        print(f"{user2.name} activates {100*(countOfEarth/12):.2f}% of {self.name}'s Earth Houses")
-        print(f"{user2.name} activates {100*(countOfAir/12):.2f}% of {self.name}'s Air Houses")
-        print(f"{user2.name} activates {100*(countOfFire/12):.2f}% of {self.name}'s Fire Houses")
-        print(f"{user2.name} activates {100*(countOfReceptive/12):.2f}% of {self.name}'s Receptive Houses")
-        print(f"{user2.name} activates {100*(countOfOutgoing/12):.2f}% of {self.name}'s Outgoing Houses")
+        print(f"{user2.name} activates {100*(countOfWater/tot):.2f}% of {self.name}'s Water Houses")
+        print(f"{user2.name} activates {100*(countOfEarth/tot):.2f}% of {self.name}'s Earth Houses")
+        print(f"{user2.name} activates {100*(countOfAir/tot):.2f}% of {self.name}'s Air Houses")
+        print(f"{user2.name} activates {100*(countOfFire/tot):.2f}% of {self.name}'s Fire Houses")
+        print(f"{user2.name} activates {100*(countOfReceptive/tot):.2f}% of {self.name}'s Receptive Houses")
+        print(f"{user2.name} activates {100*(countOfOutgoing/tot):.2f}% of {self.name}'s Outgoing Houses")
 
         overlays["summary"] = summary
         return overlays
