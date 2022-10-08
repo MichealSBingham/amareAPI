@@ -443,6 +443,9 @@ class User:
         ps = [self.sun, self.moon, self.mercury, self.venus, self.mars, self.jupiter, self.saturn, self.uranus, self.neptune, self.pluto, self.north_node, self.south_node, self.chiron]
         return [p for p in ps if p ] # removes all 'None'
 
+    def personal_planets(self):
+        ps = [self.sun, self.moon, self.mercury, self.venus, self.mars]
+        return [p for p in ps if p ]
     def angles(self):
         if not self.known_time:
             return [] #cannot compute angles without known birth_time
@@ -460,6 +463,7 @@ class User:
 #returns everything we use for synastry to get aspects, gets the planets and angles currently
     def __all_for_synastry(self):
         return self.planets() + self.angles()
+
 
     #returns all aspects between each planet , even if there is 'NO ASPECT' between them
     # returns [DetailedAspect]
@@ -534,7 +538,7 @@ class User:
 
 
         overlays = {}
-        for p in user2.__all_for_synastry():
+        for p in user2.personal_planets():
 
             info = {} # info about the overlay
             houseNumber = int(self.natal_chart.houses.getObjectHouse(p).id.replace("House", ""))
