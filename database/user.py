@@ -523,6 +523,21 @@ class User:
                     #print("Failed to get aspect between " + p1.id + " and" + p2.id)
         return Aspects(syn)
 
+
+    def basicCompatibility(self, user2):
+        from astrology.NatalChart import basicCompatibility
+
+        if self.sex == 'male':
+            maleChart = [self.sun, self.moon, self.mercury, self.venus, self.mars]
+            femaleChart = [user2.sun, user2.moon, user2.mercury, user2.venus, user2.mars]
+        
+        else: 
+            maleChart = [user2.sun, user2.moon, user2.mercury, user2.venus, user2.mars]
+            femaleChart = [self.sun, self.moon, self.mercury, self.venus, self.mars]
+
+
+        return basicCompatibility(maleChart, femaleChart)
+        
     # Returns a dictionary of the house overlays between the users. User 2's planets are overlayed on User 1. So we see how user 2's planets affect user 1
     def house_overlays(self, user2):
         if not (self.known_time and user2.known_time):

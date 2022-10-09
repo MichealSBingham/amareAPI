@@ -1786,15 +1786,60 @@ def sortList(list):
 
 
 
+def basicCompatibility(maleChart, femaleChart):
+    """ Returns whether the two charts have basic compatibility. 
+    This is not a full compatibility analysis but a quick check to see if the two charts are compatible.
+    Male/female Chart is an array of planet signs [Sun, Moon, Mercury, Venus, Mars]"""
 
+    from SynastryAlgorithm import aspectBySign
 
+    maleSun = maleChart[0]
+    maleMoon = maleChart[1]
+    maleMercury = maleChart[2]
+    maleVenus = maleChart[3]
+    maleMars = maleChart[4]
 
+    femaleSun = femaleChart[0]
+    femaleMoon = femaleChart[1]
+    femaleMercury = femaleChart[2]
+    femaleVenus = femaleChart[3]
+    femaleMars = femaleChart[4]
 
+    areCompatible = None 
 
+    if not (aspectBySign(maleMars, femaleVenus) == "CONJUNCTION" or aspectBySign(maleMars, femaleVenus) == "TRINE" or aspectBySign(maleMars, femaleVenus) == "SEXTILE"): 
+        print(f"Not compatible because male mars {maleMars} and female venus {femaleVenus} are not in a good aspect: {aspectBySign(maleMars, femaleVenus)}")
+        areCompatible = False 
 
+    if not (aspectBySign(femaleMars, maleVenus) == "CONJUNCTION" or aspectBySign(femaleMars, maleVenus) == "TRINE" or aspectBySign(femaleMars, maleVenus) == "SEXTILE"): 
+       print(f"Not compatible because female mars {femaleMars} and male venus {maleVenus} are not in a good aspect: {aspectBySign(femaleMars, maleVenus)}")
+       areCompatible = False 
 
+    if not ( aspectBySign(maleMercury, femaleMercury) == "CONJUNCTION" or aspectBySign(maleMercury, femaleMercury) == "TRINE" or aspectBySign(maleMercury, femaleMercury) == "SEXTILE"): 
+        print(f"Not compatible because male mercury {maleMercury} and female mercury {femaleMercury} are not in a good aspect: {aspectBySign(maleMercury, femaleMercury)}")
+        areCompatible = False 
 
-""""
+    if not ( aspectBySign(maleMoon, femaleMoon) == "CONJUNCTION" or aspectBySign(maleMoon, femaleMoon) == "TRINE" or aspectBySign(maleMoon, femaleMoon) == "SEXTILE"): 
+        print(f"Not compatible because male moon {maleMoon} and female moon {femaleMoon} are not in a good aspect: {aspectBySign(maleMoon, femaleMoon)}")
+        areCompatible = False 
+
+    maleSunCompatibleWithFemaleMoon = aspectBySign(maleSun, femaleMoon) == "CONJUNCTION" or aspectBySign(maleSun, femaleMoon) == "TRINE" or aspectBySign(maleSun, femaleMoon) == "SEXTILE" or aspectBySign(maleSun, femaleMoon) == "OPPOSITION"
+    femaleSunCompatibleWithMaleMoon = aspectBySign(femaleSun, maleMoon) == "CONJUNCTION" or aspectBySign(femaleSun, maleMoon) == "TRINE" or aspectBySign(femaleSun, maleMoon) == "SEXTILE" or aspectBySign(femaleSun, maleMoon) == "OPPOSITION"
+
+    if not (maleSunCompatibleWithFemaleMoon or femaleSunCompatibleWithMaleMoon):
+        if not maleSunCompatibleWithFemaleMoon: 
+            print(f"Not compatible because male sun {maleSun} and female moon {femaleMoon} are not in a good aspect: {aspectBySign(maleSun, femaleMoon)}")
+        if not femaleSunCompatibleWithMaleMoon:
+            print(f"Not compatible because female sun {femaleSun} and male moon {maleMoon} are not in a good aspect: {aspectBySign(femaleSun, maleMoon)}")
+        areCompatible = False  
+
+    print("These two are compatible based on basic compatibility")
+    if areCompatible == None: 
+        areCompatible = True
+
+    return areCompatible 
+
+    
 #Represents a pair of users, used to run synastry and get aspects.
 class Pairing:
 
@@ -1804,4 +1849,4 @@ class Pairing:
         self.all = user1.aspects(user2, aspectsToGet=aspectsToGet)   #Gets the aspects between two users (all of them)
         self.aspects = validAspects(self.all)                  # Returns all 'real' aspects.
 
-"""
+
