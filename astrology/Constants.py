@@ -91,7 +91,7 @@ ouida.sex = "female"
 david.name = "David"
 david.sex = "male"
 maryan.name = "Maryan"
-maryyan.sex = "female"
+maryan.sex = "female"
 
 
 # Returns a list of the Capricon Suns in ALL degrees
