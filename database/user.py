@@ -528,12 +528,12 @@ class User:
         from astrology.NatalChart import basicCompatibility
 
         if self.sex == 'male':
-            maleChart = [self.sun, self.moon, self.mercury, self.venus, self.mars]
-            femaleChart = [user2.sun, user2.moon, user2.mercury, user2.venus, user2.mars]
+            maleChart = [self.sun.sign, self.moon.sign, self.mercury.sign, self.venus.sign, self.mars.sign]
+            femaleChart = [user2.sun.sign, user2.moon.sign, user2.mercury.sign, user2.venus.sign, user2.mars.sign]
         
         else: 
-            maleChart = [user2.sun, user2.moon, user2.mercury, user2.venus, user2.mars]
-            femaleChart = [self.sun, self.moon, self.mercury, self.venus, self.mars]
+            maleChart = [user2.sun.sign, user2.moon.sign, user2.mercury.sign, user2.venus.sign, user2.mars.sign]
+            femaleChart = [self.sun.sign, self.moon.sign, self.mercury.sign, self.venus.sign, self.mars.sign]
 
 
         return basicCompatibility(maleChart, femaleChart)
