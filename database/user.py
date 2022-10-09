@@ -537,6 +537,9 @@ class User:
 
 
         return basicCompatibility(maleChart, femaleChart)
+
+    def bc(self, user2):
+        return self.basicCompatibility(user2)
         
     # Returns a dictionary of the house overlays between the users. User 2's planets are overlayed on User 1. So we see how user 2's planets affect user 1
     def house_overlays(self, user2):

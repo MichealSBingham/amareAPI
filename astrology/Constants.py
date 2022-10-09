@@ -65,19 +65,33 @@ david = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(davidbday)
 maryan = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(maryanbday), known_time=False, hometown=sanDiego)
 
 micheal.name = "Micheal"
+micheal.sex = "male"
 gracen.name = "Gracen"
+gracen.sex = "female"
 hirsch.name = "Hirsch"
+hirsch.sex = "male"
 sahil.name = "Sahil"
+sahil.sex = "male"
 fahid.name = "Fahid"
+fahid.sex = "male"
 zyla.name = "Zyla"
+zyla.sex = "female"
 zylasPerson.name = "Zyla's Person"
+zylasPerson.sex = "male"
 kelle.name = "Kelle"
+kelle.sex = "female"
 maurice.name = "Maurice"
+maurice.sex = "male"
 boo.name = "Boo"
+boo.sex = "male"
 oscar.name = "Oscar"
+oscar.sex = "male"
 ouida.name = "Ouida"
+ouida.sex = "female"
 david.name = "David"
+david.sex = "male"
 maryan.name = "Maryan"
+maryyan.sex = "female"
 
 
 # Returns a list of the Capricon Suns in ALL degrees

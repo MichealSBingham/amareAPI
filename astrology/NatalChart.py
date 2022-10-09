@@ -1791,7 +1791,7 @@ def basicCompatibility(maleChart, femaleChart):
     This is not a full compatibility analysis but a quick check to see if the two charts are compatible.
     Male/female Chart is an array of planet signs [Sun, Moon, Mercury, Venus, Mars]"""
 
-    from SynastryAlgorithm import aspectBySign
+    from astrology.SynastryAlgorithm import aspectBySign
 
     maleSun = maleChart[0]
     maleMoon = maleChart[1]
