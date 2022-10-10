@@ -425,7 +425,7 @@ class DetailedAspect:
                             ]
 
     always_disharmonious = [ aspectFromDeg(const.SQUARE),
-                            aspectFromDeg(const.QUIXUNX)]
+                            aspectFromDeg(const.QUINCUNX)]
 
     harmonious_aspects = [ aspectFromDeg(const.TRINE),
                            aspectFromDeg(const.CONJUNCTION),
