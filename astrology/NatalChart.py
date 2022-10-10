@@ -1661,6 +1661,7 @@ class Aspects:
                 disharm += 1
             else: 
                 continue
+        return round(harm/disharm, 2)
          
 
 
