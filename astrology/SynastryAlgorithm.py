@@ -169,37 +169,33 @@ def oppositions(sign):
         return 'Pisces'
     
 
-def aspectBySign(firstSign, secondSign):
-        # Returns the aspect the planets have by sign 
-        # returns CONJUNCTION, TRINE, SEXTILE, OPPOSITION, SQUARE, INCONJUNCT
 
-        from astrology.SynastryAlgorithm import squares, oppositions
+
+def aspectBySign(firstSign, secondSign): 
+    degrees = {'Aries': 0, 'Taurus': 30, 'Gemini': 60, 'Cancer': 90, 'Leo': 120, 'Virgo': 150, 'Libra': 180, 'Scorpio': 210, 'Sagittarius': 240, 'Capricorn': 270, 'Aquarius': 300, 'Pisces': 330}
+    deg = abs(degrees[firstSign] - degrees[secondSign])
+
+    if abs(deg) > 180:
+        deg = abs(360 - deg)
+    
+    if abs(deg) > 180: 
+        deg = abs(360 - deg)
 
         
-
-
-        if firstSign == secondSign: 
-            return 'CONJUNCTION'
-
-        if firstSign in oppositions(secondSign): 
-            return 'OPPOSISTION'
-
-        if firstSign in squares(secondSign): 
-            return 'SQUARE'
-
-        if firstSign in semisextiles(secondSign): 
-            return 'SEMISEXTILE'
-
-        (element1, element2) = (signElement(firstSign), signElement(secondSign))
-
-
-
-        if element1 == element2 and firstSign != secondSign: 
-            return 'TRINE'
-
-        if element1 != element2 and elementalHarmonyBetweenSigns(element1, element2) and firstSign not in oppositions(secondSign): 
-            return 'SEXTILE'
-
-        if element1 != element2 and not elementalHarmonyBetweenSigns(element1, element2): 
-            return 'QUINCUNX'
-
+    if deg == 0:
+        return 'CONJUNCTION'
+    elif deg == 30:
+        return 'SEMISEXTILE'
+    elif deg == 60:
+        return 'SEXTILE'
+    elif deg == 90:
+        return 'SQUARE'
+    elif deg == 120:
+        return 'TRINE'
+    elif deg == 150:
+        return 'QUINCUNX'
+    elif deg == 180:
+        return 'OPPOSITION'
+    else:
+        return 'NONE'
+    

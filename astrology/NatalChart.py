@@ -1870,29 +1870,29 @@ def basicCompatibility(maleChart, femaleChart):
     areCompatible = None 
 
     if not (aspectBySign(maleMars, femaleVenus) == "CONJUNCTION" or aspectBySign(maleMars, femaleVenus) == "TRINE" or aspectBySign(maleMars, femaleVenus) == "SEXTILE"): 
-        print(f"Not compatible because male mars {maleMars} and female venus {femaleVenus} are not in a good aspect: {aspectBySign(maleMars, femaleVenus)}")
+        #print(f"Not compatible because male mars {maleMars} and female venus {femaleVenus} are not in a good aspect: {aspectBySign(maleMars, femaleVenus)}")
         areCompatible = False 
 
     if not (aspectBySign(femaleMars, maleVenus) == "CONJUNCTION" or aspectBySign(femaleMars, maleVenus) == "TRINE" or aspectBySign(femaleMars, maleVenus) == "SEXTILE"): 
-       print(f"Not compatible because female mars {femaleMars} and male venus {maleVenus} are not in a good aspect: {aspectBySign(femaleMars, maleVenus)}")
+       #print(f"Not compatible because female mars {femaleMars} and male venus {maleVenus} are not in a good aspect: {aspectBySign(femaleMars, maleVenus)}")
        areCompatible = False 
 
     if not ( aspectBySign(maleMercury, femaleMercury) == "CONJUNCTION" or aspectBySign(maleMercury, femaleMercury) == "TRINE" or aspectBySign(maleMercury, femaleMercury) == "SEXTILE"): 
-        print(f"Not compatible because male mercury {maleMercury} and female mercury {femaleMercury} are not in a good aspect: {aspectBySign(maleMercury, femaleMercury)}")
+        #print(f"Not compatible because male mercury {maleMercury} and female mercury {femaleMercury} are not in a good aspect: {aspectBySign(maleMercury, femaleMercury)}")
         areCompatible = False 
 
     if not ( aspectBySign(maleMoon, femaleMoon) == "CONJUNCTION" or aspectBySign(maleMoon, femaleMoon) == "TRINE" or aspectBySign(maleMoon, femaleMoon) == "SEXTILE"): 
-        print(f"Not compatible because male moon {maleMoon} and female moon {femaleMoon} are not in a good aspect: {aspectBySign(maleMoon, femaleMoon)}")
+        #print(f"Not compatible because male moon {maleMoon} and female moon {femaleMoon} are not in a good aspect: {aspectBySign(maleMoon, femaleMoon)}")
         areCompatible = False 
 
     maleSunCompatibleWithFemaleMoon = aspectBySign(maleSun, femaleMoon) == "CONJUNCTION" or aspectBySign(maleSun, femaleMoon) == "TRINE" or aspectBySign(maleSun, femaleMoon) == "SEXTILE" or aspectBySign(maleSun, femaleMoon) == "OPPOSITION"
     femaleSunCompatibleWithMaleMoon = aspectBySign(femaleSun, maleMoon) == "CONJUNCTION" or aspectBySign(femaleSun, maleMoon) == "TRINE" or aspectBySign(femaleSun, maleMoon) == "SEXTILE" or aspectBySign(femaleSun, maleMoon) == "OPPOSITION"
 
     if not (maleSunCompatibleWithFemaleMoon or femaleSunCompatibleWithMaleMoon):
-        if not maleSunCompatibleWithFemaleMoon: 
-            print(f"Not compatible because male sun {maleSun} and female moon {femaleMoon} are not in a good aspect: {aspectBySign(maleSun, femaleMoon)}")
-        if not femaleSunCompatibleWithMaleMoon:
-            print(f"Not compatible because female sun {femaleSun} and male moon {maleMoon} are not in a good aspect: {aspectBySign(femaleSun, maleMoon)}")
+        #if not maleSunCompatibleWithFemaleMoon: 
+            #print(f"Not compatible because male sun {maleSun} and female moon {femaleMoon} are not in a good aspect: {aspectBySign(maleSun, femaleMoon)}")
+        #if not femaleSunCompatibleWithMaleMoon:
+            #print(f"Not compatible because female sun {femaleSun} and male moon {maleMoon} are not in a good aspect: {aspectBySign(femaleSun, maleMoon)}")
         areCompatible = False  
 
     if areCompatible == None: 

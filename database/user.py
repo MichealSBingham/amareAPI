@@ -1285,6 +1285,60 @@ class User:
                 pass
 
 
+    def findBirthdaysWithBestRatio(self, maxYearsOlder=5, maxYearsYounger=3, sunSignsToExclude=[]): 
+        
+        from database.user import User
+        from database.Location import Location
+        from datetime import datetime
+        from datetime import timedelta
+        from colorama import Fore
+        from colorama import Style
+        
+
+        start = self.birthday.timestamp() - (31556926 * maxYearsOlder) 
+        end = self.birthday.timestamp() + (31556926 * maxYearsYounger) 
+
+
+        birthdayToCheck = datetime.fromtimestamp(float(start))
+
+        birthdays = []
+        ratios = []
+
+        while birthdayToCheck.timestamp() <= end:
+            userToCheck = User(birthday = birthdayToCheck, hometown=self.hometown, sex="female")
+            ratio = round(self.synastry(userToCheck).ratio(), 1)
+
+            print(f"{birthdayToCheck} has a ratio of {ratio}", end='\r')
+
+            """
+            if len(ratios) == 0:
+                birthdays.append(userToCheck)
+                ratios.append(ratio)
+            else:
+                if ratio  != ratios[-1]:
+                    birthdays.append(userToCheck)
+                    ratios.append(ratio)
+                    if ratio >= 1.5 and self.bc(userToCheck) == True: 
+                        bday = birthdayToCheck.strftime("%m/%d/%Y")
+                        print(f"{bday} has a ratio of {ratio}")
+                """
+
+            birthdays.append(userToCheck)
+            ratios.append(ratio)
+            if ratio >= 1.5 and userToCheck.sun.sign not in sunSignsToExclude: 
+                bday = birthdayToCheck.strftime("%m/%d/%Y")
+
+                if self.bc(userToCheck) == True:
+                    print(f"{bday} {Fore.GREEN} has a ratio of {ratio} {Style.RESET_ALL}")
+                else: 
+                    print(f"{Fore.RED} {bday} has a ratio of {ratio} {Style.RESET_ALL}")
+                    
+
+            birthdayToCheck = birthdayToCheck + timedelta(days=1)
+
+        return birthdays, ratios
+
+
         
 
 """
