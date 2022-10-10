@@ -418,6 +418,15 @@ def allPossibleAspectsEachSignMakesWith(planet1):
 
 class DetailedAspect:
 
+    always_harmonious = [ aspectFromDeg(const.TRINE),
+                           
+                           aspectFromDeg(const.SEXTILE)
+        
+                            ]
+
+    always_disharmonious = [ aspectFromDeg(const.SQUARE),
+                            aspectFromDeg(const.QUIXUNX)]
+
     harmonious_aspects = [ aspectFromDeg(const.TRINE),
                            aspectFromDeg(const.CONJUNCTION),
                            aspectFromDeg(const.SEXTILE),
@@ -878,9 +887,40 @@ class DetailedAspect:
         return False 
         
 
+    def isHarmonious(self):
+        if self.type == aspectFromDeg(const.CONJUNCTION) and self.orb <= 8.0: 
+            if self.name == ('Mars', 'Pluto') or self.name == ('Pluto', 'Mars') or self.name == ('Sun', 'Pluto') or self.name == ('Pluto', 'Sun') or self.name == ('Mars', 'Saturn') or self.name == ('Saturn', 'Mars') or self.name == ('Saturn', 'Uranus') or self.name == ('Uranus', 'Saturn') or self.name == ('Pluto', 'Moon') or self.name == ('Moon', 'Pluto'):
+                return False
+            else:
+                return True
+        
+        if self.type == aspectFromDeg(const.OPPOSITION) and self.orb <= 7.0: 
+            if self.name == ('Sun', 'Moon') or self.name == ('Moon', 'Sun'):
+                return True
+            elif self.name == ('Sun', 'Venus') or self.name == ('Venus', 'Sun'):
+                return True
+            else: 
+                return False 
+            
+            return False
+        
+        if self.type == aspectFromDeg(const.TRINE) and self.orb <= 7.0: 
+            return True 
+        
+        if self.type == aspectFromDeg(const.SQUARE) and self.orb <= 6.0: 
+            return False
+        
+        if self.type == aspectFromDeg(const.SEXTILE) and self.orb <= 5.0: 
+            return True
+
+        if self.type == aspectFromDeg(const.QUINCUNX) and self.orb <= 3.0:
+            return False
+
+        return None 
+        
         
     # Returns if the aspect is `traditionally` harmonious.
-    def isHarmonious(self):
+    def isHarmonious_old_version(self):
         if self.type in DetailedAspect.harmonious_aspects and self.elementalHarmony():
             return True
         elif self.type == aspectFromDeg(const.NO_ASPECT):
@@ -1190,7 +1230,7 @@ class DetailedAspect:
         # Returns the aspect the planets have by sign 
         # returns CONJUNCTION, TRINE, SEXTILE, OPPOSITION, SQUARE, INCONJUNCT
 
-        from astrology.SynastryAlgorithm import squares, oppositions, aspectBySign
+        from astrology.SynastryAlgorithm import squares, oppositions
 
         
 
@@ -1609,6 +1649,18 @@ class Aspects:
             features.update(a.features())
 
         return features 
+
+    def ratio(self): 
+        """Returns the ratio of harmonious aspects to inharmous aspects"""
+        harm = 0 
+        disharm  = 0
+        for a in self.all: 
+            if a.isHarmonious() == True: 
+                harm += 1
+            elif a.isHarmous() == False: 
+                disharm += 1
+            else: 
+                continue
          
 
 
@@ -1790,20 +1842,29 @@ def basicCompatibility(maleChart, femaleChart):
     """ Returns whether the two charts have basic compatibility. 
     This is not a full compatibility analysis but a quick check to see if the two charts are compatible.
     Male/female Chart is an array of planet signs [Sun, Moon, Mercury, Venus, Mars]"""
-
     from astrology.SynastryAlgorithm import aspectBySign
 
     maleSun = maleChart[0]
+    #print(f"male sun: {maleSun}")
     maleMoon = maleChart[1]
+    #print(f"male moon: {maleMoon}")
     maleMercury = maleChart[2]
+    #print(f"male mercury: {maleMercury}")
     maleVenus = maleChart[3]
+    #print(f"male venus: {maleVenus}")
     maleMars = maleChart[4]
+    #print(f"male mars: {maleMars}")
 
     femaleSun = femaleChart[0]
+   # print(f"female Sun {femaleSun}")
     femaleMoon = femaleChart[1]
+   # print(f" female moon: {femaleMoon}")
     femaleMercury = femaleChart[2]
+    #print(f"female mercury : {femaleMercury}")
     femaleVenus = femaleChart[3]
+    #print(f"female venus: {femaleVenus}")
     femaleMars = femaleChart[4]
+    #print(f"female mars {femaleMars}")
 
     areCompatible = None 
 
@@ -1833,7 +1894,6 @@ def basicCompatibility(maleChart, femaleChart):
             print(f"Not compatible because female sun {femaleSun} and male moon {maleMoon} are not in a good aspect: {aspectBySign(femaleSun, maleMoon)}")
         areCompatible = False  
 
-    print("These two are compatible based on basic compatibility")
     if areCompatible == None: 
         areCompatible = True
 

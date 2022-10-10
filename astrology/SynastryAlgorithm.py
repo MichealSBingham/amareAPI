@@ -1,32 +1,7 @@
 # This is a helper class to determine element, modality, and sign of a planet and or house 
 
-def aspectBySign(sign1, sign2): 
 
-    compatiblePairs = [('Water', 'Water'), 
-                        ('Water', 'Earth'), 
-                        ('Earth', 'Earth'), 
-                        ('Earth', 'Water'), 
-                        ('Air', 'Air'), 
-                        ('Air', 'Fire'), 
-                        ('Fire', 'Fire'), 
-                        ('Fire', 'Air')
-                        ]
 
-    if sign1 == sign2: 
-        return 'CONJUNCTION'
-    elif signElement(sign1) == signElement(sign2) and (sign1 is not sign2): 
-        return 'TRINE'
-    elif (signElement(sign1), signElement(sign2) == compatiblePairs) and sign1 not in oppositions(sign2): 
-        return 'SEXTILE'
-    elif sign1 in oppositions(sign2): 
-        return 'OPPOSITION'
-    elif sign1 in squares(sign2): 
-        return 'SQUARE'
-    elif sign1 in semisextiles(sign2): 
-        return 'SEMISEXTILE'
-    else: 
-        return 'QUINCUNX'
-        
 
 
 
@@ -56,6 +31,29 @@ def elementalHarmony(self):
 
     return True
 
+def elementalHarmonyBetweenSigns(sign1, sign2):
+    from astrology.NatalChart import getElement
+
+        #if self.type == aspectFromDeg(const.OPPOSITION) and self.orb < 8.0:
+            #return False
+    (element1, element2) = (signElement(sign1), signElement(sign2))
+
+    if element1 == element2:
+        return True
+
+    if (element1, element2) == ('Water', 'Fire') or (element1, element2) == ('Fire', 'Water'):
+        return False
+
+    if (element1, element2) == ('Water', 'Air') or (element1, element2) == ('Air', 'Water'):
+        return False
+
+    if (element1, element2) == ('Earth', 'Air') or (element1, element2) == ('Air', 'Earth'):
+        return False
+    
+    if (element1, element2) == ('Earth', 'Fire') or (element1, element2) == ('Fire', 'Earth'):
+        return False
+
+    return True
 
 def signElement(sign): 
     if sign == 'Cancer' or sign =='Pisces' or sign == 'Scorpio':
@@ -99,76 +97,109 @@ def receptiveOrOutgoing(houseNumber):
 
 
 def semisextiles(sign):
-    if 'Cancer': 
+    if sign == 'Cancer': 
         return ['Gemini', 'Leo']
-    if 'Leo': 
+    if sign == 'Leo': 
         return ['Cancer', 'Virgo']
-    if 'Virgo':
+    if sign == 'Virgo':
         return ['Leo', 'Libra']
-    if 'Libra':
+    if sign == 'Libra':
         return ['Virgo', 'Scorpio']
-    if 'Scorpio':
+    if sign == 'Scorpio':
         return ['Libra', 'Sagittarius']
-    if 'Sagittarius':
+    if sign == 'Sagittarius':
         return ['Scorpio', 'Capricorn']
-    if 'Capricorn':
+    if sign == 'Capricorn':
         return ['Sagittarius', 'Aquarius']
-    if 'Aquarius':
+    if sign == 'Aquarius':
         return ['Capricorn', 'Pisces']
-    if 'Pisces':
+    if sign == 'Pisces':
         return ['Aquarius', 'Aries']
-    if 'Aries':
+    if sign == 'Aries':
         return ['Pisces', 'Taurus']
-    if 'Taurus':
+    if sign == 'Taurus':
         return ['Aries', 'Gemini']
-    if 'Gemini':
+    if sign == 'Gemini':
         return ['Taurus', 'Cancer']
     
 
 def squares(sign): 
-    if 'Aries' or 'Libra': 
+    if sign == 'Aries' or sign ==  'Libra': 
         return ['Cancer', 'Capricorn']
-    if 'Leo' or 'Aquarius': 
+    if sign == 'Leo' or sign == 'Aquarius': 
         return ['Taurus', 'Scorpio']
-    if 'Sagittarius' or 'Gemini': 
+    if sign == 'Sagittarius' or sign == 'Gemini': 
         return ['Pisces', 'Virgo']
 
-    if 'Taurus' or 'Scorpio': 
+    if sign == 'Taurus' or sign == 'Scorpio': 
         return ['Leo', 'Aquarius']
-    if 'Virgo' or 'Pisces': 
+    if sign == 'Virgo' or sign == 'Pisces': 
         return ['Sagittarius, Gemini']
-    if 'Capricorn' or 'Cancer': 
+    if sign == 'Capricorn' or sign == 'Cancer': 
         return ['Aries', 'Libra']
 
 
 def oppositions(sign): 
-    if 'Libra': 
+    if sign == 'Libra': 
         return 'Aries'
-    if 'Aquarius': 
+    if sign == 'Aquarius': 
         return 'Leo'
-    if 'Gemini': 
+    if sign == 'Gemini': 
         return 'Sagittarius'
         
-    if 'Cancer': 
+    if sign == 'Cancer': 
         return 'Capricorn'
-    if 'Pisces': 
+    if sign == 'Pisces': 
         return 'Virgo'
-    if 'Scorpio': 
+    if sign == 'Scorpio': 
         return 'Taurus'
 
-    if 'Aries': 
+    if sign == 'Aries': 
         return 'Libra'
-    if 'Leo': 
+    if sign == 'Leo': 
         return 'Aquarius'
-    if 'Sagittarius': 
+    if sign == 'Sagittarius': 
         return 'Gemini'
 
-    if 'Taurus': 
+    if sign == 'Taurus': 
         return 'Scorpio'
-    if 'Capricorn': 
+    if sign == 'Capricorn': 
         return 'Cancer'
-    if 'Virgo': 
+    if sign == 'Virgo': 
         return 'Pisces'
     
 
-    
+def aspectBySign(firstSign, secondSign):
+        # Returns the aspect the planets have by sign 
+        # returns CONJUNCTION, TRINE, SEXTILE, OPPOSITION, SQUARE, INCONJUNCT
+
+        from astrology.SynastryAlgorithm import squares, oppositions
+
+        
+
+
+        if firstSign == secondSign: 
+            return 'CONJUNCTION'
+
+        if firstSign in oppositions(secondSign): 
+            return 'OPPOSISTION'
+
+        if firstSign in squares(secondSign): 
+            return 'SQUARE'
+
+        if firstSign in semisextiles(secondSign): 
+            return 'SEMISEXTILE'
+
+        (element1, element2) = (signElement(firstSign), signElement(secondSign))
+
+
+
+        if element1 == element2 and firstSign != secondSign: 
+            return 'TRINE'
+
+        if element1 != element2 and elementalHarmonyBetweenSigns(element1, element2) and firstSign not in oppositions(secondSign): 
+            return 'SEXTILE'
+
+        if element1 != element2 and not elementalHarmonyBetweenSigns(element1, element2): 
+            return 'QUINCUNX'
+
