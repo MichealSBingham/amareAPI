@@ -1657,7 +1657,7 @@ class Aspects:
         for a in self.all: 
             if a.isHarmonious() == True: 
                 harm += 1
-            elif a.isHarmous() == False: 
+            elif a.isHarmonious() == False: 
                 disharm += 1
             else: 
                 continue
