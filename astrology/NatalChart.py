@@ -440,6 +440,7 @@ class DetailedAspect:
                             
     disharmonious_aspects = [ aspectFromDeg(const.SQUARE), aspectFromDeg(const.SEMISQUARE), aspectFromDeg(const.SESQUISQUARE), aspectFromDeg(const.OPPOSITION), aspectFromDeg(const.QUINCUNX) ]
 
+    major_aspects = [aspectFromDeg(const.CONJUNCTION), aspectFromDeg(const.OPPOSITION), aspectFromDeg(const.SQUARE), aspectFromDeg(const.TRINE), aspectFromDeg(const.SEXTILE)]
 
 ## Consider out of sign conjunctions etc
     def __init__(self,
@@ -860,6 +861,21 @@ class DetailedAspect:
         if self.name == ('Sun', 'Mars') or ('Sun', 'Mars'):
             pass  #more so chemistry / physical attraction 
             
+    def isMajor(self):
+        """Return True if this aspect is a major aspect.""" 
+        if self.type in self.major_aspects: 
+            return True
+        else:
+            return False
+
+    def containsPlanet(self, planet): 
+        "Return True if the aspect contains the planet."
+        if planet in self.name: 
+            return True
+        else: 
+            return False
+
+
 
 
     def isAspect(self): 
@@ -1223,7 +1239,26 @@ class DetailedAspect:
 
             return y.strip()
         except:
-            return ''
+
+            # Do the name thing but reverse the name of the aspect in case it is reversed (ex: Jupiter, Neptune) vs (Neptune, Jupiter)
+            aspect_name = f'{p2}_{p1}'
+
+            try: 
+                description = df.loc[aspect_name, aspect_angle]
+
+                # Replaces the place holders with their names
+
+                if p1 == p2:
+                    x = description.replace(f'{p1}1', self.first_planet_owner.name)
+                    y = x.replace(f'{p2}2', self.second_planet_owner.name)
+                else:
+                    x = description.replace(p1, self.first_planet_owner.name)
+                    y = x.replace(p2, self.second_planet_owner.name)
+
+                return y.strip()
+            except:
+                return None
+            return None
 
 
     def aspectBySign(self):
@@ -1623,6 +1658,22 @@ class Aspects:
     def quincunxes(self):
         return Aspects(get_aspects_of_type(self.list, 'QUINCUNX'))
 
+    def planet(self, planet):
+        """Returns aspects where planet is either the active or passive planet"""
+        aspects = []
+        for aspect in self.list:
+            if aspect.first.id == planet or aspect.second.id == planet:
+                aspects.append(aspect)
+        return Aspects(aspects)
+
+    def major(self):
+        """Returns all major aspects"""
+        aspects = []
+        for aspect in self.list:
+            if aspect.isMajor():
+                aspects.append(aspect)
+        return Aspects(aspects)
+
     def toDict(self):
         aspectDic = {}
         if self != None:
@@ -1662,7 +1713,15 @@ class Aspects:
             else: 
                 continue
         return round(harm/disharm, 2)
-         
+
+    def summary(self): 
+        ints = []
+        for a in sorted(self.all): 
+            interp = a.interpretation()
+            if interp is not None: 
+                ints.append(interp)
+        return " ".join(ints)
+
 
 
 

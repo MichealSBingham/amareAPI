@@ -56,6 +56,16 @@ ouida.natal()
 
 
 
+belarus = Location(latitude=float(53.7098), longitude=float(27.9534))
+lindasbday = 607255211
+linda = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(lindasbday), known_time=True, hometown=belarus)
+
+nyc  = Location(latitude=float(40.7128), longitude=float(-74.0060))
+rebeccaBirthday = 1115089213
+rebecca = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(rebeccaBirthday), known_time=True, hometown=nyc)
+
+hudson = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(1104900633), known_time=False, hometown=nyc)
+
 davidbday = 920196000
 maryanbday = 815580000
 sanDiego=Location(latitude=float(32.7157), longitude=float(-117.1611))
@@ -64,6 +74,30 @@ greensBoro=Location(latitude=float(36.0726), longitude=float(-79.7920))
 david = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(davidbday), known_time=True, hometown=greensBoro)
 maryan = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(maryanbday), known_time=False, hometown=sanDiego)
 
+
+isabellabday = 1145901600
+isabella_nyc = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(isabellabday), known_time=True, hometown=nyc)
+
+sdr = Location(latitude=float(19.4792), longitude=float(-70.6931))
+isabella_sdr = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(isabellabday), known_time=True, hometown=sdr)
+
+
+isabellabday = 1145901600
+matthewbday = 1115838000
+matthew = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(matthewbday), known_time=True, hometown=nyc)
+matthew.name = "Matthew"
+
+
+
+
+isabella_nyc.name = "Isabella"
+isabella_sdr.name = "Isabella"
+rebecca.name = "Rebecca"
+hudson.name = "Hudson"
+rebecca.sex = "female"
+hudson.sex = "male"
+linda.name = "Elizabeth"
+linda.sex = "female"
 micheal.name = "Micheal"
 micheal.sex = "male"
 gracen.name = "Gracen"
@@ -92,6 +126,7 @@ david.name = "David"
 david.sex = "male"
 maryan.name = "Maryan"
 maryan.sex = "female"
+
 
 
 # Returns a list of the Capricon Suns in ALL degrees
