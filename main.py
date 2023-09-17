@@ -1396,6 +1396,92 @@ gcloud functions describe messaging_token
         return resp
 
     
+"""Returns the Astrological Profile of the user based on input data.
+
+- Request Parameters:
+     - name (String) : The name of the user 
+     - gender (String) : male, female, or other 
+     - latitude (Double) : Latitude of birth location
+     - longitude (Double) : Longitude of birth location 
+     - birthdayInSecondsSince1970 (Double) : Birthday of the user in UTC. This should be the timestamp: seconds since 1970
+     - knowsBirthtime (Bool): Whether the user knows his/her birthtime
+
+ Deployment:
+     gcloud functions deploy predict_traits \
+--runtime python38 --trigger-http --security-level=secure-always --allow-unauthenticated
+
+Get Url to endpoint: 
+gcloud functions describe predict_traits
+"""
+def predict_traits(request): 
+    from database.Location import Location
+    from datetime import datetime 
+
+    
+
+
+    if request.method != 'POST': 
+         return jsonify(success=False,
+                           error={
+                               'code': 405,
+                               'description': "Only POST request allowed here.",
+                               'why': 'I just decided this.',
+                               'trace': traceback.format_exc()}
+                           )
+
+    req_data = request.get_json()
+
+    # Extract the variables from the parsed JSON data
+    # Assuming all the fields are mandatory, make sure to add error handling for missing fields.
+    try:
+        name = req_data["name"]
+        gender = req_data["gender"]
+        latitude = float(req_data["latitude"])  # Convert string to float
+        longitude = float(req_data["longitude"])  # Convert string to float
+        knowsBTime = req_data["knowsBirthtime"]
+        birthday_in_seconds_since_1970 = float(req_data["birthdayInSecondsSince1970"])  # Convert string to float
+    except KeyError as e:
+
+        return jsonify(success=False,
+                           error={
+                               'code': 400,
+                               'description': f"Missing required parameter: {e.args[0]}",
+                               'why': 'I just decided this.',
+                               'trace': traceback.format_exc()}
+                           )
+        
+    
+    except ValueError as e:
+        
+
+        return jsonify(success=False,
+                           error={
+                               'code': 400,
+                               'description': f"Invalid data format for one of the parameters. Error: {str(e)}",
+                               'why': 'I just decided this.',
+                               'trace': traceback.format_exc()}
+                           )
+
+
+    loc=Location(latitude=float(latitude), longitude=float(longitude))
+
+    user = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(birthday_in_seconds_since_1970), name=name, known_time=knowsBTime, hometown=loc)
+    n = user.natal() # Generates the natal chart 
+
+   
+
+    # For now, echo the same data as response to confirm parsing was successful
+    response_data = {
+        "name": name,
+        "gender": gender,
+        "latitude": latitude,
+        "longitude": longitude,
+        "birthdayInSecondsSince1970": birthday_in_seconds_since_1970, 
+        "knowsBirthTime": knowsBTime, 
+        "Asc": user.asc.sign,
+        "natal": n
+    }
+    return jsonify(status=200, **response_data)
 
 
 

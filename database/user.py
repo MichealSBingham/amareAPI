@@ -7,6 +7,9 @@ from astrology import NatalChart
 from flatlib import const
 import itertools
 from astrology.NatalChart import Aspects, DetailedAspect
+import datetime
+
+
 
 
 
@@ -432,6 +435,33 @@ class User:
 
     def __eq__(self, other):
         return (self.id == other.id)
+
+
+    def send_friend_request(self, requested_user_id):
+        try:
+            user = self
+            if user:
+                friend_request_details = {
+                    "accepted": False,
+                    "isNotable": self.is_notable,
+                    "name": self.name,  # Replace with the current user's name
+                    "profile_image_url": self.profile_image_url if self.profile_image_url else 'default_image_url', # Replace with the current user's image URL
+                    "request_by": user.id,
+                    "time": datetime.datetime.now()
+                }
+                db.collection(u'friends').document(requested_user_id).collection(u'requests').document(user.id).set(friend_request_details)
+                return True 
+            else:
+                print("Error: current user not found when trying to send friend request")
+                return False
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return False
+
+
+    def accept_friend_request(self, fromUserID): 
+
+        pass 
 
 
     def planets(self):
