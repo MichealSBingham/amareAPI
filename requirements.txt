@@ -80,3 +80,4 @@ wikipedia==1.4.0
 xml4h==1.0
 yarl==1.7.2
 zipp==3.8.0
+openai==0.27.9

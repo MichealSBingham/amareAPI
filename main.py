@@ -1416,7 +1416,7 @@ gcloud functions describe predict_traits
 def predict_traits(request): 
     from database.Location import Location
     from datetime import datetime 
-
+    from prompts.astrology_traits_generator import AstrologyTraitsGenerator
     
 
 
@@ -1467,19 +1467,28 @@ def predict_traits(request):
 
     user = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(birthday_in_seconds_since_1970), name=name, known_time=knowsBTime, hometown=loc)
     n = user.natal() # Generates the natal chart 
+    user.name = name
+    user.sex = gender 
+    astroData = user.astroDataForAPI()
 
+
+    # Now send the prompt to LLM 
+    
+    trait_generator = AstrologyTraitsGenerator()
+    traits = trait_generator.predict_traits(name=user.name, gender=user.sex, astro_data=astroData)
    
 
     # For now, echo the same data as response to confirm parsing was successful
     response_data = {
+      "traits": traits, 
         "name": name,
         "gender": gender,
-        "latitude": latitude,
+       "latitude": latitude,
         "longitude": longitude,
         "birthdayInSecondsSince1970": birthday_in_seconds_since_1970, 
         "knowsBirthTime": knowsBTime, 
-        "Asc": user.asc.sign,
-        "natal": n
+    
+       # "natal": n
     }
     return jsonify(status=200, **response_data)
 

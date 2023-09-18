@@ -1048,7 +1048,14 @@ class User:
 
         return [len(loveCreators), len(loveDestroyers), len(loveCreators) - len(loveDestroyers), loveCreators, loveDestroyers]
 
-    
+    def astroDataForAPI(self): 
+        "Returns each of the planets and their placements in a dict 'i.e' 'Asc: Capricorn, Moon: Scorpio, etc"
+        dic = {}
+        for ang in self.angles():
+            dic[ang.id] = ang.sign 
+        for p in self.planets(): 
+            dic[p.id] = p.sign 
+        return dic
 
 
 
