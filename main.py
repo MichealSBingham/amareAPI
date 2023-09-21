@@ -1264,6 +1264,45 @@ def listen_for_added_friend_and_do_synastry(data, context):
 
 
 
+
+
+def handle_failed_friend_request(data, context):
+    """Triggered by the creation of a new document in the 'outgoingRequests' collection.
+    
+    gcloud functions deploy handle_failed_friend_request \
+  --runtime python38 \
+  --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+  --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/outgoingRequests/{requestId}" \
+  
+
+
+ 
+
+    """
+
+    from database.user import db
+    import time
+
+    sender_id = context.resource.split('/')[6]
+    receiver_id = context.resource.split('/')[8]
+
+    # Reference to the incoming request
+    incoming_request_ref = db.collection('users').document(receiver_id).collection('incomingRequests').document(sender_id)
+
+    # Wait for 5 seconds before checking for the second write
+    time.sleep(5)
+
+    incoming_request = incoming_request_ref.get()
+    if not incoming_request.exists:
+        # If the incoming request doesn't exist after 5 seconds, delete the outgoing request
+        outgoing_request_ref = db.collection('users').document(sender_id).collection('outgoingRequests').document(receiver_id)
+        outgoing_request_ref.delete()
+        return f"Deleted outgoing request from {sender_id} to {receiver_id} due to missing corresponding incoming request."
+
+    return f"Outgoing request from {sender_id} to {receiver_id} remains intact as the corresponding incoming request exists."
+
+
+
 #TODO: delete synastries too
 def listen_for_removed_friend(data, context):
     """"
