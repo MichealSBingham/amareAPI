@@ -5,6 +5,7 @@ from secret import api_keys
 
 
 
+
 from json import dumps
 from flask import make_response
 from Messaging.streamBackend import *
@@ -1067,7 +1068,7 @@ def listen_for_friend_requests(data, context):
     PushNotifications.send_friend_request_to(person_requested, requester)
 
 #TODO: add images (profile)
-def listen_for_accepted_requests(data, context):
+def listen_for_accepted_requests_OLD_DEPRECATED(data, context):
     """"
               # Run this to deploy. Reads
                   gcloud functions deploy listen_for_accepted_requests \
@@ -1273,10 +1274,6 @@ def handle_failed_friend_request(data, context):
   --runtime python38 \
   --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
   --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/outgoingRequests/{requestId}" \
-  
-
-
- 
 
     """
 
@@ -1302,6 +1299,97 @@ def handle_failed_friend_request(data, context):
     return f"Outgoing request from {sender_id} to {receiver_id} remains intact as the corresponding incoming request exists."
 
 
+
+
+
+
+def handle_outgoing_request_deletion(data, context):
+    """Triggered by the deletion of a document in the 'outgoingRequests' collection.
+    
+    
+    gcloud functions deploy handle_outgoing_request_deletion \
+  --runtime python38 \
+  --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/outgoingRequests/{requestId}" \
+  --trigger-event "providers/cloud.firestore/eventTypes/document.delete"
+"""
+    from database.user import db
+    sender_id = context.resource.split('/')[6]
+    receiver_id = context.resource.split('/')[8]
+
+    # Reference to the incoming request
+    incoming_request_ref = db.collection('users').document(receiver_id).collection('incomingRequests').document(sender_id)
+
+    # Delete the incoming request
+    incoming_request_ref.delete()
+
+    return f"Deleted incoming request from {receiver_id} due to deletion of outgoing request from {sender_id}."
+
+
+
+
+
+def handle_incoming_request_deletion(data, context):
+    """Triggered by the deletion of a document in the 'incomingRequests' collection.
+    
+    gcloud functions deploy handle_incoming_request_deletion \
+  --runtime python38 \
+  --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/incomingRequests/{requestId}" \
+  --trigger-event "providers/cloud.firestore/eventTypes/document.delete"
+"""
+
+    from database.user import db
+
+    receiver_id = context.resource.split('/')[6]
+    sender_id = context.resource.split('/')[8]
+
+    # Reference to the outgoing request
+    outgoing_request_ref = db.collection('users').document(sender_id).collection('outgoingRequests').document(receiver_id)
+
+    # Delete the outgoing request
+    outgoing_request_ref.delete()
+
+    return f"Deleted outgoing request from {sender_id} due to deletion of incoming request from {receiver_id}."
+
+
+
+
+
+def handle_incoming_request_acceptance(data, context):
+    """Triggered by the update of a document in the 'incomingRequests' collection.
+gcloud functions deploy handle_incoming_request_acceptance \
+  --runtime python38 \
+  --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/incomingRequests/{requestId}" \
+  --trigger-event "providers/cloud.firestore/eventTypes/document.update"
+"""
+    from database.user import db
+    from datetime import datetime
+    from database.user import User
+
+    
+    receiver_id = context.resource.split('/')[6]
+    sender_id = context.resource.split('/')[8]
+    print(f"the data is ... {data['value']['fields']['status']['stringValue']}")
+
+    
+    # Check if the status has been updated to "accepted"
+    if data['value']['fields']['status']['stringValue'] == 'friends':
+        # Reference to the outgoing request
+        outgoing_request_ref = db.collection('users').document(sender_id).collection('outgoingRequests').document(receiver_id)
+
+        # Update the status of the outgoing request to "accepted"
+        outgoing_request_ref.update({"status": "friends"})
+
+        requested_person = User(id=receiver_id)
+        #TODO -- Optimize this, because *no need* to create a User object to pull this data since technically we already read it when we listened on the branch. see the old friendship lisenter above to understand
+        sender_user = User(id=sender_id)
+
+
+        # Add the official friendship to both users' records (if needed)
+        # ...
+        db.collection('friends').document(sender_id).collection('myFriends').document(receiver_id).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})
+        db.collection('friends').document(receiver_id).collection('myFriends').document(sender_id).set({"friends_since": datetime.now(), "profile_image_url": sender_user.profile_image_url, "isNotable": sender_user.is_notable, "name": sender_user.name})
+
+    return f"Updated outgoing request status for {sender_id} due to acceptance of incoming request by {receiver_id}."
 
 #TODO: delete synastries too
 def listen_for_removed_friend(data, context):
