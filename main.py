@@ -1266,6 +1266,40 @@ def listen_for_added_friend_and_do_synastry(data, context):
 
 
 
+def update_friend_count(data, context):
+    from database.user import db
+    from google.cloud import firestore
+
+    """
+Function to update friend count when a friend is added or removed.
+
+Trigger: Firestore -> listen for write events (create, update, delete)
+Trigger resource: "projects/findamare/databases/(default)/documents/friends/{userId}/myFriends/{friendId}"
+
+To deploy this function, run:
+gcloud functions deploy update_friend_count \
+  --runtime python38 \
+  --trigger-event "providers/cloud.firestore/eventTypes/document.write" \
+  --trigger-resource "projects/findamare/databases/(default)/documents/friends/{userId}/myFriends/{friendId}"
+"""
+
+    # Extract user ID from the event context
+    user_id = context.params['userId']
+    
+    # Reference to the user's document under 'users' collection
+    user_ref = db.collection('users').document(user_id)
+
+    # Determine whether the friend is added or removed
+    increment_value = 1 if data else -1
+    
+    # Update the user document's friend count atomically
+    user_ref.update({'friendCount': firestore.Increment(increment_value)})
+
+
+
+
+
+
 
 def handle_failed_friend_request(data, context):
     """Triggered by the creation of a new document in the 'outgoingRequests' collection.
