@@ -6,7 +6,40 @@ import json
 openai.api_key = api_key
 
 
+class PersonalityStatementsGenerator: 
+    def __init__(self, max_retries=3):
+        from prompts.constants import PREDICTING_STATEMENTS_INTRUCTIONS
+        self.model = "gpt-3.5-turbo-16k"
+        self.instructions = PREDICTING_STATEMENTS_INTRUCTIONS
+        self.messages = []
+        self.max_retries = max_retries
 
+    def _format_request_message(self, name, gender, astro_data):
+        message = f"predict statements of the following person\n\n{name}\n{gender}\n"
+        for key, value in astro_data.items():
+            message += f"{key}: {value}\n"
+        return message.strip()
+    
+    def predict_statements(self, name, gender, astro_data):
+        request_message = self._format_request_message(name, gender, astro_data)
+        
+    
+        
+        outbound_messages = [
+                {"role": "system", "content": self.instructions},
+                {"role": "user", "content": request_message}
+            ]
+            
+        response = openai.ChatCompletion.create(
+                model=self.model,
+                messages=outbound_messages, 
+                temperature=0.45, # adjust this value as needed
+                max_tokens=555 
+            )
+        response_content = response.choices[0].message['content']
+        return response_content
+
+          
 
 class AstrologyTraitsGenerator:
     def __init__(self, max_retries=3):
