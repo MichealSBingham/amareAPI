@@ -5,6 +5,47 @@ import openai
 import json
 openai.api_key = api_key
 
+from prompts.constants import *
+
+class PlacementInterpretationsGenerator:
+    
+    def __init__(self):
+        self.model = "gpt-3.5-turbo-16k"
+        self.instructions = PREDICTING_PLANETARY_PLACEMENT
+        self.messages = []
+
+    # example: male, sun, cancer, 7th. be sure the house number 
+    def _format_request_message(self,  gender, planet, sign, house=''):
+        if not house or house.isspace():
+            message = f"I'm a {gender} with {planet} in {sign} in the {house} House. Tell me about myself. Do NOT mention the name of the placement until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet, sign, and house, but in the beginning just tell me my reading nothing else. "
+        else: 
+            message = f"I'm a {gender} with {planet} in {sign}. Tell me about myself. Do NOT mention the name of the placement until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet, sign, and house, but in the beginning just tell me my reading nothing else. "
+        return message.strip()
+    
+
+    def interpret_placement(self, gender, planet, sign, house):
+        request_message = self._format_request_message(gender, planet, sign, house)
+        
+        
+        
+        outbound_messages = [
+                {"role": "system", "content": self.instructions},
+                {"role": "user", "content": request_message}
+            ]
+            
+        response = openai.ChatCompletion.create(
+                model=self.model,
+                messages=outbound_messages, 
+                temperature=0.45, # adjust this value as needed
+                max_tokens=555 
+            )
+        response_content = response.choices[0].message['content'].strip()
+        return response_content
+
+          
+        
+    
+
 
 class PersonalityStatementsGenerator: 
     def __init__(self, max_retries=3):
@@ -20,7 +61,51 @@ class PersonalityStatementsGenerator:
             message += f"{key}: {value}\n"
         return message.strip()
     
+    # Some Utilites...
+
+    def split_statements(self, text, delimiter='+'):
+        statements = text.split(delimiter)
+        result = []
+        temp = ""
+        for statement in statements:
+            temp += statement
+            if temp.endswith('.'):
+                result.append(temp.strip().strip('\n'))
+                temp = ""
+            else:
+                temp += delimiter
+        return result
+
+# not sure if this is working so well... may need to fall back to deprecated functions i think it has to do with the statement parser
     def predict_statements(self, name, gender, astro_data):
+        for attempt in range(3):
+            try:
+                request_message = self._format_request_message(name, gender, astro_data)
+
+                outbound_messages = [
+                    {"role": "system", "content": self.instructions},
+                    {"role": "user", "content": request_message}
+                ]
+
+                response = openai.ChatCompletion.create(
+                    model=self.model,
+                    messages=outbound_messages,
+                    temperature=0.45,
+                    max_tokens=555
+                )
+                response_content = response.choices[0].message['content']
+                
+                result = self.split_statements(response_content)
+                
+                if result:
+                    return result
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                continue
+
+        return []
+
+    def deprecated_for_deletion_predict_statements(self, name, gender, astro_data):
         request_message = self._format_request_message(name, gender, astro_data)
         
     
@@ -37,7 +122,8 @@ class PersonalityStatementsGenerator:
                 max_tokens=555 
             )
         response_content = response.choices[0].message['content']
-        return response_content
+        print(response_content)
+        return self.split_statements(response_content)
 
           
 
@@ -115,6 +201,7 @@ class AstrologyTraitsGenerator:
         }
         with open('chat_history.json', 'w') as f:
             json.dump(chat_data, f, indent=4)
+
 
 
 

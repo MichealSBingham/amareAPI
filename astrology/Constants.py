@@ -53,6 +53,22 @@ ouidsabday = -571212000
 ouida = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(ouidsabday), known_time=False, hometown=loc)
 ouida.natal()
 
+sp=Location(latitude=float(-22.355), longitude=float(-47.3857)) 
+biancabday = 698505000
+bianca = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(biancabday), known_time=True, hometown=sp)
+
+
+#san fran
+pa=Location(latitude=float(37.4419), longitude=float(-122.1430)) 
+aidanbday = 854991000
+aidan = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(aidanbday), known_time=True, hometown=pa)
+aidan.name = "Aidan"
+
+
+tn=Location(latitude=float(35.1495), longitude=float(-90.0490)) 
+nyamalbday = 881775000
+nyamal = User(do_not_fetch=True,  birthday = datetime.utcfromtimestamp(nyamalbday), known_time=True, hometown=pa)
+nyamal.name = "Nyamal"
 
 
 davidbday = 920196000
