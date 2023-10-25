@@ -1635,7 +1635,7 @@ def predict_traits(request):
 def placement_read(request):
     """
     POST: Retrieves astrology interpretation for a specific placement based on input parameters.
-
+    url: https://us-central1-findamare.cloudfunctions.net/placement_read
     Parameters in REST API Call:
     - gender: (optional) 'male' or 'female'. If missing, defaults to 'person'.
     - planet: (required) Name of the planet or celestial body (e.g., 'North Node').
@@ -1666,15 +1666,15 @@ def placement_read(request):
                                'trace': traceback.format_exc()}
                            )
     
-    gender = request.args.get('gender', None)
-    if not gender:
-        gender = 'person'
-    else:
-        gender = gender.lower()
-    planet = request.args.get('planet')
-    sign = request.args.get('sign')
-    house_num = request.args.get('house', "")
-    user_id = request.args.get('user_id', None)
+    
+
+    req_data = request.get_json()
+    gender = req_data.get('gender', 'person').lower()
+    planet = req_data.get('planet')
+    sign = req_data.get('sign')
+    house_num = req_data.get('house', "")
+    user_id = req_data.get('user_id', None)
+
     
     # Convert house number to ordinal string (e.g., '1' -> '1st')
     if house_num.isdigit():
@@ -1692,7 +1692,8 @@ def placement_read(request):
             pass 
             
         return jsonify(success=True,
-                       interpretation=interpretation
+                       interpretation=interpretation,
+                       prompt=reader.prompt
                         
                            )
         

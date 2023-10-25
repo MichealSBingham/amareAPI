@@ -14,6 +14,7 @@ class PlacementInterpretationsGenerator:
         self.model = "gpt-3.5-turbo"
         self.instructions = PREDICTING_PLANETARY_PLACEMENT
         self.messages = []
+        self.prompt = ""
 
     # example: male, sun, cancer, 7th. be sure the house number 
     def _format_request_message(self,  gender, planet, sign, house=''):
@@ -21,12 +22,13 @@ class PlacementInterpretationsGenerator:
             message = f"I'm a {gender} with {planet} in {sign}. Tell me about myself. Do NOT mention the name of the placement until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet, sign, and house, but in the beginning just tell me my reading nothing else. "
         else: 
             message = f"I'm a {gender} with {planet} in {sign} in the {house} house. Tell me about myself. Do NOT mention the name of the placement until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet, sign, and house, but in the beginning just tell me my reading nothing else. "
+        self.prompt = message 
         return message.strip()
     
 
     def interpret_placement(self, gender, planet, sign, house):
         request_message = self._format_request_message(gender, planet, sign, house)
-        
+        print(f"the message sent is ... {request_message}")
         
         
         outbound_messages = [
@@ -37,8 +39,8 @@ class PlacementInterpretationsGenerator:
         response = openai.ChatCompletion.create(
                 model=self.model,
                 messages=outbound_messages, 
-                temperature=1, # adjust this value as needed
-                max_tokens=555, 
+                temperature=0, # adjust this value as needed
+                max_tokens=1000, 
                 top_p=1,
                 frequency_penalty=0,
                 presence_penalty=0
