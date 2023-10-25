@@ -1452,26 +1452,6 @@ def listen_for_removed_friend(data, context):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def listen_for_deleted_user(data, context):
     """"
   # Run this to deploy. Reads
@@ -1505,11 +1485,6 @@ def listen_for_deleted_user(data, context):
 
     except Exception as e:
         print(f"Could not delete gender count from database with error {e}")
-
-
-
-
-
 
 
 
@@ -1657,5 +1632,72 @@ def predict_traits(request):
 
 
 
+def placement_read(request):
+    """
+    POST: Retrieves astrology interpretation for a specific placement based on input parameters.
 
+    Parameters in REST API Call:
+    - gender: (optional) 'male' or 'female'. If missing, defaults to 'person'.
+    - planet: (required) Name of the planet or celestial body (e.g., 'North Node').
+    - sign: (required) Astrological sign (e.g., 'Leo').
+    - house: (optional) Astrological house as an ordinal number (e.g., '1st', '2').
+    - user_id: (optional) User identifier.
+
+    JSON Response:
+    {
+        "success": HTTP status code,
+        "interpretation": String interpretation,
+        "error": Error message if applicable
+    }
+    
+    Deploy using the following command:
+    gcloud functions deploy placement_read \
+    --runtime python38 \
+    --trigger-http \
+    --allow-unauthenticated
+
+    """
+    if request.method != 'POST': 
+         return jsonify(success=False,
+                           error={
+                               'code': 405,
+                               'description': "Only POST request allowed here.",
+                               'why': 'I just decided this.',
+                               'trace': traceback.format_exc()}
+                           )
+    
+    gender = request.args.get('gender', None)
+    if not gender:
+        gender = 'person'
+    else:
+        gender = gender.lower()
+    planet = request.args.get('planet')
+    sign = request.args.get('sign')
+    house_num = request.args.get('house', "")
+    user_id = request.args.get('user_id', None)
+    
+    # Convert house number to ordinal string (e.g., '1' -> '1st')
+    if house_num.isdigit():
+        house_num = "{}{}".format(house_num, 'th' if 4 <= int(house_num) % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(int(house_num) % 10, 'th'))
+
+    try:
+        
+        from prompts.astrology_traits_generator import PlacementInterpretationsGenerator
+        reader = PlacementInterpretationsGenerator()
+        interpretation = reader.interpret_placement(gender, planet, sign, house_num)
+
+        # Optional: Write to Firestore if user_id is provided
+        if user_id:
+            # TODO: Add Firestore code here. 
+            pass 
+            
+        return jsonify(success=True,
+                       interpretation=interpretation
+                        
+                           )
+        
+
+
+    except Exception as e:
+        return jsonify(success=False, error=str(e))
 

@@ -7,6 +7,7 @@ openai.api_key = api_key
 
 from prompts.constants import *
 
+# TODO: make sure it can handle placements on cusps 
 class PlacementInterpretationsGenerator:
     
     def __init__(self):
