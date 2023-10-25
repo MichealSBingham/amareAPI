@@ -18,7 +18,7 @@ class PlacementInterpretationsGenerator:
     # example: male, sun, cancer, 7th. be sure the house number 
     def _format_request_message(self,  gender, planet, sign, house=''):
         if not house or house.isspace():
-            message = f"I'm a {gender} with {planet} in {sign} in the {house} House. Tell me about myself.  "
+            message = f"I'm a {gender} with {planet} in {sign} in the {house} house. Tell me about myself. Do NOT mention the name of the placement until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet, sign, and house, but in the beginning just tell me my reading nothing else. "
         else: 
             message = f"I'm a {gender} with {planet} in {sign}. Tell me about myself. Do NOT mention the name of the placement until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet, sign, and house, but in the beginning just tell me my reading nothing else. "
         return message.strip()
