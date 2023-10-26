@@ -1046,7 +1046,7 @@ def listen_for_winks(data, context):
         # One way wink: Send notification that someone winked at them
         PushNotifications.winked_at(winked, winker)
 
-
+#I THINK this is OLD 
 def listen_for_friend_requests(data, context):
     """"
           # Run this to deploy. Reads
@@ -1631,7 +1631,8 @@ def predict_traits(request):
 
 
 
-
+""" Interprets a particular placement (sign, planet, house)"""
+#TODO: make option for genderless in the prompt, we use 'person' for now thus far but we need to see how the synastry changes when we do this
 def placement_read(request):
     """
     POST: Retrieves astrology interpretation for a specific placement based on input parameters.
@@ -1650,6 +1651,7 @@ def placement_read(request):
         "error": Error message if applicable
     }
     
+    Example: curl -X POST https://us-central1-findamare.cloudfunctions.net/placement_read -H "Content-Type: application/json" -d '{"gender": "male", "planet": "Sun", "sign": "Cancer/Leo Cusp", "house": "7"}'
     Deploy using the following command:
     gcloud functions deploy placement_read \
     --runtime python38 \
