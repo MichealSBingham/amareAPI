@@ -2,6 +2,7 @@ from flask import jsonify
 from database.user import User
 import traceback
 from secret import api_keys
+from google.cloud import firestore
 
 
 
@@ -1263,39 +1264,59 @@ def listen_for_added_friend_and_do_synastry(data, context):
 
 
 
-
-
-
-def update_friend_count(data, context):
-    from database.user import db
-    from google.cloud import firestore
-
+# On user creation, create the myFriendCountShard to keep track of number of friends
+def init_friend_counter(event, context):
     """
-Function to update friend count when a friend is added or removed.
-
-Trigger: Firestore -> listen for write events (create, update, delete)
-Trigger resource: "projects/findamare/databases/(default)/documents/friends/{userId}/myFriends/{friendId}"
-
-To deploy this function, run:
-gcloud functions deploy update_friend_count \
-  --runtime python38 \
-  --trigger-event "providers/cloud.firestore/eventTypes/document.write" \
-  --trigger-resource "projects/findamare/databases/(default)/documents/friends/{userId}/myFriends/{friendId}"
-"""
-
-    # Extract user ID from the event context
-    user_id = context.params['userId']
+    Initialize a user's friend count shards when a new user is created.
     
-    # Reference to the user's document under 'users' collection
-    user_ref = db.collection('users').document(user_id)
+    Deploy with:
+    gcloud functions deploy init_friend_counter \
+    --runtime python38 \
+    --trigger-event providers/cloud.firestore/eventTypes/document.create \
+    --trigger-resource "projects/findamare/databases/(default)/documents/users/{userID}"
+    """
+    from database.user import db
+    user_id = event["value"]["fields"]["id"]["stringValue"]
+    doc_ref = db.collection('users').document(user_id)
+    num_shards = 10
+    col_ref = doc_ref.collection("myFriendsCountShards")
 
-    # Determine whether the friend is added or removed
-    increment_value = 1 if data else -1
+    for num in range(num_shards):
+        col_ref.document(str(num)).set({"count": 0})
     
-    # Update the user document's friend count atomically
-    user_ref.update({'friendCount': firestore.Increment(increment_value)})
+    doc_ref.update({"totalFriendCount": 0})
 
 
+def update_friend_count(event, context):
+    """
+    Update the friend count shards when a new friend is added or removed.
+    
+    Deploy with:
+    gcloud functions deploy update_friend_count \
+    --runtime python38 \
+    --trigger-event providers/cloud.firestore/eventTypes/document.write \
+    --trigger-resource "projects/findamare/databases/(default)/documents/users/{userID}/myFriends/{friendID}"
+    """
+    from database.user import db
+    import random 
+    user_id = event["value"]["fields"]["id"]["stringValue"]
+    doc_ref = db.collection('users').document(user_id)
+    num_shards = 10
+
+    doc_id = random.randint(0, num_shards - 1)
+    shard_ref = doc_ref.collection("myFriendsCountShards").document(str(doc_id))
+    increment_value = 1 if event['value'] else -1
+    shard_ref.update({"count": firestore.Increment(increment_value)})
+
+    total = 0
+    shards = doc_ref.collection("myFriendsCountShards").stream()
+    for shard in shards:
+        total += shard.to_dict().get("count", 0)
+
+    doc_ref.update({"totalFriendCount": total})
+
+
+\
 
 
 
