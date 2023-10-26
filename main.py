@@ -1420,8 +1420,8 @@ gcloud functions deploy handle_incoming_request_acceptance \
 
         # Add the official friendship to both users' records (if needed)
         # ...
-        db.collection('friends').document(sender_id).collection('myFriends').document(receiver_id).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})
-        db.collection('friends').document(receiver_id).collection('myFriends').document(sender_id).set({"friends_since": datetime.now(), "profile_image_url": sender_user.profile_image_url, "isNotable": sender_user.is_notable, "name": sender_user.name})
+        db.collection('users').document(sender_id).collection('myFriends').document(receiver_id).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})
+        db.collection('users').document(receiver_id).collection('myFriends').document(sender_id).set({"friends_since": datetime.now(), "profile_image_url": sender_user.profile_image_url, "isNotable": sender_user.is_notable, "name": sender_user.name})
 
     return f"Updated outgoing request status for {sender_id} due to acceptance of incoming request by {receiver_id}."
 
@@ -1486,6 +1486,37 @@ def listen_for_deleted_user(data, context):
     except Exception as e:
         print(f"Could not delete gender count from database with error {e}")
 
+
+def handle_failed_wink(data, context):
+    """Triggered by the creation of a new document in the 'outgoingWinks' collection. (When a user winks at another)
+    
+    gcloud functions deploy handle_failed_wink \
+  --runtime python38 \
+  --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
+  --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/outgoingWinks/{receiverID}" \
+
+    """
+
+    from database.user import db
+    import time
+
+    sender_id = context.resource.split('/')[6]
+    receiver_id = context.resource.split('/')[8]
+
+    # Reference to the incoming wink
+    incoming_request_ref = db.collection('users').document(receiver_id).collection('incomingWinks').document(sender_id)
+
+    # Wait for 5 seconds before checking for the second write
+    time.sleep(5)
+
+    incoming_request = incoming_request_ref.get()
+    if not incoming_request.exists:
+        # If the incoming request doesn't exist after 5 seconds, delete the outgoing request
+        outgoing_request_ref = db.collection('users').document(sender_id).collection('outgoingWinks').document(receiver_id)
+        outgoing_request_ref.delete()
+        return f"Deleted outgoing wink from {sender_id} to {receiver_id} due to missing corresponding incoming wink."
+
+    return f"Outgoing wink from {sender_id} to {receiver_id} remains intact as the corresponding incoming wink exists."
 
 
 
