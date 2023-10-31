@@ -3,7 +3,7 @@ from database.user import User
 import traceback
 from secret import api_keys
 from google.cloud import firestore
-
+from database.notifications import PushNotifications
 
 
 
@@ -1316,14 +1316,15 @@ def update_friend_count(event, context):
     doc_ref.update({"totalFriendCount": total})
 
 
-\
+
 
 
 
 
 
 def handle_failed_friend_request(data, context):
-    """Triggered by the creation of a new document in the 'outgoingRequests' collection.
+    """Triggered by the creation of a new document in the 'outgoingRequests' collection. Will also send a 
+    notification to a user that a friend request was sent.
     
     gcloud functions deploy handle_failed_friend_request \
   --runtime python38 \
@@ -1333,10 +1334,14 @@ def handle_failed_friend_request(data, context):
     """
 
     from database.user import db
+    from database.notifications import PushNotifications
     import time
 
     sender_id = context.resource.split('/')[6]
     receiver_id = context.resource.split('/')[8]
+
+    #When a friend request is sent, we should tell the user via push notification
+    PushNotifications.send_friend_request_to(receiver_id, sender_id)
 
     # Reference to the incoming request
     incoming_request_ref = db.collection('users').document(receiver_id).collection('incomingRequests').document(sender_id)
