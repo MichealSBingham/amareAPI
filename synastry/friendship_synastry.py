@@ -13,3 +13,10 @@ def add_synastry_aspects_to_database(user1, user2):
 
     db.collection('synastry').document(user1.id).collection("outerChart").document(user2.id).set({'aspects': a1})
     db.collection('synastry').document(user2.id).collection("outerChart").document(user1.id).set({'aspects': a2})
+
+def delete_synastry_chart(user1_id, user2_id): 
+    """ Delete user1's synastry chart from user2's charts. Deletes synastry/user2_id/outerChart/user1_id. Will not delete synastry/user1_id/outerChart/user2_id.. need to do this seperately. Deletes user2's chart.
+    """
+
+
+    pass 
