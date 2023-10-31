@@ -1051,7 +1051,7 @@ def listen_for_winks(data, context):
 
 
 # Soon to deprecate 
-def listen_for_added_friend_and_do_synastry(data, context):
+def DEPRECATED_listen_for_added_friend_and_do_synastry_OLD(data, context):
     #Should add synastry chart to database when a new friend is added
     """"
           # Run this to deploy. Reads
@@ -1375,6 +1375,7 @@ gcloud functions deploy handle_incoming_request_acceptance \
     from database.user import User
     from database.notifications import PushNotifications
     from indexes.friendship_indexes import index_friend_placements
+    from synastry.friendship_synastry import add_synastry_aspects_to_database
 
     
     receiver_id = context.resource.split('/')[6]
@@ -1391,7 +1392,6 @@ gcloud functions deploy handle_incoming_request_acceptance \
         outgoing_request_ref.update({"status": "friends"})
 
         requested_person = User(id=receiver_id)
-        #TODO -- Optimize this, because *no need* to create a User object to pull this data since technically we already read it when we listened on the branch. see the old friendship lisenter above to understand
         sender_user = User(id=sender_id)
         receiver_username = User(id=receiver_id).username
         
@@ -1405,30 +1405,14 @@ gcloud functions deploy handle_incoming_request_acceptance \
         index_friend_placements(requested_person, sender_user)
         index_friend_placements(sender_user, requested_person)
 
+        # Now draw synastry charts and add to database
+        add_synastry_aspects_to_database(requested_person, sender_user)
+
+
+
     return f"Updated outgoing request status for {sender_id} due to acceptance of incoming request by {receiver_id}."
 
 
-    """"
-      # Run this to deploy. Reads
-          gcloud functions deploy listen_for_removed_friend \
-        --runtime python37 \
-        --trigger-event "providers/cloud.firestore/eventTypes/document.delete" \
-        --trigger-resource "projects/findamare/databases/(default)/documents/friends/{A}/myFriends/{B}"
-          """
-
-    # Let user 'A' remove user 'B' as a friend using mobile app.
-    # If 'A' removes 'B' as a friend. (Trigger) /friends/A/myFriends/B (detect a deletion)
-        # WE should 1. remove 'A' from 'B' and 2. remove friend requests from both (in case they exist)
-
-    from database.user import db
-    path_parts = context.resource.split('/documents/')[1].split('/')
-    user_A = path_parts[1]
-    user_B = path_parts[3]
-
-    print(f"Should be deleting {user_A} from {user_B} friend list and 2-way friend request")
-    db.collection("friends").document(user_B).collection("myFriends").document(user_A).delete()
-    db.collection("friends").document(user_A).collection("requests").document(user_B).delete()
-    db.collection("friends").document(user_B).collection("requests").document(user_A).delete()
 
 #TODO: delete synastries too... this will remove the myFriends index when a friend is removed
 def listen_for_removed_friend(data, context):
