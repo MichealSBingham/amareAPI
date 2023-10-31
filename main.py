@@ -1047,63 +1047,10 @@ def listen_for_winks(data, context):
         # One way wink: Send notification that someone winked at them
         PushNotifications.winked_at(winked, winker)
 
-#I THINK this is OLD 
-def listen_for_friend_requests(data, context):
-    """"
-          # Run this to deploy. Reads
-              gcloud functions deploy listen_for_friend_requests \
-            --runtime python38 \
-            --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
-            --trigger-resource "projects/findamare/databases/(default)/documents/friends/{user}/requests/{requester}"
-              """
-
-    #from database.user import db
-    from database.notifications import PushNotifications
-
-    path_parts = context.resource.split('/documents/')[1].split('/')
-    collection_path = path_parts[0]
-    person_requested = path_parts[1]
-    requester = path_parts[3]
-
-    #When a friend request is sent, we should tell the user via push notification
-    PushNotifications.send_friend_request_to(person_requested, requester)
-
-#TODO: add images (profile)
-def listen_for_accepted_requests_OLD_DEPRECATED(data, context):
-    """"
-              # Run this to deploy. Reads
-                  gcloud functions deploy listen_for_accepted_requests \
-                --runtime python38 \
-                --trigger-event "providers/cloud.firestore/eventTypes/document.update" \
-                --trigger-resource "projects/findamare/databases/(default)/documents/friends/{user}/requests/{requester}"
-                  """
-
-    from database.notifications import PushNotifications
-    from database.user import db
-    from datetime import datetime
-    from database.user import User
-
-    path_parts = context.resource.split('/documents/')[1].split('/')
-    collection_path = path_parts[0]
-    person_requested = path_parts[1]
-    requester = path_parts[3]
-
-    dataHere = data["value"]['fields']
-    didAccept = dataHere['accepted']['booleanValue']
-    isNotable_requester = dataHere['isNotable']['booleanValue']
-    requesters_name = dataHere['name']['stringValue']
-    print(f"The data is is {dataHere} and did accept: {didAccept}")
-    #
-    requesters_profile_image_url = dataHere['profile_image_url']['stringValue']
-    requested_person = User(id=person_requested)
-
-    if didAccept:
-        db.collection('friends').document(requester).collection('myFriends').document(person_requested).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})
-        db.collection('friends').document(person_requested).collection('myFriends').document(requester).set({"friends_since": datetime.now(), "profile_image_url": requesters_profile_image_url, "isNotable": isNotable_requester, "name": requesters_name})
-        PushNotifications.acceptFriendRequestFrom(requester, person_requested)
 
 
 
+# Soon to deprecate 
 def listen_for_added_friend_and_do_synastry(data, context):
     #Should add synastry chart to database when a new friend is added
     """"
@@ -1340,7 +1287,7 @@ def handle_failed_friend_request(data, context):
     sender_id = context.resource.split('/')[6]
     receiver_id = context.resource.split('/')[8]
 
-    #When a friend request is sent, we should tell the user via push notification
+    #When a friend request is sent, we should tell the user via push notification. TODO: Maybe wait after the delay to send this?
     PushNotifications.send_friend_request_to(receiver_id, sender_id)
 
     # Reference to the incoming request
@@ -1424,6 +1371,8 @@ gcloud functions deploy handle_incoming_request_acceptance \
     from database.user import db
     from datetime import datetime
     from database.user import User
+    from database.notifications import PushNotifications
+    from indexes.friendship_indexes import index_friend_placements
 
     
     receiver_id = context.resource.split('/')[6]
@@ -1442,17 +1391,20 @@ gcloud functions deploy handle_incoming_request_acceptance \
         requested_person = User(id=receiver_id)
         #TODO -- Optimize this, because *no need* to create a User object to pull this data since technically we already read it when we listened on the branch. see the old friendship lisenter above to understand
         sender_user = User(id=sender_id)
+        PushNotifications.acceptFriendRequestFrom(sender_user, requested_person)
 
-
-        # Add the official friendship to both users' records (if needed)
+        
         # ...
         db.collection('users').document(sender_id).collection('myFriends').document(receiver_id).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})
         db.collection('users').document(receiver_id).collection('myFriends').document(sender_id).set({"friends_since": datetime.now(), "profile_image_url": sender_user.profile_image_url, "isNotable": sender_user.is_notable, "name": sender_user.name})
+        
+        #Now add the placement indexes for both users so that they can quickly query their friends who have a specific placement
+        index_friend_placements(requested_person, sender_user)
+        index_friend_placements(sender_user, requested_person)
 
     return f"Updated outgoing request status for {sender_id} due to acceptance of incoming request by {receiver_id}."
 
-#TODO: delete synastries too
-def listen_for_removed_friend(data, context):
+
     """"
       # Run this to deploy. Reads
           gcloud functions deploy listen_for_removed_friend \
@@ -1474,6 +1426,41 @@ def listen_for_removed_friend(data, context):
     db.collection("friends").document(user_B).collection("myFriends").document(user_A).delete()
     db.collection("friends").document(user_A).collection("requests").document(user_B).delete()
     db.collection("friends").document(user_B).collection("requests").document(user_A).delete()
+
+#TODO: delete synastries too... this will remove the myFriends index when a friend is removed
+def listen_for_removed_friend(data, context):
+    """
+    Listens for the removal of a friend from a user's myFriends collection.
+    When a friend is removed, it deletes the indexed placements for the friendship.
+
+    # Run this to deploy. Reads
+    gcloud functions deploy listen_for_removed_friend \
+    --runtime python38 \
+    --trigger-event "providers/cloud.firestore/eventTypes/document.delete" \
+    --trigger-resource "projects/findamare/databases/(default)/documents/users/{user1}/myFriends/{user2}"
+
+    Args:
+        data: The event payload.
+        context: Metadata for the event.
+    """
+
+    from indexes.friendship_indexes import delete_indexed_placements
+    from database.user import db
+    from database.user import User
+
+    # Extract user IDs
+    path_parts = context.resource.split('/documents/')[1].split('/')
+    user1_id = path_parts[1]
+    user2_id = path_parts[3]
+
+    # Assuming you have a way to instantiate user objects given their IDs
+    user1 = User(id=user1_id)
+    user2 = User(id=user2_id)
+
+    # Call the function to delete indexed placements
+    delete_indexed_placements(user2, user1)
+
+    print(f"Deleted indexed placements of {user2_id} under {user1_id}.")
 
 
 
