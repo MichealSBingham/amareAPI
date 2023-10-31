@@ -1288,7 +1288,9 @@ def handle_failed_friend_request(data, context):
     receiver_id = context.resource.split('/')[8]
 
     #When a friend request is sent, we should tell the user via push notification. TODO: Maybe wait after the delay to send this?
-    PushNotifications.send_friend_request_to(receiver_id, sender_id)
+    
+    sender_username = User(id=sender_id).username
+    PushNotifications.send_friend_request_to(receiver_id, sender_id, sender_username, title="Amāre")
 
     # Reference to the incoming request
     incoming_request_ref = db.collection('users').document(receiver_id).collection('incomingRequests').document(sender_id)
@@ -1391,8 +1393,9 @@ gcloud functions deploy handle_incoming_request_acceptance \
         requested_person = User(id=receiver_id)
         #TODO -- Optimize this, because *no need* to create a User object to pull this data since technically we already read it when we listened on the branch. see the old friendship lisenter above to understand
         sender_user = User(id=sender_id)
-        PushNotifications.acceptFriendRequestFrom(sender_user, requested_person)
-
+        receiver_username = User(id=receiver_id).username
+        
+        PushNotifications.acceptFriendRequestFrom(sender_user.id, receiver_id, receiver_username, title="Amāre")
         
         # ...
         db.collection('users').document(sender_id).collection('myFriends').document(receiver_id).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})

@@ -60,16 +60,16 @@ class PushNotifications:
         )
 
     @staticmethod
-    def send_friend_request_to(userID, requester_uid, title="Amāre"):
+    def send_friend_request_to(receiver_id, sender_id, sender_username, title="Amāre"):
         from database.user import User
         """
         Send notification to user that they received a friend request
         """
-        requester = User(id=requester_uid)
-        message = f"@{requester.username} sent you a friend request ✉️. Know them?"
+        
+        message = f"@{sender_username} sent you a friend request ✉️. Know them?"
 
         response = beams_client.publish_to_interests(
-            interests=[userID],
+            interests=[receiver_id],
             publish_body={
                 'apns': {
                     'aps': {
@@ -78,22 +78,22 @@ class PushNotifications:
                             "body": message
                         }
                     },
-                    'requester': requester_uid
+                    'requester': sender_id
                 },
             },
         )
 
     @staticmethod
-    def acceptFriendRequestFrom(requester_uid, requested_uid, title="Amāre"):
+    def acceptFriendRequestFrom(sender_uid, receiver_uid, receiver_username, title="Amāre"):
         from database.user import User
         """
         Sends a notification to the user (requester) that their friend request was accepted
         """
-        requested = User(id=requested_uid)
-        message = f"@{requested.username} accepted ✅ your friend request. 🥂"
+        
+        message = f"@{receiver_username} accepted ✅ your friend request. 🥂"
 
         response = beams_client.publish_to_interests(
-            interests=[requester_uid],
+            interests=[sender_uid],
             publish_body={
                 'apns': {
                     'aps': {
@@ -102,8 +102,8 @@ class PushNotifications:
                             "body": message
                         }
                     },
-                    'requester': requester_uid,
-                    'requested': requested_uid
+                    'requester': sender_uid,
+                    'requested': receiver_uid
                 },
             },
         )
