@@ -1316,7 +1316,7 @@ def update_friend_count(event, context):
     doc_ref.update({"totalFriendCount": total})
 
 
-\
+
 
 
 
@@ -1602,6 +1602,10 @@ Get Url to endpoint:
 gcloud functions describe predict_traits
 """
 def predict_traits(request): 
+    """ gcloud functions deploy predict_traits \
+    --runtime python38 \
+    --trigger-http \
+    --allow-unauthenticated"""
     from database.Location import Location
     from datetime import datetime 
     from prompts.astrology_traits_generator import AstrologyTraitsGenerator
@@ -1683,6 +1687,23 @@ def predict_traits(request):
 
 
 
+""" Helper function for placement read to update interpretation """
+
+
+def update_interpretation(user_id, planet, interpretation):
+    from database.user import db 
+    user_ref = db.collection('users').document(user_id)
+    natal_chart_ref = user_ref.collection('public').document('natal_chart')
+
+    update_data = {
+        f'interpretations.{planet}': interpretation
+    }
+
+    natal_chart_ref.update(update_data)
+
+
+
+
 """ Interprets a particular placement (sign, planet, house)"""
 #TODO: make option for genderless in the prompt, we use 'person' for now thus far but we need to see how the synastry changes when we do this
 def placement_read(request):
@@ -1709,6 +1730,14 @@ def placement_read(request):
     --runtime python38 \
     --trigger-http \
     --allow-unauthenticated
+
+    
+     curl -X POST localhost:8080/placement_read -H "Content-Type: application/json" -d '{"gender": "male", "planet": "Sun", "sign": "Cancer/Leo Cusp", "house": "7"}'
+
+
+
+    For testing: 
+    /Library/Frameworks/Python.framework/Versions/3.7/bin/functions-framework --target=placement_read --signature-type=http
 
     """
     if request.method != 'POST': 
@@ -1742,8 +1771,9 @@ def placement_read(request):
 
         # Optional: Write to Firestore if user_id is provided
         if user_id:
-            # TODO: Add Firestore code here. 
-            pass 
+            update_interpretation(user_id, planet, interpretation)
+
+        
             
         return jsonify(success=True,
                        interpretation=interpretation,
