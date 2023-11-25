@@ -1,9 +1,8 @@
 from flask import jsonify
-from database.user import User
 import traceback
 from secret import api_keys
 from google.cloud import firestore
-
+from database.user import db, User
 
 
 
@@ -605,127 +604,6 @@ def natal(request):
 
 
 
-# Converts strings added to /messages/{pushId}/original to uppercase
-#- Creates a natal chart for the user and adds it to the database when they sign up
-#- Checks user gender and +1 for gender ( to keep statistics on amount of women/men on platform)
-def monitor_user_data(data, context):
-    """"
-
-# Run this to deploy. Reads
-    gcloud functions deploy monitor_user_data \
-  --runtime python38 \
-  --trigger-event "providers/cloud.firestore/eventTypes/document.update" \
-  --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
-
-    """
-    from database.user import db
-    from database.Location import Location
-    import iso8601
-    import analytics.app_data as analytics
-
-    path_parts = context.resource.split('/documents/')[1].split('/')
-    collection_path = path_parts[0]
-    document_path = '/'.join(path_parts[1:])
-
-    affected_doc = db.collection(collection_path).document(document_path)
-    id = document_path
-
-
-    trigger_resource = context.resource
-    print('***Function triggered by change to: %s and id %s: ' % (trigger_resource, id))
-
-    updated_attributes =  data["updateMask"]["fieldPaths"] #returns list of attributes updated on commit in firebase  ex: ['hometown']
-    user_data = data["value"]
-    old_user_data = data['oldValue']
-
-    print("The updated attributes are: ")
-    print(updated_attributes)
-
-
-    #chart should update if 'hometown' , 'birthday', 'known_time', are modified.
-    # and if both hometown and birthday exist in the database, if known_time isn't assume false.
-
-    if 'sex' in updated_attributes:
-        new_sex = user_data['fields']['sex']['stringValue']
-        try:
-            old_sex = old_user_data['fields']['sex']['stringValue']
-
-            if old_sex != new_sex:    #the sex changed so we should decrment the old one and increment new one
-
-                if old_sex == "male":
-                    analytics.less_male()
-                elif old_sex == 'female':
-                    analytics.less_female()
-                elif old_sex == 'transfemale':
-                    analytics.less_trans_female()
-                elif old_sex == 'transmale':
-                    analytics.less_trans_male()
-                elif old_sex == 'non-binary':
-                    analytics.less_non_binary()
-                else:
-                    pass
-
-                if new_sex == "male":
-                    analytics.new_male()
-                elif new_sex == 'female':
-                    analytics.new_female()
-                elif new_sex == 'transfemale':
-                    analytics.new_trans_female()
-                elif new_sex == 'transmale':
-                    analytics.new_trans_male()
-                elif new_sex == 'non-binary':
-                    analytics.new_non_binary()
-                else:
-                    pass
-
-        except:
-            # No old value found for sex so it's probably newly created
-            if new_sex == "male":
-                analytics.new_male()
-            elif new_sex == 'female':
-                analytics.new_female()
-            elif new_sex == 'transfemale':
-                analytics.new_trans_female()
-            elif new_sex == 'transmale':
-                analytics.new_trans_male()
-            elif new_sex == 'non-binary':
-                analytics.new_non_binary()
-            else:
-                pass
-
-
-
-
-    if 'hometown' in updated_attributes or 'birthday' in updated_attributes or 'known_time' in updated_attributes or 'isNotable' in updated_attributes:
-
-        try:
-            print(f"the FULL user data is {user_data}")
-            lat = user_data['fields']['hometown']['mapValue']['fields']['latitude']['doubleValue']
-            lon = user_data['fields']['hometown']['mapValue']['fields']['longitude']['doubleValue']
-            location = Location(latitude=lat, longitude=lon)
-
-            isReal = user_data['fields']['isReal']['booleanValue']
-
-            isNotable = user_data['fields']['isNotable']['booleanValue']
-            bday = user_data['fields']['birthday']['mapValue']['fields']['timestamp']['timestampValue']
-            date = iso8601.parse_date(bday) #converts the timestamp String into a datetime object
-            try:
-                known_time = user_data['fields']['known_time']['booleanValue']
-            except:
-                known_time = False
-
-            user = User(id=id,
-                        do_not_fetch=True,
-                        hometown=location,
-                        birthday=date,
-                        known_time=known_time,
-                        is_notable=isNotable,
-                        isReal=isReal
-                        )
-            # Set it in database now
-            user.set_natal_chart()
-        except Exception as error:
-            print(f"This data does not exist in the database yet or some error:  {error}")
 
 
 
@@ -807,199 +685,112 @@ def listen_for_new_user(data, context):
     """
 
 
-#TODO: Check for part of fortune in the aspescts and synastry stuff too
-def listen_for_new_natal_chart(data, context):
-    # Triggered when a new natal chart has been added to the database
-    # Should add the user to the indexes of each aspect ; e.g -- if they're a sun in scorpio, add them to it, etc
-    # Should add them to the aspect type too
 
-    from database.user import db
-    from database.user import User
 
+
+def listen_for_new_natal_chart_and_write_indexes(data, context):
     """"
      # Run this to deploy. Reads
-         gcloud functions deploy listen_for_new_natal_chart \
+         gcloud functions deploy listen_for_new_natal_chart_and_write_indexes \
        --runtime python38 \
        --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
-       --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/public/natal_chart"
-         """
+       --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}/public/natal_chart" \
+       --timeout=540s
 
-
-
+        """
+    
     path_parts = context.resource.split('/documents/')[1].split('/')
-    collection_path = path_parts[0]
-    document_path = '/'.join(path_parts[1:])
-    id = path_parts[1] #ID of the user the natal chart belongs too
+    collection_path, document_path, user_id = path_parts[0], '/'.join(path_parts[1:]), path_parts[1]
 
-    natal_chart_doc = db.collection(collection_path).document(document_path).get()#Document reference object
+    natal_chart_doc = db.collection(collection_path).document(document_path).get()
     natal_dict = natal_chart_doc.to_dict()
 
-    print(f"The natal chart doc is : {natal_chart_doc} and dictionary is {natal_dict}")
+    user = User(id=user_id, skip_getting_natal=True)
+    
 
-    #Going through the planets and adding each placmenet to the index; e.g. if Sun in Cancer
-    # -- add user to Sun / Cancer aspect
-    # data structure: 
-    #       /placements (collection)
-    #           / <planet> (collection)
-    #               / <cancer> (collection)
-    #                   / <user ID> (document)
-    #                       /
+    def update_planet_placements(user, natal_dict):
+        planets = natal_dict['planets']
+        for planet in planets:
+            add_planet_placement_to_db(planet, user)
 
+    def add_planet_placement_to_db(planet, user):
+        common_data = {
+            'is_on_cusp': planet['is_on_cusp'],
+            'angle': planet['angle'],
+            'is_retrograde': planet['is_retrograde'],
+            'is_notable': user.is_notable,
+            'house': planet.get('house'),
+            'profile_image_url': user.profile_image_url,
+            'name': user.name
+           
+        }
 
-    user = User(id=id, skip_getting_natal=True)
+        # Add user placement to the database
+        db.collection(f'all_users_placements').document(planet['name']).collection(planet['sign']).document(user.id).set(common_data)
+        #add_research_data(user, planet, common_data)
 
-
-    planets = natal_dict['planets']
-    for planet in planets:
-        is_on_cusp = planet['is_on_cusp']
-        angle = planet['angle']
-        is_retrograde = planet['is_retrograde']
-        sign = planet['sign']
-        planet_name = planet['name']
-        is_notable = user.is_notable
-        profile_image_url = user.profile_image_url
-        try:
-            house = planet['house']
-        except:
-            house = None
-
-        #Add placement to this database index
-        db.collection(f'all_placements').document(f'{planet_name}').collection(f'{sign}').document(id).set({
-            'is_on_cusp': is_on_cusp,
-            'angle': angle,
-            'is_retrograde': is_retrograde,
-            'is_notable': is_notable,
-            'house': house,
-            'profile_image_url': profile_image_url,
-            'name': user.name,
-            'isReal': user.isReal
-        })
-
-        ## Also add this placement under the research index , for example
-        ## if it's a sports player we may have ["Vocation:Sports:Boxing"] as a note
-        ## then add /research_data/vocation/sports/boxing/id   --> this adds their id to that
-
+    def add_research_data(user, planet, common_data):
         try:
             for note in user.notes:
-                n = note.split(":")  #should return array [Vocation, sports, boxing]
-                print(f'note: {note} n : {n} ')
-                db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(
-                    f'{planet_name}').collection(f'{sign}').document(id).set({
-                    'is_on_cusp': is_on_cusp,
-                    'angle': angle,
-                    'is_retrograde': is_retrograde,
-                    'is_notable': is_notable,
-                    'house': house,
-                    'profile_image_url': profile_image_url,
-                    'name': user.name,
-                    'isReal': user.isReal
-                })
-
-                db.collection(f'researchData').document(f'ByPlacement').collection(
-                    f'{planet_name}').document(f'{sign}').collection(f'{n[0]}').document(
-                    f'{n[1]}').collection(f'{n[2]}').document(id).set({
-                    'is_on_cusp': is_on_cusp,
-                    'angle': angle,
-                    'is_retrograde': is_retrograde,
-                    'is_notable': is_notable,
-                    'house': house,
-                    'profile_image_url': profile_image_url,
-                    'name': user.name,
-                    'isReal': user.isReal
-                })
-
-
+                categories = note.split(":")
+                add_note_to_research_data(categories, planet, user.id, common_data)
         except Exception as e:
-            print(f"CAN'T DO IT  because {e}")
-            pass
+            print(f"CAN'T DO IT because {e}")
 
+    def add_note_to_research_data(categories, planet, user_id, common_data):
+        # Add user to 'ByCategory' and 'ByPlacement' collections
+        db.collection('researchData').document('ByCategory').collection(categories[0]).document(categories[1]).collection(categories[2]).document(planet['name']).collection(planet['sign']).document(user_id).set(common_data)
+        db.collection('researchData').document('ByPlacement').collection(planet['name']).document(planet['sign']).collection(categories[0]).document(categories[1]).collection(categories[2]).document(user_id).set(common_data)
 
+    def update_aspects(user, natal_dict):
+        aspects = natal_dict['aspects']
+        for aspect in aspects:
+            if aspect['type'] != 'NO_ASPECT':
+                add_aspect_to_db(aspect, user)
 
+    def add_aspect_to_db(aspect, user):
+        aspect_data = {
+            'profile_image_url': user.profile_image_url,
+            'name_belongs_to': user.name,
+            'isReal': user.isReal,
+            **aspect  # Unpack aspect dictionary into aspect_data
+        }
 
+        # Add aspect to the database
+        first, second = aspect['first'], aspect['second']
+        db.collection(f'all_natal_aspects_for_all_users').document(first).collection(second).document('doc').collection(aspect['type']).document(user.id).set(aspect_data)
+        #add_aspect_research_data(user, aspect, aspect_data)
 
+    def add_aspect_research_data(user, aspect, aspect_data):
+        try:
+            for note in user.notes:
+                categories = note.split(":")
+                first, second = aspect['first'], aspect['second']
+                # Add user to 'ByCategory' and 'ByAspect' collections
+                db.collection('researchData').document('ByCategory').collection(categories[0]).document(categories[1]).collection(categories[2]).document(first).collection(second).document('doc').collection(aspect['type']).document(user.id).set(aspect_data)
+                db.collection('researchData').document('ByAspect').collection(first).document(second).collection('doc').document(aspect['type']).collection(categories[0]).document(categories[1]).collection(categories[2]).document(user.id).set(aspect_data)
+        except Exception as e:
+            print(f"CAN'T DO IT because {e}")
 
+    
 
-        ## we also need to do, let's say /mars/scorpio/vocation/sports/boxing/id
-
-        if house is not None: #add to index of house placements (i.e. Mars in 5th House)
-            db.collection(f'all_placements').document(f'{planet_name}').collection(f'House{house}').document(id).set({
-                'is_on_cusp': is_on_cusp,
-                'angle': angle,
-                'is_retrograde': is_retrograde,
-                'is_notable': is_notable,
-                'house': house,
-                'profile_image_url': profile_image_url,
-                'name': user.name,
-                'isReal': user.isReal
-            })
-
-
+    def write_all_planet_interpretations():
+        from prompts.astrology_traits_generator import PlacementInterpretationsGenerator
+        reader = PlacementInterpretationsGenerator()
+        gender = user.sex
+        for planet in natal_dict['planets']:
             try:
-                for note in user.notes:
-                    n = note.split(":")
-                    db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(f'{planet_name}').collection(f'House{house}').document(id).set({
-                'is_on_cusp': is_on_cusp,
-                'angle': angle,
-                'is_retrograde': is_retrograde,
-                'is_notable': is_notable,
-                'house': house,
-                'profile_image_url': profile_image_url,
-                'name': user.name,
-                'isReal': user.isReal
-            })
-
-                    db.collection(f'researchData').document(f'ByPlacement').collection(f'{planet_name}').document(f'House{house}').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(id).set({
-                'is_on_cusp': is_on_cusp,
-                'angle': angle,
-                'is_retrograde': is_retrograde,
-                'is_notable': is_notable,
-                'house': house,
-                'profile_image_url': profile_image_url,
-                'name': user.name,
-                'isReal': user.isReal
-            })
-
+                house_num = str(planet.get('house', ""))
+                if house_num.isdigit():
+                    house_num = "{}{}".format(house_num, 'th' if 4 <= int(house_num) % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(int(house_num) % 10, 'th'))
+                interpretation = reader.interpret_placement(gender, planet['name'], planet['sign'], house_num)
+                update_interpretation(user_id=user_id, planet=planet['name'], interpretation=interpretation)
             except Exception as e:
-                print(f"CAN'T DO IT  because {e}")
-                pass
+                print(f"Error interpreting planet {planet['name']}: {e}") 
 
-
-            #adding research data index to houses now
-
-
-
-
-    #Saving all synastry aspects globally like above
-    #       WARNING-- first/second == second/first but will not always filter. - Micheal
-    aspects = natal_dict['aspects']
-
-    for aspect in aspects:
-        first = aspect['first']
-        second = aspect['second']
-        name = aspect['name']
-        type = aspect['type']
-        aspect['profile_image_url'] = user.profile_image_url
-        aspect['name_belongs_to'] = user.name
-        aspect['isReal'] = user.isReal
-
-
-        #Add synastry to this database index
-        db.collection(f'all_natal_aspects').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
-        try:
-            for note in user.notes:
-                n = note.split(":")
-                db.collection(f'researchData').document(f'ByCategory').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(f'{first}').collection(f'{second}').document('doc').collection(f'{type}').document(id).set(aspect)
-                #by aspect
-                db.collection(f'researchData').document(f'ByAspect').collection(f'{first}').document(f'{second}').colection('doc').document(f'{type}').collection(f'{n[0]}').document(f'{n[1]}').collection(f'{n[2]}').document(id).set(aspect)
-
-
-        except Exception as e:
-            print(f"CAN'T DO IT  because {e}")
-            pass
-
-
-
-
+    write_all_planet_interpretations()
+    update_planet_placements(user, natal_dict)
+    update_aspects(user, natal_dict)
 
 
 
