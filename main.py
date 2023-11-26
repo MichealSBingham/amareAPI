@@ -687,7 +687,7 @@ def listen_for_new_user(data, context):
 
 
 
-
+# THis function is a too long process and it is timing out.. seek alternative solution  because the indexes never write due to it timining out
 def listen_for_new_natal_chart_and_write_indexes(data, context):
     """"
      # Run this to deploy. Reads
@@ -894,7 +894,7 @@ def listen_for_accepted_requests_OLD_DEPRECATED(data, context):
         PushNotifications.acceptFriendRequestFrom(requester, person_requested)
 
 
-
+#OLD friendship stricture, this might be deprecated or needs to be deleted.
 def listen_for_added_friend_and_do_synastry(data, context):
     #Should add synastry chart to database when a new friend is added
     """"
@@ -1066,8 +1066,8 @@ def init_friend_counter(event, context):
     --trigger-event providers/cloud.firestore/eventTypes/document.create \
     --trigger-resource "projects/findamare/databases/(default)/documents/users/{userID}"
     """
-    from database.user import db
-    user_id = event["value"]["fields"]["id"]["stringValue"]
+    
+    user_id = context.resource.split('/documents/')[1].split('/')[1]
     doc_ref = db.collection('users').document(user_id)
     num_shards = 10
     col_ref = doc_ref.collection("myFriendsCountShards")
@@ -1088,9 +1088,12 @@ def update_friend_count(event, context):
     --trigger-event providers/cloud.firestore/eventTypes/document.write \
     --trigger-resource "projects/findamare/databases/(default)/documents/users/{userID}/myFriends/{friendID}"
     """
-    from database.user import db
+    
     import random 
-    user_id = event["value"]["fields"]["id"]["stringValue"]
+    # Extracting the user_id from the document path
+    resource_path = context.resource.split('/documents/')[1]
+    path_parts = resource_path.split('/')
+    user_id = path_parts[1]
     doc_ref = db.collection('users').document(user_id)
     num_shards = 10
 
