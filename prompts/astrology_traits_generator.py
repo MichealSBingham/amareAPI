@@ -97,7 +97,7 @@ class PersonalityStatementsGenerator:
                     model=self.model,
                     messages=outbound_messages,
                     temperature=0.45,
-                    max_tokens=555
+                    max_tokens=250
                 )
                 response_content = response.choices[0].message['content']
                 
@@ -111,7 +111,7 @@ class PersonalityStatementsGenerator:
 
         return []
 
-    def deprecated_for_deletion_predict_statements(self, name, gender, astro_data):
+    def predict_statements_old(self, name, gender, astro_data):
         request_message = self._format_request_message(name, gender, astro_data)
         
     
@@ -125,11 +125,11 @@ class PersonalityStatementsGenerator:
                 model=self.model,
                 messages=outbound_messages, 
                 temperature=0.45, # adjust this value as needed
-                max_tokens=555 
+                max_tokens=250 # 300 might be a little better
             )
         response_content = response.choices[0].message['content']
         print(response_content)
-        return self.split_statements(response_content)
+        return response_content #self.split_statements(response_content)
 
           
 
@@ -184,7 +184,7 @@ class AstrologyTraitsGenerator:
                 model=self.model,
                 messages=outbound_messages, 
                 temperature=0.45, # adjust this value as needed
-                max_tokens=555 
+                max_tokens=100  #we can go a bit lower here
             )
             response_content = response.choices[0].message['content']
             is_valid, traits_dict = self._validate_traits(response_content)

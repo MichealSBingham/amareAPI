@@ -1059,14 +1059,19 @@ class User:
     
 #TODO: handle erros here. be sure that we have  the right properties in the User object.. name, gender.. natal chart. we don't want this to work if the user property is missing data.
     def personality_statements(self):
+        import re
         from prompts.astrology_traits_generator import PersonalityStatementsGenerator
         n = self.natal() # in case it hasn't produced the natal chart TOOO: do this more efficiently. either call the natal chart in the constructor or check if it already exists so we don't run this more than necessary because it takes some time
         astroData = self.astroDataForAPI()
 
         #send prompt to LLM
         statements_generator = PersonalityStatementsGenerator()
-        statements_raw = statements_generator.predict_statements(name=self.name, gender=self.sex, astro_data=astroData)
-        return statements_raw
+        text = statements_generator.predict_statements_old(name=self.name, gender=self.sex, astro_data=astroData)
+        cleaned_text = re.sub(r'\s+', ' ', text)  # Replace all kinds of whitespace with a single space
+        sentences = re.split(r'\.\s+', cleaned_text)  # Splitting the text into sentences based on period followed by space
+        sentences = [sentence.strip() for sentence in sentences if sentence]  # Removing any leading or trailing spaces in each sentence
+
+        return sentences
          
 
 
