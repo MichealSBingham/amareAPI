@@ -1128,6 +1128,7 @@ def handle_failed_friend_request(data, context):
 
     from database.user import db
     import time
+    from database.notifications import PushNotifications
 
     sender_id = context.resource.split('/')[6]
     receiver_id = context.resource.split('/')[8]
@@ -1144,6 +1145,10 @@ def handle_failed_friend_request(data, context):
         outgoing_request_ref = db.collection('users').document(sender_id).collection('outgoingRequests').document(receiver_id)
         outgoing_request_ref.delete()
         return f"Deleted outgoing request from {sender_id} to {receiver_id} due to missing corresponding incoming request."
+    else:
+        #Notify user of a sent friend request
+        PushNotifications.send_friend_request_to(receiver_id, sender_id)
+
 
     return f"Outgoing request from {sender_id} to {receiver_id} remains intact as the corresponding incoming request exists."
 
@@ -1213,6 +1218,7 @@ gcloud functions deploy handle_incoming_request_acceptance \
     from database.user import db
     from datetime import datetime
     from database.user import User
+    from database.notifications import PushNotifications
 
     
     receiver_id = context.resource.split('/')[6]
@@ -1237,6 +1243,7 @@ gcloud functions deploy handle_incoming_request_acceptance \
         # ...
         db.collection('users').document(sender_id).collection('myFriends').document(receiver_id).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})
         db.collection('users').document(receiver_id).collection('myFriends').document(sender_id).set({"friends_since": datetime.now(), "profile_image_url": sender_user.profile_image_url, "isNotable": sender_user.is_notable, "name": sender_user.name})
+        PushNotifications.acceptFriendRequestFrom(sender_id,receiver_id)
 
     return f"Updated outgoing request status for {sender_id} due to acceptance of incoming request by {receiver_id}."
 

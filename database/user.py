@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from firebase_admin import messaging
 #from google.cloud import firestore
 from database.Location import Location
 from astrology import NatalChart
@@ -1072,6 +1073,31 @@ class User:
         sentences = [sentence.strip() for sentence in sentences if sentence]  # Removing any leading or trailing spaces in each sentence
 
         return sentences
+    
+    @classmethod
+    def send_notification_to_user(self,user_id, title, body):
+        
+        # Fetch device tokens from Firestore
+        user_tokens_ref = db.collection('deviceTokens').document(user_id)
+        tokens_document = user_tokens_ref.get()
+        if tokens_document.exists:
+            user_tokens = tokens_document.to_dict().get('tokens', [])
+
+            # Send notification to each token
+            for token in user_tokens:
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title=title,
+                        body=body,
+                    ),
+                    token=token,
+                )
+
+                # Send a message to the device
+                response = messaging.send(message)
+                print('Successfully sent message:', response)
+        else:
+            print(f"No tokens found for user: {user_id}")
          
 
 
