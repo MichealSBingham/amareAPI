@@ -1,10 +1,11 @@
 api_key = "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"
 
 import os
+from openai import OpenAI
 import openai
+client = OpenAI(api_key=api_key)
 from openai import OpenAI
 import json
-openai.api_key = api_key
 client = OpenAI( api_key=api_key )
 DASHA_ASSISTANT_ID = "asst_oh3BtBECBD1cqa3VidCPbk2t"
 from database.user import User
@@ -42,16 +43,14 @@ class PlacementInterpretationsGenerator:
                 {"role": "user", "content": request_message}
             ]
             
-        response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=outbound_messages, 
-                temperature=0, # adjust this value as needed
-                max_tokens=1000, 
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0
-            )
-        response_content = response.choices[0].message['content'].strip()
+        response = client.chat.completions.create(model=self.model,
+        messages=outbound_messages, 
+        temperature=0, # adjust this value as needed
+        max_tokens=1000, 
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0)
+        response_content = response.choices[0].message.content
         return response_content
 
           
@@ -99,12 +98,10 @@ class PersonalityStatementsGenerator:
                     {"role": "user", "content": request_message}
                 ]
 
-                response = openai.ChatCompletion.create(
-                    model=self.model,
-                    messages=outbound_messages,
-                    temperature=0.45,
-                    max_tokens=250
-                )
+                response = client.chat.completions.create(model=self.model,
+                messages=outbound_messages,
+                temperature=0.45,
+                max_tokens=250)
                 response_content = response.choices[0].message['content']
                 
                 result = self.split_statements(response_content)
@@ -127,12 +124,10 @@ class PersonalityStatementsGenerator:
                 {"role": "user", "content": request_message}
             ]
             
-        response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=outbound_messages, 
-                temperature=0.45, # adjust this value as needed
-                max_tokens=250 # 300 might be a little better
-            )
+        response = client.chat.completions.create(model=self.model,
+        messages=outbound_messages, 
+        temperature=0.45, # adjust this value as needed
+        max_tokens=250)
         response_content = response.choices[0].message['content']
         print(response_content)
         return response_content #self.split_statements(response_content)
@@ -186,12 +181,10 @@ class AstrologyTraitsGenerator:
                 {"role": "user", "content": request_message}
             ]
             
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=outbound_messages, 
-                temperature=0.45, # adjust this value as needed
-                max_tokens=100  #we can go a bit lower here
-            )
+            response = client.chat.completions.create(model=self.model,
+            messages=outbound_messages, 
+            temperature=0.45, # adjust this value as needed
+            max_tokens=100)
             response_content = response.choices[0].message['content']
             is_valid, traits_dict = self._validate_traits(response_content)
 
