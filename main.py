@@ -3,7 +3,7 @@ import traceback
 from secret import api_keys
 from google.cloud import firestore
 from database.user import db, User
-
+from google.cloud.firestore_v1 import Transaction
 from json import dumps
 from flask import make_response
 from Messaging.streamBackend import *
@@ -995,6 +995,45 @@ def listen_for_winks_DEPRECATED(data, context):
         # One way wink: Send notification that someone winked at them
         PushNotifications.winked_at(winked, winker)
 
+
+
+def write_aspect_interpretations(event, context):
+
+    
+
+    """  Writes the first part of the aspect interpretations to the database
+    gcloud functions deploy write_aspect_interpretations \
+    --runtime python38 \
+    --trigger-topic write_aspect_interpretations_1 \
+    --timeout=540s
+    
+    """
+
+    message = base64.b64decode(event['data']).decode('utf-8')
+    pubsub_data = json.loads(message)
+    print(f"pubsub data is .. {pubsub_data}")
+
+    collection_path = pubsub_data['collection_path']
+    document_path = pubsub_data['document_path']
+    user_id = pubsub_data['user_id']
+
+    natal_chart_doc = db.collection(collection_path).document(document_path).get()
+    natal_dict = natal_chart_doc.to_dict()
+
+    def write_all_aspect_interpretations():
+        from prompts.astrology_traits_generator import PlacementInterpretationsGenerator
+        reader = PlacementInterpretationsGenerator()
+        gender = user.sex
+        aspects = natal_dict['aspects']
+        for aspect in aspects:
+            try:
+
+                interpretation = reader.interpret_aspect(gender, aspect["first"], aspect["type"], aspect["second"], round(aspect["orb"]))
+                update_aspect_interpretation(user_id=user_id, name=aspect['name'], interpretation=interpretation)
+            except Exception as e:
+                print(f"Error interpreting planet {aspect['name']}: {e}")  
+    write_all_aspect_interpretations()
+
 #I THINK this is OLD 
 def listen_for_friend_requests(data, context):
     """"
@@ -1764,6 +1803,41 @@ def update_interpretation(user_id, planet, interpretation):
 
     natal_chart_ref.update(update_data)
 
+def update_aspect_interpretation(user_id, name, interpretation):
+    from database.user import db 
+    update_aspect_interpretation_and_deduct_stars(db.transaction(), user_id, name, interpretation)
+
+    # SHow me how to make a transcaction that not only updates the aspecs interpration like above but also 
+    # it needs to 'deduct' a point from their 'stars' number at the same time 
+    # /users/{user_id} ... stars is the property, make sure if it doesn't exist , you do nothing 
+
+
+@firestore.transactional
+def update_aspect_interpretation_and_deduct_stars(transaction: Transaction, user_id: str, name: str, interpretation: str):
+   user_ref = db.collection('users').document(user_id)
+   natal_chart_ref = user_ref.collection('public').document('natal_chart')
+
+   user_snapshot = user_ref.get(transaction=transaction)
+   natal_chart_snapshot = natal_chart_ref.get(transaction=transaction)
+
+   if user_snapshot.exists and natal_chart_snapshot.exists:
+       update_data = {
+           f'aspects_interpretations.{name}': interpretation
+       }
+       stars = user_snapshot.get('stars')
+       if stars is not None and stars >= 1:
+           update_data['stars'] = stars - 1
+           transaction.update(natal_chart_ref, update_data)
+       else:
+           # If stars are not sufficient, raise an exception to abort the transaction
+           raise ValueError("Not enough stars")
+   else:
+       # If either user or natal chart does not exist, raise an exception to abort the transaction
+       raise ValueError("User or natal chart not found")
+
+
+
+
 
 
 
@@ -1851,6 +1925,114 @@ def placement_read(request):
 
 
 
+def aspect_read(request):
+    """
+    POST: Retrieves astrology interpretation for a specific placement based on input parameters.
+    url: https://us-central1-findamare.cloudfunctions.net/aspect_read
+    Parameters in REST API Call:
+    - gender: (optional) 'male' or 'female'. If missing, defaults to 'person'.
+    - planet1: (required) Name of the planet or celestial body (e.g., 'North Node').
+    - type: (required) Astrological aspect type  (e.g., 'Square').
+    - planet2: (required) Name of the planet or celestial body (e.g., 'North Node').
+    - name: (required) Name of the aspect (e.g., 'Sun Moon')
+    - orb: (required) Int
+
+    JSON Response:
+    {
+        "success": HTTP status code,
+        "interpretation": String interpretation,
+        "error": Error message if applicable
+    }
+    
+    Example: curl -X POST https://us-central1-findamare.cloudfunctions.net/aspect_read -H "Content-Type: application/json" -d '{"gender": "male", "planet1": "Sun", "type": "Square", "planet2": "Moon", orb: 4}'
+    Deploy using the following command:
+    gcloud functions deploy aspect_read \
+    --runtime python38 \
+    --trigger-http \
+    --allow-unauthenticated \
+    --timeout=540s
+
+    curl -X POST https://us-central1-findamare.cloudfunctions.net/aspect_read -H "Content-Type: application/json" -d '{"gender": "male", "planet1": "Sun", "type": "Square", "planet2": "Moon", orb: 4, name: "Mars Jupiter", "user_id": "ei8U2avSdYZCijlCmfMbsvLjUwD2"}'
+
+    
+     curl -X POST localhost:8080/aspect_read -H "Content-Type: application/json" -d '{"gender": "male", "planet1": "Sun", "type": "Square", "planet2": "Moon", orb: 4}'
+
+    curl -X POST https://us-central1-findamare.cloudfunctions.net/aspect_read -H "Content-Type: application/json" -d '{"gender": "male", "planet1": "Mars", "planet2": "Jupiter", "type": "Square", "user_id": "ei8U2avSdYZCijlCmfMbsvLjUwD2", "orb": 4}'
+
+    For testing: 
+    /Library/Frameworks/Python.framework/Versions/3.7/bin/functions-framework --target=aspect_read --signature-type=http
+
+    """
+    if request.method != 'POST': 
+         return jsonify(success=False,
+                           error={
+                               'code': 405,
+                               'description': "Only POST request allowed here.",
+                               'why': 'I just decided this.',
+                               'trace': traceback.format_exc()}
+                           )
+    
+    
+
+    req_data = request.get_json()
+    gender = req_data.get('gender', 'person').lower()
+    planet1 = req_data.get('planet1')
+    planet2 = req_data.get('planet2')
+    aspectType = req_data.get('type')
+    name = req_data.get('name')
+    orb = req_data.get('orb')
+    user_id = req_data.get('user_id', None)
+
+    if not check_stars(user_id):
+        print("Not enough stars")
+        return jsonify(success=False, error="You don't have enough stars!")
+
+    
+
+    
+    try:
+        
+        from prompts.astrology_traits_generator import PlacementInterpretationsGenerator
+        reader = PlacementInterpretationsGenerator()
+        interpretation = reader.interpret_aspect(gender, planet1, aspectType, planet2, orb)
+
+        # Optional: Write to Firestore if user_id is provided
+        if user_id:
+            update_aspect_interpretation(user_id, name, interpretation)
+
+        
+            
+        return jsonify(success=True,
+                       interpretation=interpretation,
+                       prompt=reader.prompt
+                        
+                           )
+        
+
+
+    except Exception as e:
+        return jsonify(success=False, error=str(e))
+
+
+def check_stars(user_id, amount=1):
+    """ Checks if the user has enough stars to do this """
+    user_ref = db.collection('users').document(user_id)
+
+    # Get the document snapshot
+    user_doc = user_ref.get()
+
+    # Check if the document exists
+    if user_doc.exists:
+        # Get the 'stars' property
+        try: 
+            stars = user_doc.get('stars')
+        except: 
+            return False
+
+        # Check if 'stars' is at least 1
+        if stars is not None and stars >= amount:
+            return True
+    return False
 
 def message_dasha(request):
     """
