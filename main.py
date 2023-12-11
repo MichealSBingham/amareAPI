@@ -8,7 +8,7 @@ from json import dumps
 from flask import make_response
 from Messaging.streamBackend import *
 from google.cloud import pubsub_v1
-
+import base64
 import subprocess
 import json
 
@@ -793,7 +793,10 @@ def add_planet_placements(event, context):
     --trigger-topic add_planet_placements
     """
     
-    pubsub_data = json.loads(event['data'])
+   
+    message = base64.b64decode(event['data']).decode('utf-8')
+    pubsub_data = json.loads(message)
+    print(f"pubsub data is .. {pubsub_data}")
 
     # Access individual strings
     collection_path = pubsub_data['collection_path']
@@ -835,7 +838,11 @@ def write_planet_interpretations_1(event, context):
     --timeout=540s
     """
     print("write_planet_interpretations_1")
-    pubsub_data = json.loads(event['data'])
+    
+    
+
+    message = base64.b64decode(event['data']).decode('utf-8')
+    pubsub_data = json.loads(message)
     print(f"pubsub data is .. {pubsub_data}")
 
     # Access individual strings
@@ -874,7 +881,9 @@ def write_planet_interpretations_2(event, context):
     --timeout=540s
     """
 
-    pubsub_data = json.loads(event['data'])
+    message = base64.b64decode(event['data']).decode('utf-8')
+    pubsub_data = json.loads(message)
+    print(f"pubsub data is .. {pubsub_data}")
 
     # Access individual strings
     collection_path = pubsub_data['collection_path']
@@ -913,7 +922,9 @@ def write_planet_interpretations_3(event, context):
     """
 
     
-    pubsub_data = json.loads(event['data'])
+    message = base64.b64decode(event['data']).decode('utf-8')
+    pubsub_data = json.loads(message)
+    print(f"pubsub data is .. {pubsub_data}")
 
     # Access individual strings
     collection_path = pubsub_data['collection_path']
