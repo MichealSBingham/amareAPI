@@ -2,10 +2,16 @@ api_key = "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"
 
 import os
 import openai
+from openai import OpenAI
 import json
 openai.api_key = api_key
+client = OpenAI( api_key=api_key )
+DASHA_ASSISTANT_ID = "asst_oh3BtBECBD1cqa3VidCPbk2t"
+from database.user import User
 
 from prompts.constants import *
+from Messaging.streamBackend import * 
+from database.user import db
 
 # TODO: make sure it can handle placements on cusps 
 class PlacementInterpretationsGenerator:
@@ -210,5 +216,89 @@ class AstrologyTraitsGenerator:
 
 
 
+class DashaChatBot:
+    
+    ## Creates the initial thread and sends the welcome message to the user 
+    @staticmethod
+    def createInitialThread(userID): 
+        """ Creates the initial thread and sends the welcome message to the user and sends the thread id to the user database"""
+
+        
+
+        thread = client.beta.threads.create(
+            messages=[
+                
+                 {
+                "role": "user",
+                    "content": "Hi. Introduce yourself"
+                
+                 }
+                    ]
+            )
+        
+        promptForUser = User(id=userID).chartSummaryForPrompt()
+        
+        run = client.beta.threads.runs.create(
+                thread_id=thread.id,
+                assistant_id=DASHA_ASSISTANT_ID,
+                instructions=f"{DASHA_PROMPT} {promptForUser}"
+                    )
+        
+        while run.status !="completed":
+            run = openai.beta.threads.runs.retrieve(
+            thread_id=thread.id,
+            run_id=run.id
+                                )
+            
+        print(run.status)
+
+        messages = openai.beta.threads.messages.list(
+                 thread_id=thread.id
+        )
+
+        # Update thread ID in firebase now
+        db.collection('users').document(userID).update({'dashaThreadID': thread.id})
+        
+        response = messages.data[0].content[0].text.value
+        send_welcome_message(userID, response)
+
+        print(messages.data[0].content[0].text.value)
 
 
+    @staticmethod
+    def sendMessageFrom(userID, message): 
+        user = User(id=userID)
+        
+        dashaThreadID = user.dashaThreadID 
+        
+        thread_message = client.beta.threads.messages.create(
+            dashaThreadID,
+            role="user",
+            content=message,
+                )
+        
+        promptForUser = User(id=userID).chartSummaryForPrompt()
+        
+        run = client.beta.threads.runs.create(
+                thread_id=dashaThreadID,
+                assistant_id=DASHA_ASSISTANT_ID,
+                instructions=f"{DASHA_PROMPT} {promptForUser}"
+                    )
+        
+        while run.status !="completed":
+            run = openai.beta.threads.runs.retrieve(
+            thread_id=dashaThreadID,
+            run_id=run.id
+                                )
+        print(run.status)
+
+        messages = openai.beta.threads.messages.list(
+                 thread_id=dashaThreadID
+        )
+
+        response = messages.data[0].content[0].text.value
+
+        send_message_to_user(userID, response)
+
+
+       

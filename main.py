@@ -4,11 +4,43 @@ from secret import api_keys
 from google.cloud import firestore
 from database.user import db, User
 
-
-
 from json import dumps
 from flask import make_response
 from Messaging.streamBackend import *
+from google.cloud import pubsub_v1
+
+import subprocess
+import json
+
+
+
+
+
+def publish_to_pubsub(topic, data):
+    try:
+        publisher = pubsub_v1.PublisherClient()
+        topic_path = publisher.topic_path('findamare', topic)
+        message = json.dumps(data).encode('utf-8')
+
+        # Publish the message
+        future = publisher.publish(topic_path, data=message)
+        future.result()  # Wait for the message to be published
+        print(f"Message published to topic {topic}")
+
+    except Exception as e:
+        print(f"Error publishing to Pub/Sub: {e}")
+
+
+
+
+# Example data
+
+
+# Example usage
+
+#publish_to_pubsub('update_aspects', data)
+
+
 
 def jsonify(status=200, indent=4, sort_keys=True, **kwargs):
     response = make_response(dumps(dict(**kwargs), indent=indent, sort_keys=sort_keys))
@@ -613,13 +645,16 @@ def listen_for_new_user(data, context):
       gcloud functions deploy listen_for_new_user \
     --runtime python38 \
     --trigger-event "providers/cloud.firestore/eventTypes/document.create" \
-    --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}"
+    --trigger-resource "projects/findamare/databases/(default)/documents/users/{userId}" \
+    --timeout=540s
       """
 
     from analytics.app_data import new_user
     from database.user import db
     from database.Location import Location
     import iso8601
+    import time
+    from prompts.astrology_traits_generator import DashaChatBot
 
     path_parts = context.resource.split('/documents/')[1].split('/')
     collection_path = path_parts[0]
@@ -662,6 +697,9 @@ def listen_for_new_user(data, context):
             # Set it in database now
             user.set_natal_chart()
             new_user()
+            time.sleep(100)
+            DashaChatBot.createInitialThread(id)
+            
         except Exception as error:
             print(f"This data does not exist in the database yet or some error:  {error}")
 
@@ -706,41 +744,13 @@ def listen_for_new_natal_chart_and_write_indexes(data, context):
     natal_dict = natal_chart_doc.to_dict()
 
     user = User(id=user_id, skip_getting_natal=True)
+
+    data = {
+    "collection_path": collection_path,
+    "document_path": document_path,
+    "user_id": user_id
+    }
     
-
-    def update_planet_placements(user, natal_dict):
-        planets = natal_dict['planets']
-        for planet in planets:
-            add_planet_placement_to_db(planet, user)
-
-    def add_planet_placement_to_db(planet, user):
-        common_data = {
-            'is_on_cusp': planet['is_on_cusp'],
-            'angle': planet['angle'],
-            'is_retrograde': planet['is_retrograde'],
-            'is_notable': user.is_notable,
-            'house': planet.get('house'),
-            'profile_image_url': user.profile_image_url,
-            'name': user.name
-           
-        }
-
-        # Add user placement to the database
-        db.collection(f'all_users_placements').document(planet['name']).collection(planet['sign']).document(user.id).set(common_data)
-        #add_research_data(user, planet, common_data)
-
-    def add_research_data(user, planet, common_data):
-        try:
-            for note in user.notes:
-                categories = note.split(":")
-                add_note_to_research_data(categories, planet, user.id, common_data)
-        except Exception as e:
-            print(f"CAN'T DO IT because {e}")
-
-    def add_note_to_research_data(categories, planet, user_id, common_data):
-        # Add user to 'ByCategory' and 'ByPlacement' collections
-        db.collection('researchData').document('ByCategory').collection(categories[0]).document(categories[1]).collection(categories[2]).document(planet['name']).collection(planet['sign']).document(user_id).set(common_data)
-        db.collection('researchData').document('ByPlacement').collection(planet['name']).document(planet['sign']).collection(categories[0]).document(categories[1]).collection(categories[2]).document(user_id).set(common_data)
 
     def update_aspects(user, natal_dict):
         aspects = natal_dict['aspects']
@@ -761,24 +771,89 @@ def listen_for_new_natal_chart_and_write_indexes(data, context):
         db.collection(f'all_natal_aspects_for_all_users').document(first).collection(second).document('doc').collection(aspect['type']).document(user.id).set(aspect_data)
         #add_aspect_research_data(user, aspect, aspect_data)
 
-    def add_aspect_research_data(user, aspect, aspect_data):
-        try:
-            for note in user.notes:
-                categories = note.split(":")
-                first, second = aspect['first'], aspect['second']
-                # Add user to 'ByCategory' and 'ByAspect' collections
-                db.collection('researchData').document('ByCategory').collection(categories[0]).document(categories[1]).collection(categories[2]).document(first).collection(second).document('doc').collection(aspect['type']).document(user.id).set(aspect_data)
-                db.collection('researchData').document('ByAspect').collection(first).document(second).collection('doc').document(aspect['type']).collection(categories[0]).document(categories[1]).collection(categories[2]).document(user.id).set(aspect_data)
-        except Exception as e:
-            print(f"CAN'T DO IT because {e}")
 
+
+    publish_to_pubsub('write_planet_interpretations_1', data)
+    publish_to_pubsub('write_planet_interpretations_2', data)
+    publish_to_pubsub('write_planet_interpretations_3', data)
+
+    publish_to_pubsub('add_planet_placements', data)
     
 
+
+    update_aspects(user, natal_dict)
+
+
+
+def add_planet_placements(event, context): 
+
+    """  Reads the user's planet placements and adds to the databse. 
+    gcloud functions deploy add_planet_placements \
+    --runtime python38 \
+    --trigger-topic add_planet_placements
+    """
+    
+    pubsub_data = json.loads(event['data'])
+
+    # Access individual strings
+    collection_path = pubsub_data['collection_path']
+    document_path = pubsub_data['document_path']
+    user_id = pubsub_data['user_id']
+
+    natal_chart_doc = db.collection(collection_path).document(document_path).get()
+    natal_dict = natal_chart_doc.to_dict()
+
+    user = User(id=user_id, skip_getting_natal=True)
+    def add_planet_placement_to_db(planet, user):
+
+        common_data = {
+            'is_on_cusp': planet['is_on_cusp'],
+            'angle': planet['angle'],
+            'is_retrograde': planet['is_retrograde'],
+            'is_notable': user.is_notable,
+            'house': planet.get('house'),
+            'profile_image_url': user.profile_image_url,
+            'name': user.name
+        # Add user placement to the database
+    
+        }
+        db.collection(f'all_users_placements').document(planet['name']).collection(planet['sign']).document(user.id).set(common_data)
+    
+    def update_planet_placements(user, natal_dict):
+        planets = natal_dict['planets']
+        for planet in planets:
+            add_planet_placement_to_db(planet, user)
+    update_planet_placements(user, natal_dict)
+
+
+def write_planet_interpretations_1(event, context):
+
+    """  Writes the first part of the planet interpretations to the database
+    gcloud functions deploy write_planet_interpretations_1 \
+    --runtime python38 \
+    --trigger-topic write_planet_interpretations_1 \
+    --timeout=540s
+    """
+    print("write_planet_interpretations_1")
+    pubsub_data = json.loads(event['data'])
+    print(f"pubsub data is .. {pubsub_data}")
+
+    # Access individual strings
+    collection_path = pubsub_data['collection_path']
+    document_path = pubsub_data['document_path']
+    user_id = pubsub_data['user_id']
+
+    natal_chart_doc = db.collection(collection_path).document(document_path).get()
+    natal_dict = natal_chart_doc.to_dict()
+
+    user = User(id=user_id, skip_getting_natal=True)
     def write_all_planet_interpretations():
         from prompts.astrology_traits_generator import PlacementInterpretationsGenerator
         reader = PlacementInterpretationsGenerator()
         gender = user.sex
-        for planet in natal_dict['planets']:
+        sortedPlanets = sorted(natal_dict['planets'], key=lambda x: x['angle'])
+        first4planets = sortedPlanets[:4]
+        for planet in first4planets:
             try:
                 house_num = str(planet.get('house', ""))
                 if house_num.isdigit():
@@ -788,15 +863,86 @@ def listen_for_new_natal_chart_and_write_indexes(data, context):
             except Exception as e:
                 print(f"Error interpreting planet {planet['name']}: {e}") 
 
-    write_all_planet_interpretations()
-    update_planet_placements(user, natal_dict)
-    update_aspects(user, natal_dict)
+    write_all_planet_interpretations() 
 
+def write_planet_interpretations_2(event, context):
 
+    """  Writes the first part of the planet interpretations to the database
+    gcloud functions deploy write_planet_interpretations_2 \
+    --runtime python38 \
+    --trigger-topic write_planet_interpretations_2 \
+    --timeout=540s
+    """
 
+    pubsub_data = json.loads(event['data'])
 
+    # Access individual strings
+    collection_path = pubsub_data['collection_path']
+    document_path = pubsub_data['document_path']
+    user_id = pubsub_data['user_id']
+
+    natal_chart_doc = db.collection(collection_path).document(document_path).get()
+    natal_dict = natal_chart_doc.to_dict()
+
+    user = User(id=user_id, skip_getting_natal=True)
+    def write_all_planet_interpretations():
+        from prompts.astrology_traits_generator import PlacementInterpretationsGenerator
+        reader = PlacementInterpretationsGenerator()
+        gender = user.sex
+        sortedPlanets = sorted(natal_dict['planets'], key=lambda x: x['angle'])
+        mid4planets = sortedPlanets[3:7]
+        for planet in mid4planets:
+            try:
+                house_num = str(planet.get('house', ""))
+                if house_num.isdigit():
+                    house_num = "{}{}".format(house_num, 'th' if 4 <= int(house_num) % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(int(house_num) % 10, 'th'))
+                interpretation = reader.interpret_placement(gender, planet['name'], planet['sign'], house_num)
+                update_interpretation(user_id=user_id, planet=planet['name'], interpretation=interpretation)
+            except Exception as e:
+                print(f"Error interpreting planet {planet['name']}: {e}") 
+
+    write_all_planet_interpretations() 
+     
+def write_planet_interpretations_3(event, context):
+
+    """  Writes the first part of the planet interpretations to the database
+    gcloud functions deploy write_planet_interpretations_3 \
+    --runtime python38 \
+    --trigger-topic write_planet_interpretations_3 \
+    --timeout=540s
+    """
+
+    
+    pubsub_data = json.loads(event['data'])
+
+    # Access individual strings
+    collection_path = pubsub_data['collection_path']
+    document_path = pubsub_data['document_path']
+    user_id = pubsub_data['user_id']
+
+    natal_chart_doc = db.collection(collection_path).document(document_path).get()
+    natal_dict = natal_chart_doc.to_dict()
+
+    user = User(id=user_id, skip_getting_natal=True)
+    def write_all_planet_interpretations():
+        from prompts.astrology_traits_generator import PlacementInterpretationsGenerator
+        reader = PlacementInterpretationsGenerator()
+        gender = user.sex
+        sortedPlanets = sorted(natal_dict['planets'], key=lambda x: x['angle'])
+        last4planets = sortedPlanets[-4:]
+        for planet in last4planets:
+            try:
+                house_num = str(planet.get('house', ""))
+                if house_num.isdigit():
+                    house_num = "{}{}".format(house_num, 'th' if 4 <= int(house_num) % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(int(house_num) % 10, 'th'))
+                interpretation = reader.interpret_placement(gender, planet['name'], planet['sign'], house_num)
+                update_interpretation(user_id=user_id, planet=planet['name'], interpretation=interpretation)
+            except Exception as e:
+                print(f"Error interpreting planet {planet['name']}: {e}") 
+
+    write_all_planet_interpretations() 
 #Winked vs Winker in database --> winks / {winked} / peopleWhoWinked / {winker}
-def listen_for_winks(data, context):
+def listen_for_winks_DEPRECATED(data, context):
     """"
       # Run this to deploy. Reads
           gcloud functions deploy listen_for_winks \
@@ -1321,12 +1467,16 @@ def handle_failed_wink(data, context):
 
     from database.user import db
     import time
+    from database.notifications import PushNotifications
 
     sender_id = context.resource.split('/')[6]
     receiver_id = context.resource.split('/')[8]
 
     # Reference to the incoming wink
     incoming_request_ref = db.collection('users').document(receiver_id).collection('incomingWinks').document(sender_id)
+
+    # Send notification to reciever 
+    PushNotifications.winked_at(receiver_id, sender_id)
 
     # Wait for 5 seconds before checking for the second write
     time.sleep(5)
@@ -1688,3 +1838,60 @@ def placement_read(request):
     except Exception as e:
         return jsonify(success=False, error=str(e))
 
+
+
+
+def message_dasha(request):
+    """
+    POST: Sends a message using DashaChatBot.
+
+    URL: https://us-central1-findamare.cloudfunctions.net/message_dasha
+
+    Parameters in JSON payload:
+    - userID: User identifier.
+    - message: Message to be sent.
+
+    JSON Response:
+    {
+        "success": true or false,
+        "message": "Message sent successfully" or error message
+    }
+
+    Example:
+    curl -X POST https://us-central1-findamare.cloudfunctions.net/message_dasha \
+        -H "Content-Type: application/json" \
+        -d '{"userID": "ZH17wkDgkIVFqQ2F9wtwcRPi5oo1", "message": "Hello, Dasha!"}'
+
+    Deploy using the following command:
+    gcloud functions deploy message_dasha \
+        --runtime python38 \
+        --trigger-http \
+        --allow-unauthenticated  \
+        --timeout=540s
+        
+    """
+    from prompts.astrology_traits_generator import DashaChatBot
+
+    
+    try:
+        request_json = request.get_json(silent=True)
+
+        # Extracting parameters from the JSON payload
+        user_id = request_json.get('userID')
+        message = request_json.get('message')
+
+        # Call the sendMessageFrom method
+        DashaChatBot.sendMessageFrom(user_id, message)
+
+        # Return a success response
+        return jsonify(success=True )
+        
+        j 
+
+    except Exception as e:
+        # Handle errors
+        return jsonify(success=False,
+                           error={
+                               'code': 400,
+                               'description': str(e)}
+                           ) 

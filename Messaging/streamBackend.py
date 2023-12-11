@@ -3,7 +3,7 @@
 from stream_chat import StreamChat
 import json 
 import time
-import socketio
+#import socketio
 
 # Set up Stream Chat client
 api_key = "92jyyxebed2m"
@@ -50,7 +50,7 @@ def handle_message(event):
 
 
 # Send a welcome message to a specific user
-def send_welcome_message(user_id):
+def send_welcome_message(user_id, message="Hey, I'm Dasha! 💁🏼‍♀️ Ask me anything about your birth chart , astrology, relationships 💖 , and dating 👩🏼‍❤️‍💋‍👨🏾! I can also give readings-- only for you though! 😉"):
     channel_type = "messaging"
 
     channel_id = f"{user_id}-dasha"
@@ -67,7 +67,7 @@ def send_welcome_message(user_id):
 
         
         # Send the welcome message
-        message = {"text": "Hey, I'm Dasha! 💁🏼‍♀️ Ask me anything about your birth chart , astrology, relationships 💖 , and dating 👩🏼‍❤️‍💋‍👨🏾! I can also give readings-- only for you though! 😉"}
+        message = {"text": message}
         channel.send_message(message, "dasha")
         print(f"Welcome message sent to user {user_id}.")
     except Exception as e:
@@ -174,6 +174,9 @@ testUser2 = "ZH17wkDgkIVFqQ2F9wtwcRPi5oo1"
 
 testID = "!members-bdRFBY75-BL-SIErP2Ekytk5XT2EPpxDkEJgTCr0-Wk"
 
+"""
+
+
 
 def listen_to_channel_id(channel_id):
     
@@ -191,7 +194,7 @@ def listen_to_channel_id(channel_id):
         message_text = data.get('text', '')
 
         # Process the message (add your processing logic here)
-        print(f"Received message from user {user_sending_message}: {message_text}")
+        print(f"Received message from user {user_sending_message}: {exitmessage_text}")
 
         # Send a response back
         response_text = "Thanks for your message!"
@@ -255,7 +258,7 @@ def listen_to_channel_id(channel_id):
     #channel.watch()
 
     # Event handling loop
-    """ 
+    
     while True:
         event = chat_client.listen()
         
@@ -272,7 +275,7 @@ def listen_to_channel_id(channel_id):
             #channel.send_message({"text": response_text}, "dasha")
            # print(f"Sent response to user {user_sending_message}: {response_text}")
 
-    """  
+    
 
 
 
@@ -309,3 +312,6 @@ def listen_to_channel(user_id):
 # Uncomment the following lines if you want to run this locally
 # if __name__ == "__main__":
 #     listen_to_channel("existing_user_id")
+
+
+"""
