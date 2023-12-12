@@ -9,7 +9,7 @@ import json
 client = OpenAI( api_key=api_key )
 DASHA_ASSISTANT_ID = "asst_oh3BtBECBD1cqa3VidCPbk2t"
 from database.user import User
-
+openai.api_key = api_key
 from prompts.constants import *
 from Messaging.streamBackend import * 
 from database.user import db
@@ -27,7 +27,7 @@ class PlacementInterpretationsGenerator:
     def _format_request_message_for_aspect(self,  gender, planet1, aspectType, planet2, orb):
         self.instructions = PREDICTING_PLANETARY_PLACEMENT
     
-        message = f"I'm a {gender} with {planet1} {aspectType} {planet2} with an orb of {orb}. Tell me about myself. Do NOT mention the name of the aspect until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet and aspect but in the beginning just tell me my reading nothing else. Use emojis whenever you can and be sure it captures my attention. "
+        message = f"I'm a {gender} with {planet1} {aspectType} {planet2} with an orb of {orb}. Tell me about myself. Do NOT mention the name of the aspect until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet and aspect but in the beginning just tell me my reading nothing else. Use emojis whenever you can and be sure it captures my attention and ESPECIALLY use emojis in the first few sentences and throughout just don't overdo it. "
         self.prompt = message 
         return message.strip()
     
@@ -289,6 +289,7 @@ class DashaChatBot:
 
     @staticmethod
     def sendMessageFrom(userID, message): 
+        print(f"DashaChatBot.sendMessageFrom")
         user = User(id=userID)
         
         dashaThreadID = user.dashaThreadID 
@@ -300,6 +301,7 @@ class DashaChatBot:
                 )
         
         promptForUser = User(id=userID).chartSummaryForPrompt()
+        print(f"promtForUser: {promptForUser}")
         
         run = client.beta.threads.runs.create(
                 thread_id=dashaThreadID,

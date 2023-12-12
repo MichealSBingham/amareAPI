@@ -1439,6 +1439,9 @@ gcloud functions deploy handle_incoming_request_acceptance \
         # ...
         db.collection('users').document(sender_id).collection('myFriends').document(receiver_id).set({"friends_since": datetime.now(), "profile_image_url":requested_person.profile_image_url, "isNotable": requested_person.is_notable, "name": requested_person.name})
         db.collection('users').document(receiver_id).collection('myFriends').document(sender_id).set({"friends_since": datetime.now(), "profile_image_url": sender_user.profile_image_url, "isNotable": sender_user.is_notable, "name": sender_user.name})
+        # Give them both  stars 
+        db.collection('users').document(sender_id).update({'stars': firestore.Increment(9)})
+        db.collection('users').document(receiver_id).update({'stars': firestore.Increment(9)})
         PushNotifications.acceptFriendRequestFrom(sender_id,receiver_id)
 
     return f"Updated outgoing request status for {sender_id} due to acceptance of incoming request by {receiver_id}."
@@ -1803,22 +1806,40 @@ def update_interpretation(user_id, planet, interpretation):
 
     natal_chart_ref.update(update_data)
 
-def update_aspect_interpretation(user_id, name, interpretation):
+def update_aspect_interpretation(user_id, name, interpretation, requester_id=None):
     from database.user import db 
-    update_aspect_interpretation_and_deduct_stars(db.transaction(), user_id, name, interpretation)
+    
+    requester_user_ref = db.collection('users').document(requester_id)
+    user_ref = db.collection('users').document(user_id)
 
-    # SHow me how to make a transcaction that not only updates the aspecs interpration like above but also 
-    # it needs to 'deduct' a point from their 'stars' number at the same time 
-    # /users/{user_id} ... stars is the property, make sure if it doesn't exist , you do nothing 
+    # update 
+    natal_chart_ref = user_ref.collection('public').document('natal_chart')
+    update_data = {
+           f'aspects_interpretations.{name}': interpretation
+       }
+    natal_chart_ref.update(update_data)
+    
+    
+    #decrement 
+    requester_user_ref.update({'stars': firestore.Increment(-1)})
 
 
+    # fix this: update_aspect_interpretation_and_deduct_stars(db.transaction(), user_id, name, interpretation, requester_id)
+
+
+
+""""
 @firestore.transactional
-def update_aspect_interpretation_and_deduct_stars(transaction: Transaction, user_id: str, name: str, interpretation: str):
-   user_ref = db.collection('users').document(user_id)
-   natal_chart_ref = user_ref.collection('public').document('natal_chart')
+def update_aspect_interpretation_and_deduct_stars(transaction: Transaction, user_id: str, name: str, interpretation: str, requester_id: str):
+   user_ref = db.collection('users').document(requester_id)
+   user_ref_for_reading = db.collection('users').document(user_id)
+   natal_chart_ref = user_ref_for_reading.collection('public').document('natal_chart')
 
    user_snapshot = user_ref.get(transaction=transaction)
    natal_chart_snapshot = natal_chart_ref.get(transaction=transaction)
+   print(f"user_snapshot data: {user_snapshot.to_dict()}")
+   print(f"natal_chart_snapshot data: {natal_chart_snapshot.to_dict()}")
+
 
    if user_snapshot.exists and natal_chart_snapshot.exists:
        update_data = {
@@ -1826,7 +1847,9 @@ def update_aspect_interpretation_and_deduct_stars(transaction: Transaction, user
        }
        stars = user_snapshot.get('stars')
        if stars is not None and stars >= 1:
+           print(f"Stars before deduction: {stars}")
            update_data['stars'] = stars - 1
+           print(f"Stars after deduction: {update_data['stars']}")
            transaction.update(natal_chart_ref, update_data)
        else:
            # If stars are not sufficient, raise an exception to abort the transaction
@@ -1834,7 +1857,7 @@ def update_aspect_interpretation_and_deduct_stars(transaction: Transaction, user
    else:
        # If either user or natal chart does not exist, raise an exception to abort the transaction
        raise ValueError("User or natal chart not found")
-
+"""
 
 
 
@@ -1936,6 +1959,8 @@ def aspect_read(request):
     - planet2: (required) Name of the planet or celestial body (e.g., 'North Node').
     - name: (required) Name of the aspect (e.g., 'Sun Moon')
     - orb: (required) Int
+    - user_id: user_id for the user so that we can write this description to them 
+    - requesting_user_id: the user that is requesting this information 
 
     JSON Response:
     {
@@ -1982,8 +2007,9 @@ def aspect_read(request):
     name = req_data.get('name')
     orb = req_data.get('orb')
     user_id = req_data.get('user_id', None)
+    requesting_user_id = req_data.get('requesting_user_id', user_id)
 
-    if not check_stars(user_id):
+    if not check_stars(requesting_user_id):
         print("Not enough stars")
         return jsonify(success=False, error="You don't have enough stars!")
 
@@ -1994,11 +2020,12 @@ def aspect_read(request):
         
         from prompts.astrology_traits_generator import PlacementInterpretationsGenerator
         reader = PlacementInterpretationsGenerator()
+        print(f"{requesting_user_id} is requesting {user_id}")
         interpretation = reader.interpret_aspect(gender, planet1, aspectType, planet2, orb)
 
         # Optional: Write to Firestore if user_id is provided
         if user_id:
-            update_aspect_interpretation(user_id, name, interpretation)
+            update_aspect_interpretation(user_id, name, interpretation, requester_id=requesting_user_id)
 
         
             
@@ -2073,13 +2100,30 @@ def message_dasha(request):
         user_id = request_json.get('userID')
         message = request_json.get('message')
 
+        print(f"The user id {user_id} and message: {message}")
+
+        # Check if they have enough stars
+        
+        if not check_stars(user_id):
+            print("Not enough stars")
+            send_message_to_user(user_id, "You don't have enough ⭐️'s to message me. 😭 😭 😭. You can get more stars by adding friends or engaging with the app! If I see you tomorrow, you might get some for free. 😏😏😏")
+            return jsonify(success=False, error="You don't have enough stars!")
+        
+        print("sending messsage to dasha")
+
         # Call the sendMessageFrom method
         DashaChatBot.sendMessageFrom(user_id, message)
+
+        # Increment Sent Dasha Message
+        db.collection('users').document(user_id).update({'sentDashaMessages': firestore.Increment(1)}) 
+
+        # Decrement Stars
+        db.collection('users').document(user_id).update({'stars': firestore.Increment(-1)})
 
         # Return a success response
         return jsonify(success=True )
         
-        j 
+        
 
     except Exception as e:
         # Handle errors
