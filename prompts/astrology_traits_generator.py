@@ -240,6 +240,87 @@ class AstrologyTraitsGenerator:
 
 class DashaChatBot:
     
+    @staticmethod
+    def tellMeAbout(user2, user1):
+        #Sends a message to Dasha that 'user1' wants to know about 'user2' so we send a message to 'user1' to give some insight into who 'user2' might be 
+        from itertools import islice
+
+        print(f"DashaChatBot.sendMessageFrom")
+        requestingUser = User(id=user1)
+        targetUser = User(id=user2)
+
+        promptForUser = requestingUser.chartSummaryForPrompt()
+        
+        dashaThreadID = requestingUser.dashaThreadID 
+
+        message = f"""Based on our synastry aspects between  me and {targetUser.name} gender: {targetUser.sex} your next message will poetically be an astrological reading of the synastry between us too but you will talk to us in 2nd person. Do NOT use any astrological terms at all or jargon or mention the word 'synastry'. You are our personal astrology
+         and you should with your first sentences describe our relationship. Tell us our greatest strength and biggest challenge and conflict based on our aspects. The only thing that 
+         should dictate your response is a look at our synastry chart and what each means seperately and broadly with the entire relationship dynamic. Briefly talk about our dynamic based on only our synastry aspects but be specific and astrologically correct. No introductory text. No closing text. But tell me I can ask questions and give feedback and have personal opinions on whether we're (as in me and the person in synastry) are a good match or not. Suggest me some questions I could ask you. Use EMOJIS323
+         """
+        
+      
+
+        aspects = requestingUser.synastry(targetUser)
+        aspects.sort()
+        #aspects = list(islice(aspects, 8))
+
+        sentences = []
+
+        for a in aspects: 
+            if (a.type == 'TRINE'or  a.type == 'CONJUNCTION' or a.type=='OPPOSITION' or a.type =='SQUARE' or a.type =='QUINCUNX' or a.type =='SEXTILE') and a.orb < 10:
+                sentence = f"{a.first.id} {a.type} {a.second.id}"
+                sentences.append(sentence)
+
+        paragraph = ". ".join(sentences[:8])
+
+
+
+
+        synMessage = f"The synastry chart is with {targetUser.name} and the synastry aspects are: {paragraph}"
+
+        fullMessage = message+synMessage 
+
+        print(f"the full message is {fullMessage}")
+
+        print(f"The thread id of dasha for openai is {dashaThreadID}")
+
+        thread = client.beta.threads.messages.create(
+            dashaThreadID,
+            role="user",
+            content=fullMessage,
+                )
+        
+        
+        
+        run = client.beta.threads.runs.create(
+                thread_id=dashaThreadID,
+                assistant_id=DASHA_ASSISTANT_ID,
+                instructions=f"{DASHA_PROMPT} {promptForUser}"
+                    )
+        
+        while run.status !="completed":
+            run = openai.beta.threads.runs.retrieve(
+            thread_id=dashaThreadID,
+            run_id=run.id
+                                )
+            
+        print(run.status)
+
+        messages = openai.beta.threads.messages.list(
+                 thread_id=dashaThreadID
+        )
+
+        
+        
+        response = messages.data[0].content[0].text.value
+        send_message_to_user(requestingUser.id, response)
+        
+
+        print(messages.data[0].content[0].text.value)
+
+      
+
+
     ## Creates the initial thread and sends the welcome message to the user 
     @staticmethod
     def createInitialThread(userID): 

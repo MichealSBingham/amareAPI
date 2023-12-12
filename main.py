@@ -2132,3 +2132,75 @@ def message_dasha(request):
                                'code': 400,
                                'description': str(e)}
                            ) 
+
+
+def message_dasha_about_another(request):
+    """
+    POST: Sends a message using DashaChatBot.
+
+    URL: https://us-central1-findamare.cloudfunctions.net/message_dasha_about_another
+
+    Parameters in JSON payload:
+    - requestingUserID: User identifier of the user who is requesting the synastry
+    - targetUserID: The user whose information will be read. e.g. Micheal is chating about Grace with Dasha
+    
+
+    JSON Response:
+    {
+        "success": true or false,
+        "message": "Message sent successfully" or error message
+    }
+
+    Example:
+    curl -X POST https://us-central1-findamare.cloudfunctions.net/message_dasha \
+        -H "Content-Type: application/json" \
+        -d '{"userID": "ZH17wkDgkIVFqQ2F9wtwcRPi5oo1", "message": "Hello, Dasha!"}'
+
+    Deploy using the following command:
+    gcloud functions deploy message_dasha \
+        --runtime python38 \
+        --trigger-http \
+        --allow-unauthenticated  \
+        --timeout=540s
+        
+    """
+    from prompts.astrology_traits_generator import DashaChatBot
+
+    
+    try:
+        request_json = request.get_json(silent=True)
+
+        # Extracting parameters from the JSON payload
+        requestingUserID = request_json.get('requestingUserID')
+        targetUserID = request_json.get('targetUserID')
+
+        firstUser = User(id=requestingUserID)
+        secondUser = User(id=targetUserID)
+
+        # Check if they have enough stars
+        
+        
+        # message should contain info about the other person 
+        print("sending messsage to dasha")
+
+        # Call the sendMessageFrom method
+        DashaChatBot.sendMessageFrom(user_id, message)
+
+        # Increment Sent Dasha Message
+        db.collection('users').document(user_id).update({'sentDashaMessages': firestore.Increment(1)}) 
+
+        # Decrement Stars
+        db.collection('users').document(user_id).update({'stars': firestore.Increment(-1)})
+
+        # Return a success response
+        return jsonify(success=True )
+        
+        
+
+    except Exception as e:
+        # Handle errors
+        return jsonify(success=False,
+                           error={
+                               'code': 400,
+                               'description': str(e)}
+                           ) 
