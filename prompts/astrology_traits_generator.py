@@ -1,11 +1,18 @@
 api_key = "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"
 
 import os
+from openai import OpenAI
 import openai
+client = OpenAI(api_key=api_key)
+from openai import OpenAI
 import json
+client = OpenAI( api_key=api_key )
+DASHA_ASSISTANT_ID = "asst_oh3BtBECBD1cqa3VidCPbk2t"
+from database.user import User
 openai.api_key = api_key
-
 from prompts.constants import *
+from Messaging.streamBackend import * 
+from database.user import db
 
 # TODO: make sure it can handle placements on cusps 
 class PlacementInterpretationsGenerator:
@@ -17,7 +24,15 @@ class PlacementInterpretationsGenerator:
         self.prompt = ""
 
     # example: male, sun, cancer, 7th. be sure the house number 
+    def _format_request_message_for_aspect(self,  gender, planet1, aspectType, planet2, orb):
+        self.instructions = PREDICTING_PLANETARY_PLACEMENT
+    
+        message = f"I'm a {gender} with {planet1} {aspectType} {planet2} with an orb of {orb}. Tell me about myself. Do NOT mention the name of the aspect until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet and aspect but in the beginning just tell me my reading nothing else. Use emojis whenever you can and be sure it captures my attention and ESPECIALLY use emojis in the first few sentences and throughout just don't overdo it. "
+        self.prompt = message 
+        return message.strip()
+    
     def _format_request_message(self,  gender, planet, sign, house=''):
+         
         if not house or house.isspace():
             message = f"I'm a {gender} with {planet} in {sign}. Tell me about myself. Do NOT mention the name of the placement until the end of the reading, towards the end you can speak more about the reasoning behind it such as the planet, sign, and house, but in the beginning just tell me my reading nothing else. "
         else: 
@@ -36,18 +51,37 @@ class PlacementInterpretationsGenerator:
                 {"role": "user", "content": request_message}
             ]
             
-        response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=outbound_messages, 
-                temperature=0, # adjust this value as needed
-                max_tokens=1000, 
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0
-            )
-        response_content = response.choices[0].message['content'].strip()
+        response = client.chat.completions.create(model=self.model,
+        messages=outbound_messages, 
+        temperature=0, # adjust this value as needed
+        max_tokens=1000, 
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0)
+        response_content = response.choices[0].message.content
         return response_content
 
+
+    def interpret_aspect(self, gender, planet1, aspectType, planet2, orb):
+        self.instructions = PREDICTING_PLANETARY_PLACEMENT
+        request_message = self._format_request_message_for_aspect(gender, planet1, aspectType, planet2, orb)
+        print(f"the message sent is ... {request_message}")
+        
+        
+        outbound_messages = [
+                {"role": "system", "content": self.instructions},
+                {"role": "user", "content": request_message}
+            ]
+            
+        response = client.chat.completions.create(model=self.model,
+        messages=outbound_messages, 
+        temperature=0.10, # adjust this value as needed
+        max_tokens=1000, 
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0)
+        response_content = response.choices[0].message.content
+        return response_content
           
         
     
@@ -93,12 +127,10 @@ class PersonalityStatementsGenerator:
                     {"role": "user", "content": request_message}
                 ]
 
-                response = openai.ChatCompletion.create(
-                    model=self.model,
-                    messages=outbound_messages,
-                    temperature=0.45,
-                    max_tokens=555
-                )
+                response = client.chat.completions.create(model=self.model,
+                messages=outbound_messages,
+                temperature=0.45,
+                max_tokens=250)
                 response_content = response.choices[0].message['content']
                 
                 result = self.split_statements(response_content)
@@ -111,7 +143,7 @@ class PersonalityStatementsGenerator:
 
         return []
 
-    def deprecated_for_deletion_predict_statements(self, name, gender, astro_data):
+    def predict_statements_old(self, name, gender, astro_data):
         request_message = self._format_request_message(name, gender, astro_data)
         
     
@@ -121,15 +153,13 @@ class PersonalityStatementsGenerator:
                 {"role": "user", "content": request_message}
             ]
             
-        response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=outbound_messages, 
-                temperature=0.45, # adjust this value as needed
-                max_tokens=555 
-            )
+        response = client.chat.completions.create(model=self.model,
+        messages=outbound_messages, 
+        temperature=0.45, # adjust this value as needed
+        max_tokens=250)
         response_content = response.choices[0].message['content']
         print(response_content)
-        return self.split_statements(response_content)
+        return response_content #self.split_statements(response_content)
 
           
 
@@ -180,12 +210,10 @@ class AstrologyTraitsGenerator:
                 {"role": "user", "content": request_message}
             ]
             
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=outbound_messages, 
-                temperature=0.45, # adjust this value as needed
-                max_tokens=555 
-            )
+            response = client.chat.completions.create(model=self.model,
+            messages=outbound_messages, 
+            temperature=0.45, # adjust this value as needed
+            max_tokens=100)
             response_content = response.choices[0].message['content']
             is_valid, traits_dict = self._validate_traits(response_content)
 
@@ -210,5 +238,172 @@ class AstrologyTraitsGenerator:
 
 
 
+class DashaChatBot:
+    
+    @staticmethod
+    def tellMeAbout(user2, user1):
+        #Sends a message to Dasha that 'user1' wants to know about 'user2' so we send a message to 'user1' to give some insight into who 'user2' might be 
+        from itertools import islice
+
+        print(f"DashaChatBot.sendMessageFrom")
+        requestingUser = User(id=user1)
+        targetUser = User(id=user2)
+
+        promptForUser = requestingUser.chartSummaryForPrompt()
+        
+        dashaThreadID = requestingUser.dashaThreadID 
+
+        message = f"""Based on our synastry aspects between  me and {targetUser.name} gender: {targetUser.sex} your next message will poetically be an astrological reading of the synastry between us too but you will talk to us in 2nd person. Do NOT use any astrological terms at all or jargon or mention the word 'synastry'. You are our personal astrology
+         and you should with your first sentences describe our relationship. Tell us our greatest strength and biggest challenge and conflict based on our aspects. The only thing that 
+         should dictate your response is a look at our synastry chart and what each means seperately and broadly with the entire relationship dynamic. Briefly talk about our dynamic based on only our synastry aspects but be specific and astrologically correct. No introductory text. No closing text. But tell me I can ask questions and give feedback and have personal opinions on whether we're (as in me and the person in synastry) are a good match or not. Suggest me some questions I could ask you. Use EMOJIS323
+         """
+        
+      
+
+        aspects = requestingUser.synastry(targetUser)
+        aspects.sort()
+        #aspects = list(islice(aspects, 8))
+
+        sentences = []
+
+        for a in aspects: 
+            if (a.type == 'TRINE'or  a.type == 'CONJUNCTION' or a.type=='OPPOSITION' or a.type =='SQUARE' or a.type =='QUINCUNX' or a.type =='SEXTILE') and a.orb < 10:
+                sentence = f"{a.first.id} {a.type} {a.second.id}"
+                sentences.append(sentence)
+
+        paragraph = ". ".join(sentences[:8])
 
 
+
+
+        synMessage = f"The synastry chart is with {targetUser.name} and the synastry aspects are: {paragraph}"
+
+        fullMessage = message+synMessage 
+
+        print(f"the full message is {fullMessage}")
+
+        print(f"The thread id of dasha for openai is {dashaThreadID}")
+
+        thread = client.beta.threads.messages.create(
+            dashaThreadID,
+            role="user",
+            content=fullMessage,
+                )
+        
+        
+        
+        run = client.beta.threads.runs.create(
+                thread_id=dashaThreadID,
+                assistant_id=DASHA_ASSISTANT_ID,
+                instructions=f"{DASHA_PROMPT} {promptForUser}"
+                    )
+        
+        while run.status !="completed":
+            run = openai.beta.threads.runs.retrieve(
+            thread_id=dashaThreadID,
+            run_id=run.id
+                                )
+            
+        print(run.status)
+
+        messages = openai.beta.threads.messages.list(
+                 thread_id=dashaThreadID
+        )
+
+        
+        
+        response = messages.data[0].content[0].text.value
+        send_message_to_user(requestingUser.id, response)
+        
+
+        print(messages.data[0].content[0].text.value)
+
+      
+
+
+    ## Creates the initial thread and sends the welcome message to the user 
+    @staticmethod
+    def createInitialThread(userID): 
+        """ Creates the initial thread and sends the welcome message to the user and sends the thread id to the user database"""
+
+        
+
+        thread = client.beta.threads.create(
+            messages=[
+                
+                 {
+                "role": "user",
+                    "content": "Hi. Introduce yourself"
+                
+                 }
+                    ]
+            )
+        
+        promptForUser = User(id=userID).chartSummaryForPrompt()
+        
+        run = client.beta.threads.runs.create(
+                thread_id=thread.id,
+                assistant_id=DASHA_ASSISTANT_ID,
+                instructions=f"{DASHA_PROMPT} {promptForUser}"
+                    )
+        
+        while run.status !="completed":
+            run = openai.beta.threads.runs.retrieve(
+            thread_id=thread.id,
+            run_id=run.id
+                                )
+            
+        print(run.status)
+
+        messages = openai.beta.threads.messages.list(
+                 thread_id=thread.id
+        )
+
+        # Update thread ID in firebase now
+        db.collection('users').document(userID).update({'dashaThreadID': thread.id})
+        
+        response = messages.data[0].content[0].text.value
+        send_welcome_message(userID, response)
+
+        print(messages.data[0].content[0].text.value)
+
+
+    @staticmethod
+    def sendMessageFrom(userID, message): 
+        print(f"DashaChatBot.sendMessageFrom")
+        user = User(id=userID)
+        
+        dashaThreadID = user.dashaThreadID 
+        
+        thread_message = client.beta.threads.messages.create(
+            dashaThreadID,
+            role="user",
+            content=message,
+                )
+        
+        promptForUser = User(id=userID).chartSummaryForPrompt()
+        print(f"promtForUser: {promptForUser}")
+        
+        run = client.beta.threads.runs.create(
+                thread_id=dashaThreadID,
+                assistant_id=DASHA_ASSISTANT_ID,
+                instructions=f"{DASHA_PROMPT} {promptForUser}"
+                    )
+        
+        while run.status !="completed":
+            run = openai.beta.threads.runs.retrieve(
+            thread_id=dashaThreadID,
+            run_id=run.id
+                                )
+        print(run.status)
+
+        messages = openai.beta.threads.messages.list(
+                 thread_id=dashaThreadID
+        )
+
+        response = messages.data[0].content[0].text.value
+
+        send_message_to_user(userID, response)
+
+
+       

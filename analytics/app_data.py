@@ -3,7 +3,9 @@ from google.cloud.firestore_v1 import Increment
 
 
 # Increments a new user for analytics to use
+
 def new_user():
+    
     db.collection('amare').document('app').set({"users": {"total": Increment(1)}}, merge=True)
 
 def less_user():

@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from firebase_admin import messaging
 #from google.cloud import firestore
 from database.Location import Location
 from astrology import NatalChart
@@ -80,6 +81,7 @@ class User:
             self.isReal = self.__data.get('isReal', True)
             self.notes = self.__data.get('notes', None)
             self.bio = self.__data.get('bio', None)
+            self.dashaThreadID = self.__data.get('dashaThreadID', None)
 
             location = Location(info_dict=self.__data.get('hometown', {}))
             if location.info_dict == {} or location.info_dict is None:
@@ -496,7 +498,8 @@ class User:
             for pair in itertools.combinations(planets, 2):
                 try:
                     aspect = NatalChart.DetailedAspect(pair[0], pair[1], aspectsToGet=aspectsToGet)
-                    aspects.append(aspect)
+                    if aspect.type != 'NO ASPECT':
+                        aspects.append(aspect)
                 except:
                     #print("Failed to get aspect between " + pair[0].id + " and " + pair[1].id)
                     pass
@@ -520,7 +523,8 @@ class User:
                             aspect.active_planet_owner = user2
                             aspect.passive_planet_owner = self
 #################################################################################################################
-                        aspects.append(aspect)
+                        if aspect.type != 'NO ASPECT':
+                            aspects.append(aspect)
                     except:
                         #print("Failed to get aspect between " + user1planet.id + " and " + user2planet.id)
                         pass
@@ -538,7 +542,8 @@ class User:
             for p2 in user2.__all_for_synastry():
                 try:
                     asp = NatalChart.DetailedAspect(p1, p2, first_planet_owner=self, second_planet_owner=user2)
-                    syn.append(asp)
+                    if asp.type != 'NO ASPECT':
+                        syn.append(asp)
                 except:
                     pass
                     #print("Failed to get aspect between " + p1.id + " and" + p2.id)
@@ -1057,16 +1062,76 @@ class User:
             dic[p.id] = p.sign 
         return dic
     
+    def chartSummaryForPrompt(self):
+        statements = [] 
+        statements.append(f"My name is {self.name} and in my birthchart I have ")
+        for p in self.planets(): 
+            body = p.id 
+            sign = p.sign
+            if self.known_time:
+                house = p.house
+                house_num = "{}{}".format(house, 'th' if 4 <= int(house) % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(int(house) % 10, 'th'))
+                s = f"My {body} in {sign} in the {house_num} house. "
+                statements.append(s)
+            else: 
+                s = f"My {body} is in {sign}. "
+                statements.append(s)
+
+        for ang in self.angles(): 
+            s = f"My {ang.id} is in {ang.sign}. "
+            statements.append(s)
+
+        statements.append("For my aspects, I have my ")
+        for asp in self.aspects(): 
+            s = f"{asp.first.id} {asp.type} {asp.second.id} with an orb of {int(round(asp.orb))}. "
+            statements.append(s)
+
+        prompt = ''.join(statements)
+        return prompt
+
+        
+    
+    
 #TODO: handle erros here. be sure that we have  the right properties in the User object.. name, gender.. natal chart. we don't want this to work if the user property is missing data.
     def personality_statements(self):
+        import re
         from prompts.astrology_traits_generator import PersonalityStatementsGenerator
         n = self.natal() # in case it hasn't produced the natal chart TOOO: do this more efficiently. either call the natal chart in the constructor or check if it already exists so we don't run this more than necessary because it takes some time
         astroData = self.astroDataForAPI()
 
         #send prompt to LLM
         statements_generator = PersonalityStatementsGenerator()
-        statements_raw = statements_generator.predict_statements(name=self.name, gender=self.sex, astro_data=astroData)
-        return statements_raw
+        text = statements_generator.predict_statements_old(name=self.name, gender=self.sex, astro_data=astroData)
+        cleaned_text = re.sub(r'\s+', ' ', text)  # Replace all kinds of whitespace with a single space
+        sentences = re.split(r'\.\s+', cleaned_text)  # Splitting the text into sentences based on period followed by space
+        sentences = [sentence.strip() for sentence in sentences if sentence]  # Removing any leading or trailing spaces in each sentence
+
+        return sentences
+    
+    @classmethod
+    def send_notification_to_user(self,user_id, title, body):
+        
+        # Fetch device tokens from Firestore
+        user_tokens_ref = db.collection('deviceTokens').document(user_id)
+        tokens_document = user_tokens_ref.get()
+        if tokens_document.exists:
+            user_tokens = tokens_document.to_dict().get('tokens', [])
+
+            # Send notification to each token
+            for token in user_tokens:
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title=title,
+                        body=body,
+                    ),
+                    token=token,
+                )
+
+                # Send a message to the device
+                response = messaging.send(message)
+                print('Successfully sent message:', response)
+        else:
+            print(f"No tokens found for user: {user_id}")
          
 
 
